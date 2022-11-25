@@ -26,6 +26,13 @@
 			<artifactId>spring-boot-starter-data-rest</artifactId>
 		</dependency>
 
+<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -51,6 +58,21 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
+		
+		<pluginRepositories>
+		<pluginRepository>
+		<id>spring-snapshots</id>
+		<url>https://repo.spring.io/snapshot</url>
+		</pluginRepository>
+		
+		<pluginRepository>
+		<id>spring-milestones</id>
+		<url>https://repo.spring.io/milestones</url>
+		</pluginRepository>
+		
+		</pluginRepositories>
 	</build>
+	
+	
 
 </project>
