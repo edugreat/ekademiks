@@ -8,31 +8,41 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+/*
+ * This class models the Options(available answers to choose from),
+ * for a particular academic Subject
+ */
 
 @Entity
 @Table(name = "Options")
 public class Options {
-	
+	//Key used for identification
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private int id;
 	
+	//option A
 	@Column(name = "a")
 	private String a;
 	
+	//option B
 	@Column(name = "b")
 	private String b;
 
+	//option C
 	@Column(name = "c")
 	private String c;
 
+	//option D
 	@Column(name = "d")
 	private String d;
 
+	//option E
 	@Column(name = "e")
 	private String e;
 
+	//The subject to which the options belong
 	@OneToOne
 	@JoinColumn(name = "subject_id")
 	private Subject subject;

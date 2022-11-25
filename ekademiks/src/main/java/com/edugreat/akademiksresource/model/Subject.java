@@ -13,34 +13,49 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+/*
+ * The subject class models the academic subject taken in the school.
+ * The fields provided are the relevant ones for our use case
+ */
+
 @Entity
-@Table(name="Subject")
+@Table(name = "Subject")
 public class Subject {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
-	private int id;
-	
+	private Integer id;
+
+	// Name of the particular subject
 	@Column(name = "name")
 	private String name;
-	
+
+	// The question asked in a particular question number
 	@Column(name = "question")
 	private String question;
-	
+
+	// The answer for a particular question number
 	@Column(name = "answer")
 	private String answer;
-	
+
+	// The question number
 	@Column(name = "question_number")
-	private int number;
-	
-	@Column(name = "date")
-	private Date date;
-	
+	private Integer number;
+
+	// The year the particular question was asked
+	@Column(name = "exam_year")
+	private Date examYear;
+
+	// The category a particular question belong
+	@JsonBackReference
 	@ManyToOne
-     @JoinColumn(name = "course_category", nullable = false)
+	@JoinColumn(name = "course_category", nullable = false)
 	private Category category;
 
+	// The options(available answers to choose from) for a particular question
 	@OneToOne(cascade = CascadeType.ALL, mappedBy = "subject")
 	private Options options;
 
@@ -68,20 +83,20 @@ public class Subject {
 		this.answer = answer;
 	}
 
-	public int getNumber() {
+	public Integer getNumber() {
 		return number;
 	}
 
-	public void setNumber(int number) {
+	public void setNumber(Integer number) {
 		this.number = number;
 	}
 
-	public Date getDate() {
-		return date;
+	public Date getExamYear() {
+		return examYear;
 	}
 
-	public void setDate(Date date) {
-		this.date = date;
+	public void setExamYear(Date examYear) {
+		this.examYear = examYear;
 	}
 
 	public Category getCategory() {
@@ -100,14 +115,8 @@ public class Subject {
 		this.options = options;
 	}
 
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
-	
-
-
-	
-	
-	
 
 }

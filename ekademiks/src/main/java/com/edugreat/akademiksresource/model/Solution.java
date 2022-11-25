@@ -9,21 +9,29 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+/*
+ * The solution class models the solution provided to help
+ * students master how to tackle a problems encountered in a academic question
+ */
 @Entity
-@Table(name= "Sollution")
+@Table(name= "Solution")
 public class Solution {
 	
+	//Key used for identification
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
-	private int id;
+	private Integer id;
 	
+	//The name of subject whose solutions have been provided
 	@Column(name = "subject")
 	private String subject;
 	
-	@Column(name = "date")
-	private Date date;
+	//The year the question was asked
+	@Column(name = "exam_year")
+	private Date examYear;
 	
+	// link pointing to the solution for the question
 	@Column(name = "link")
 	private String link;
 
@@ -35,12 +43,12 @@ public class Solution {
 		this.subject = subject;
 	}
 
-	public Date getDate() {
-		return date;
+	public Date getExamYear() {
+		return examYear;
 	}
 
-	public void setDate(Date date) {
-		this.date = date;
+	public void setExamYear(Date date) {
+		this.examYear = date;
 	}
 
 	public String getLink() {
