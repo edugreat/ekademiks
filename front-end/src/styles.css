@@ -1,0 +1,17 @@
+body{
+    background: url(assets/bg-folder/Main.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+}
+.top-sidebar{
+    min-height: 80vh;
+}
+.side-bar-link{
+    text-decoration: none;
+    
+}
+.side-bar-link:hover{
+text-decoration: none;
+}
