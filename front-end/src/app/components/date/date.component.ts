@@ -18,6 +18,9 @@ for the subjects for which their category was selected
 })
 export class DateComponent implements OnInit {
 
+  //declare field category name here
+  categoryName:string ='';
+
   //Create an empty date array
   uniqueDates:Date[] = [];  
   //create an empty array dates instance
@@ -36,19 +39,28 @@ export class DateComponent implements OnInit {
   }
 
 
-  //declare a method to subscribe to the multi-service and get the dates
+  /**
+   * declares a method to subscribe to the multi-service and get the dates arraay
+   */
   private getAvailableDates() {
 
-    //check if the id param exists in the router
-    const idExists = this.route.snapshot.paramMap.has("id");
+    //check if the id and categoryName parameters exist in the router
+    const idAndNameExist = this.route.snapshot.paramMap.has("id" && "categoryName");
 
-    if (idExists) {
+    if (idAndNameExist) {
+      //converts the id param to a number
       const categoryId = Number(this.route.snapshot.paramMap.get("id")!);
+      
+      //extract the categoryName parameter
+       this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
+
+      console.log(`category name is ${this.categoryName}`);
+
       this.multiService.fetchAvailableExamDates(categoryId).subscribe(data=>{
         this.availableDates = data;
-        
 
-        this.uniqueDates = (this.availableDates.map(x=>x.examYear));
+        //extract only unique date values
+        this.uniqueDates = (this.availableDates.map(x=>x.examYear)).filter(this.isUnique);
 
         console.log(JSON.stringify(this.uniqueDates));
        
@@ -56,9 +68,17 @@ export class DateComponent implements OnInit {
                                         }
   }
 
-  isUnique(current:Date, index:number, dates:SubjectDate[]):boolean{
+  /**
+   * This method returns true if the index of the current array is equal to the current index.
+   * It is a callback function to return unique array records
+   * @param current current array value
+   * @param index The index of the current array value
+   * @param dates The array
+   * @returns 
+   */
+  isUnique(current:Date, index:number, dates:Date[]):boolean{
 
-    return current !== dates[index++].examYear;
+    return (index === dates.indexOf(current))
   }
  
 }

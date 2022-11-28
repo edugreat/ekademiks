@@ -10,9 +10,10 @@ import { SolutionComponent } from './components/solution/solution.component'
 import { MultiService } from './services/multi.service';
 import { DateComponent } from './components/date/date.component';
 import { RouterModule, Routes } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 const routes: Routes=[
-  {path: 'category/:id', component: DateComponent}
+  {path: 'category/:categoryName/:id', component: DateComponent}
 ]
 
 @NgModule({
@@ -26,7 +27,8 @@ const routes: Routes=[
   imports: [
     RouterModule.forRoot(routes),
     BrowserModule,
-    HttpClientModule
+    HttpClientModule,
+    FormsModule
   ],
   providers: [MultiService],
   bootstrap: [AppComponent]

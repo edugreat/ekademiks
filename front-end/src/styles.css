@@ -15,3 +15,23 @@ body{
 .side-bar-link:hover{
 text-decoration: none;
 }
+.dateDiv{
+   
+    width: 300px;
+    min-height: 30vh;
+}
+.dateSelection{
+    width: fit-content;
+    
+}
+.date-label{
+    font-weight: bold;
+    font-size: larger;
+}
+.dateDiv:hover{
+    background-color: black;
+    border: none !important;
+}
+div.inline{
+    float: right;
+}

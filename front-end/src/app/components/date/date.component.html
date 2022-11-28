@@ -1,1 +1,17 @@
-<p>date works!</p>
+
+<label class="ml-2 date-label mb-0 text-info text-center">Please choose date for {{categoryName}}</label>
+<div class="d-flex bd-highlight justify-content-center 
+dateDiv align-items-center border border-warning rounded">
+
+    <div class="dateSelection inline" #selectedDate >
+    <select class="custom-select mx-10">
+        <option [ngValue]="date"  *ngFor="let date of uniqueDates">
+            {{date|date}}
+        </option>
+    </select>
+</div>
+<a href="#" class="btn  btn-outline-success 
+text-nowrap inline ml-2" role="button ">
+    Ok
+</a>
+</div>
