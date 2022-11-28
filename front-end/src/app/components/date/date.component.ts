@@ -22,7 +22,7 @@ export class DateComponent implements OnInit {
   categoryName:string ='';
 
   //Create an empty date array
-  uniqueDates:Date[] = [];  
+  uniqueDates:number[] = [];  
   //create an empty array dates instance
   availableDates: SubjectDate[] =[];
 
@@ -60,9 +60,9 @@ export class DateComponent implements OnInit {
         this.availableDates = data;
 
         //extract only unique date values
-        this.uniqueDates = (this.availableDates.map(x=>x.examYear)).map(isoDate=>new Date(isoDate)).filter(this.isUnique);
+        this.uniqueDates = (this.availableDates.map(x=>x.examYear)).map(isoDate=>new Date(isoDate)).filter(this.isUnique).map(isoDate=>isoDate.getFullYear());
 
-        this.uniqueDates.forEach(x=>console.log(x.getFullYear()))
+        this.uniqueDates.forEach(x=>console.log(x))
        
        } );
                                         }

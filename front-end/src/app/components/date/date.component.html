@@ -6,7 +6,7 @@ dateDiv align-items-center border border-warning rounded">
     <div class="dateSelection inline" #selectedDate >
     <select class="custom-select mx-10">
         <option [ngValue]="date"  *ngFor="let date of uniqueDates">
-            {{date|date}}
+            {{date}}
         </option>
     </select>
 </div>
