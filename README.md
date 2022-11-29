@@ -31,7 +31,7 @@ For local use of the project follow these steps:
    * download the [zip project](https://github.com/edugreat/ekademiks/archive/refs/heads/dev.zip)
    * unzip to your desired folder
    
-3 Run the database scripts in the [starter folder](https://github.com/edugreat/ekademiks/tree/dev/starter) on your MYSQL woekbench or command line interface   
+3 Run the database scripts in the [starter folder](https://github.com/edugreat/ekademiks/blob/dev/starter/database.sql) on your MYSQL woekbench or command line interface   
 4 Import the spring boot application in the ``ekademiks folder`` into your **Maven supported IDE** and download the ``pom dependencies``
    * Run the spring boot app
 
