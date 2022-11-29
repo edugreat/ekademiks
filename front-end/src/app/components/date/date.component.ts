@@ -62,7 +62,7 @@ export class DateComponent implements OnInit {
         //extract only unique date values
         this.uniqueDates = (this.availableDates.map(x=>x.examYear)).map(isoDate=>new Date(isoDate)).filter(this.isUnique).map(isoDate=>isoDate.getFullYear());
 
-        this.uniqueDates.forEach(x=>console.log(x))
+       // this.uniqueDates.forEach(x=>console.log(x))
        
        } );
                                         }
@@ -79,6 +79,10 @@ export class DateComponent implements OnInit {
   isUnique(current:Date, index:number, dates:Date[]):boolean{
 
     return (index === dates.indexOf(current))
+  }
+
+  getAvailableSubjects(input:string){
+    console.log(input)//continue fro here
   }
  
 }
