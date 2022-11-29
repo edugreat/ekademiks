@@ -3,15 +3,15 @@
 <div class="d-flex bd-highlight justify-content-center 
 dateDiv align-items-center border border-warning rounded">
 
-    <div class="dateSelection inline" #selectedDate >
-    <select class="custom-select mx-10">
+    <div class="dateSelection inline" >
+    <select class="custom-select mx-10" #selectedDate id="examDates">
         <option [ngValue]="date"  *ngFor="let date of uniqueDates">
             {{date}}
         </option>
     </select>
 </div>
-<a href="#" class="btn  btn-outline-success 
-text-nowrap inline ml-2" role="button ">
+<a  class="btn  btn-outline-success 
+text-nowrap inline ml-2" role="button" (click)="getAvailableSubjects(selectedDate.value)">
     Ok
 </a>
 </div>
