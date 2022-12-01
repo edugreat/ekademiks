@@ -1,7 +1,6 @@
 package com.edugreat.akademiksresource.controller;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.custom.dao.DatesOnly;
+import com.edugreat.akademiksresource.custom.dao.SubjectNamesOnly;
 import com.edugreat.akademiksresource.dao.SubjectDao;
+import com.edugreat.akademiksresource.model.Subject;
 
 /*
  * This controller class is used to retrieve an array of dates from the SubjectDao interface
@@ -29,5 +30,16 @@ public class DateController {
    public List<DatesOnly> getDates(@RequestParam("id") Integer id){
 		return subjectDao.findAllByCategoryId(id);
 		
+	}
+	
+	//routes to get all subjects with the date parameter
+	@GetMapping("/date")
+	public List<SubjectNamesOnly> getSubjectWithNames(@RequestParam("date") String date){
+		
+		
+		Integer year = Integer.parseInt(date.substring(0, 4));
+	
+		
+		return  subjectDao.findByExamYearYear(year);
 	}
 }
