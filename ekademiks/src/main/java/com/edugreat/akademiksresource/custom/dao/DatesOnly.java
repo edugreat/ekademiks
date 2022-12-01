@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.custom.dao;
 
-import java.util.Date;
+import java.sql.Date;
+import java.time.LocalDate;
 
 /*
  * This is an interface for projection purpose.
@@ -9,7 +10,7 @@ import java.util.Date;
 
 public interface DatesOnly {
 	
-	Date getExamYear();
+	LocalDate getExamYear();
 	 
 	 
 	 
