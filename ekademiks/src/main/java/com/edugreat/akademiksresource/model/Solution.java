@@ -1,6 +1,6 @@
 package com.edugreat.akademiksresource.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -29,7 +29,7 @@ public class Solution {
 	
 	//The year the question was asked
 	@Column(name = "exam_year")
-	private Date examYear;
+	private LocalDate examYear;
 	
 	// link pointing to the solution for the question
 	@Column(name = "link")
@@ -43,11 +43,11 @@ public class Solution {
 		this.subject = subject;
 	}
 
-	public Date getExamYear() {
+	public LocalDate getExamYear() {
 		return examYear;
 	}
 
-	public void setExamYear(Date date) {
+	public void setExamYear(LocalDate date) {
 		this.examYear = date;
 	}
 
