@@ -1,6 +1,8 @@
 package com.edugreat.akademiksresource.model;
 
-import java.util.Date;
+
+
+import java.time.LocalDate;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -12,8 +14,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 /*
  * The subject class models the academic subject taken in the school.
@@ -47,7 +52,8 @@ public class Subject {
 
 	// The year the particular question was asked
 	@Column(name = "exam_year")
-	private Date examYear;
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	private LocalDate examYear;
 
 	// The category a particular question belong
 	@JsonBackReference
@@ -91,11 +97,11 @@ public class Subject {
 		this.number = number;
 	}
 
-	public Date getExamYear() {
-		return examYear;
+	public LocalDate getExamYear() {
+		return  examYear;
 	}
 
-	public void setExamYear(Date examYear) {
+	public void setExamYear(LocalDate examYear) {
 		this.examYear = examYear;
 	}
 
