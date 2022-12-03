@@ -112,7 +112,7 @@ export class DateComponent implements OnInit {
       // sets isButtonClicked to true here
       this.dateNotSelected = false;
 
-     
+     console.log(this.dateNotSelected);
     
     }
   
