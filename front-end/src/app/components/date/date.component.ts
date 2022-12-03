@@ -97,6 +97,7 @@ export class DateComponent implements OnInit {
 
         this.uniqueSubjectName = this.subjectName.map(x => x.name).filter(this.isUniqueName)
         
+        console.log(this.uniqueSubjectName);
 
         console.log(JSON.stringify(this.subjectName));
        });
