@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Table(name = "Subject")
 public class Subject {
+	
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
