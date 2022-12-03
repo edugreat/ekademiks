@@ -1,1 +1,17 @@
-<p>subject-name works!</p>
+
+<label class="ml-2 date-label mb-0 text-info text-center">Please choose subject for {{categoryName}}</label>
+<div class="d-flex bd-highlight justify-content-center 
+dateDiv align-items-center border border-warning rounded">
+
+    <div class="dateSelection inline">
+    <select class="custom-select mx-10" #selectedDate id="subjectName">
+        <option [ngValue]="name"  *ngFor="let name of uniqueSubjectName">
+            {{name}}
+        </option>
+    </select>
+</div>
+<a  class="btn  btn-outline-success 
+text-nowrap inline ml-2" role="button">
+    Ok
+</a>
+</div>

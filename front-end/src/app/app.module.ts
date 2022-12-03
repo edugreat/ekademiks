@@ -14,7 +14,9 @@ import { FormsModule } from '@angular/forms';
 import { SubjectNameComponent } from './components/subject-name/subject-name.component';
 
 const routes: Routes=[
-  {path: 'category/:categoryName/:id', component: DateComponent}
+  {path: 'category/:categoryName/:id', component: DateComponent},
+
+  {path: 'exam/:categoryName/:examYear', component: SubjectNameComponent}
 ]
 
 @NgModule({

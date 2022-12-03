@@ -3,8 +3,6 @@
 <div class="d-flex bd-highlight justify-content-center 
 dateDiv align-items-center border border-warning rounded">
 
-<div>
-<div *ngIf="dateNotSelected; elseBlock">
     <div class="dateSelection inline" >
     <select class="custom-select mx-10" #selectedDate id="subjectName">
         <option [ngValue]="date"  *ngFor="let date of uniqueDates">
@@ -13,26 +11,7 @@ dateDiv align-items-center border border-warning rounded">
     </select>
 </div>
 <a  class="btn  btn-outline-success 
-text-nowrap inline ml-2" role="button" (click)="getAvailableSubjects(selectedDate.value)">
+text-nowrap inline ml-2" role="button" (click)="goToSubject(selectedDate.value)">
     Ok
 </a>
-
-</div>
-</div>
-<!--else block goes here-->
-<div *ngIf="dateNotSelected==false">
-    <div class="dateSelection inline" >
-        <select class="custom-select mx-10" #selectedDate>
-            <option [ngValue]="name"  *ngFor="let name of uniqueSubjectName">
-                {{name}}
-            </option>
-        </select>
-    </div>
-    <a  class="btn  btn-outline-success 
-    text-nowrap inline ml-2" role="button">
-        Ok
-    </a>
-</div>
-<!--else block ends here-->
-
 </div>
