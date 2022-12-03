@@ -1,3 +1,4 @@
+import { R3SelectorScopeMode } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
@@ -92,7 +93,10 @@ export class DateComponent implements OnInit {
        //call the service method to retrieve our SubjectName array
        this.multiService.fetchSubjectNames(input).subscribe(data => {
         
-        this.subjectName = data
+        this.subjectName = data;
+
+        this.uniqueSubjectName = this.subjectName.map(x => x.name).filter(this.isUniqueName)
+        
 
         console.log(JSON.stringify(this.subjectName));
        });
