@@ -36,7 +36,7 @@ public class DateController {
 	public List<SubjectNamesOnly> getSubjectWithNames(@RequestParam("date") String date){
 		
 		
-		Integer year = Integer.parseInt(date.substring(0, 4));
+		Integer year = Integer.parseInt(date);
 	
 		
 		return  subjectDao.findByExamYearYear(year);
