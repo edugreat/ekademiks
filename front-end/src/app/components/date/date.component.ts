@@ -125,5 +125,16 @@ export class DateComponent implements OnInit {
     return (index === dates.indexOf(current))
   }
 
-  
+  //implements method callback that filters unique string array
+  /**
+   * 
+   * @param current current array element to test
+   * @param index current array index
+   * @param names the string array to test its records
+   * @returns 
+   */
+  isUniqueName(current:string, index:number, names:string[]):boolean{
+
+    return (index === names.indexOf(current))
+  }
 }
