@@ -81,6 +81,9 @@ export class DateComponent implements OnInit {
         this.uniqueDates.forEach(x=>console.log(x))
        
        } );
+
+       //sets the dateNotSelected to true here to render the html page
+       this.dateNotSelected = true;
                                         }
   }
 
