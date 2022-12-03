@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
 import { SubjectDate } from 'src/app/util/subject-date';
+import { SubjectName } from 'src/app/util/subject-name';
 
 /*
 This  component is responsible for  pupulating the view with a drop-down
 list of dates whenever a course category is selected. Therefore it receives a dates
 array from the backend end corresponding to the all the available dates
-for the subjects for which their category was selected
+for the subjects for which their category was selected. It also populates the subject name
 */
 
 
@@ -18,6 +19,13 @@ for the subjects for which their category was selected
 })
 export class DateComponent implements OnInit {
 
+  /**
+   * a button that tracks when the ok button has been clicked to
+   * search subjects that match the selected date option
+   */
+  dateNotSelected:boolean = true;
+  
+
   //declare field category name here
   categoryName:string ='';
 
@@ -25,6 +33,9 @@ export class DateComponent implements OnInit {
   uniqueDates:number[] = [];  
   //create an empty array dates instance
   availableDates: SubjectDate[] =[];
+
+  //declares and initialize an array of SubjectName 
+  subjectName: SubjectName[] = [];
 
   //Inject the multi-service and activated Routes instances here
   constructor(private multiService: MultiService,
@@ -48,8 +59,10 @@ export class DateComponent implements OnInit {
     const idAndNameExist = this.route.snapshot.paramMap.has("id" && "categoryName");
 
     if (idAndNameExist) {
+
       //converts the id param to a number
       const categoryId = Number(this.route.snapshot.paramMap.get("id")!);
+      
       
       //extract the categoryName parameter
        this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
@@ -62,11 +75,40 @@ export class DateComponent implements OnInit {
         //extract only unique date values
         this.uniqueDates = (this.availableDates.map(x=>x.examYear)).map(isoDate=>new Date(isoDate)).filter(this.isUnique).map(isoDate=>isoDate.getFullYear());
 
-       // this.uniqueDates.forEach(x=>console.log(x))
+        this.uniqueDates.forEach(x=>console.log(x))
        
        } );
                                         }
   }
+
+   /**
+   * 
+   * @param input the date option chosen by the user from
+   */
+    getAvailableSubjects(input:string){
+   
+       //call the service method to retrieve our SubjectName array
+       this.multiService.fetchSubjectNames(input).subscribe(data => {
+        
+        this.subjectName = data
+
+        console.log(JSON.stringify(this.subjectName));
+       });
+
+      // console.log("input is "+this.subjectName)
+
+       //JSON.stringify(this.subjectName);
+
+      // sets isButtonClicked to true here
+      this.dateNotSelected = false;
+
+     
+    
+    }
+  
+
+
+      
 
   /**
    * This method returns true if the index of the current array is equal to the current index.
@@ -81,8 +123,5 @@ export class DateComponent implements OnInit {
     return (index === dates.indexOf(current))
   }
 
-  getAvailableSubjects(input:string){
-    console.log(input)//continue fro here
-  }
- 
+  
 }
