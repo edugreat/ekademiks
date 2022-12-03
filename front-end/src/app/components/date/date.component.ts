@@ -25,6 +25,8 @@ export class DateComponent implements OnInit {
    */
   dateNotSelected:boolean = true;
   
+  //declares an initializes a string array for storing unique Subject names
+  uniqueSubjectName:string[] = [];
 
   //declare field category name here
   categoryName:string ='';
