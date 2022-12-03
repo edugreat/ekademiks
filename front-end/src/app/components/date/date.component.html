@@ -3,6 +3,7 @@
 <div class="d-flex bd-highlight justify-content-center 
 dateDiv align-items-center border border-warning rounded">
 
+<div>
     <div class="dateSelection inline" >
     <select class="custom-select mx-10" #selectedDate id="examDates">
         <option [ngValue]="date"  *ngFor="let date of uniqueDates">
@@ -10,6 +11,8 @@ dateDiv align-items-center border border-warning rounded">
         </option>
     </select>
 </div>
+</div>
+
 <a  class="btn  btn-outline-success 
 text-nowrap inline ml-2" role="button" (click)="getAvailableSubjects(selectedDate.value)">
     Ok
