@@ -22,6 +22,7 @@ text-decoration: none;
 }
 .dateSelection{
     width: fit-content;
+    height: fit-content;
     
 }
 .date-label{
@@ -34,4 +35,13 @@ text-decoration: none;
 }
 div.inline{
     float: left;
+    margin-left: 30%;
+}
+.go-back:hover{
+    text-decoration: none;
+    
+}
+.go-back{
+    padding-top: 5%;
+    
 }
