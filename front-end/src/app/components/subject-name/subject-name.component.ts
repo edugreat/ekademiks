@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
@@ -19,7 +20,7 @@ categoryName:string='';
 uniqueSubjectName:string[] = [];
 
 constructor(private multiService:MultiService,
-  private route:ActivatedRoute){}
+  private route:ActivatedRoute, private location:Location){}
 
   ngOnInit(): void {
    this.route.paramMap.subscribe(()=>{
@@ -78,4 +79,8 @@ isUniqueName(current:string, index:number, names:string[]):boolean{
  return (index === names.indexOf(current))
 }
 
+goBack(){
+
+  this.location.back();
+}
 }
