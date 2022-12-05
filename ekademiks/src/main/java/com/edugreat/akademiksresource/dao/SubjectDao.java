@@ -20,8 +20,9 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 	List<DatesOnly> findAllByCategoryId(@RequestParam("id") Integer id);
 	
 	//Returns an array of subjects with their name attribute
-	@Query(value ="SELECT * From Subject WHERE YEAR(exam_year) =:year", nativeQuery = true)
-	List<SubjectNamesOnly> findByExamYearYear(Integer year);
+	@Query(value ="SELECT * From Subject WHERE YEAR(exam_year) =:year AND course_category = "
+			+ "(Select id From Category Where name =:categoryName)", nativeQuery = true)
+	List<SubjectNamesOnly> findByExamCategoryAndYear(String categoryName, Integer year);
 	
 	
 }
