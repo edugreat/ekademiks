@@ -36,11 +36,11 @@ export class MultiService {
   }
 
   //Method returns Subject array with name attributes
-  fetchSubjectNames(examYear:string):Observable<SubjectName[]>{
+  fetchSubjectNames(examYear:string, categoryName:string):Observable<SubjectName[]>{
     
     //routes to the controller class's GET method in the database
     
-    return this.httpClient.get<SubjectName[]>(`${this.subjectNameEndpoint}?date=${examYear}`);
+    return this.httpClient.get<SubjectName[]>(`${this.subjectNameEndpoint}?date=${examYear} &categoryName=${categoryName}`);
 
   }
    
