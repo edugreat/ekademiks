@@ -43,7 +43,7 @@ constructor(private multiService:MultiService,
    const examYear = this.route.snapshot.paramMap.get("examYear")!;
 
    //call the service method to retrieve our SubjectName array
-   this.multiService.fetchSubjectNames(examYear).subscribe(data => {
+   this.multiService.fetchSubjectNames(examYear, this.categoryName).subscribe(data => {
      
     this.subjectName = data;
 
