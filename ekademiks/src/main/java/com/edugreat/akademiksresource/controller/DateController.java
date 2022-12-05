@@ -17,28 +17,25 @@ import com.edugreat.akademiksresource.dao.SubjectDao;
  */
 @RestController
 @RequestMapping("/subject")
-@CrossOrigin(value = {"http://localhost:4200"})
+@CrossOrigin(value = { "http://localhost:4200" })
 public class DateController {
-	
+
 	@Autowired
 	private SubjectDao subjectDao;
-	
-	
-	
+
 	@GetMapping()
-   public List<DatesOnly> getDates(@RequestParam("id") Integer id){
+	public List<DatesOnly> getDates(@RequestParam("id") Integer id) {
 		return subjectDao.findAllByCategoryId(id);
-		
+
 	}
-	
-	//routes to get all subjects with the date parameter
+
+	// routes to get all subjects with the date parameter
 	@GetMapping("/date")
-	public List<SubjectNamesOnly> getSubjectWithNames(@RequestParam("date") String date){
-		
+	public List<SubjectNamesOnly> getSubjectWithNames(@RequestParam("date") String date,
+			@RequestParam("categoryName") String categoryName) {
 		
 		Integer year = Integer.parseInt(date);
-	
 		
-		return  subjectDao.findByExamYearYear(year);
+		return subjectDao.findByExamCategoryAndYear(categoryName, year);
 	}
 }
