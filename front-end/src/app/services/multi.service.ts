@@ -40,7 +40,7 @@ export class MultiService {
     
     //routes to the controller class's GET method in the database
     
-    return this.httpClient.get<SubjectName[]>(`${this.subjectNameEndpoint}?date=${examYear} &categoryName=${categoryName}`);
+    return this.httpClient.get<SubjectName[]>(`${this.subjectNameEndpoint}?date=${examYear}&categoryName=${categoryName}`);
 
   }
    
