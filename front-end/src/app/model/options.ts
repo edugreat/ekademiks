@@ -1,9 +1,12 @@
 export class Options {
 
-    constructor(private id?: number,
-                private a?:string,
-                private b?:string,
-                private c?:string,
-                private d?:string,
-                private e?:string){}
+    constructor(
+
+        public id?: number,
+        public a?: string,
+        public b?: string,
+        public c?: string,
+        public d?: string,
+        public e?: string
+    ) { }
 }
