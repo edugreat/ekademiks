@@ -1,16 +1,20 @@
+import { Options } from "./options";
+
 export class Subject {
     private id: number;
     private name:string;
     private question:string;
     private number:number;
     private date:Date;
+    private options:Options;
 
     constructor(
         id:number,
         name:string,
         question:string,
         number: number,
-        date: Date 
+        date: Date,
+        options:Options 
         ){
 
         this.id = id;
@@ -18,5 +22,6 @@ export class Subject {
         this.question= question;
         this.number = number;
         this.date = date;
+        this.options = options;
     }
 }
