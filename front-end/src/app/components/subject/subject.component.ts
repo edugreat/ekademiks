@@ -15,6 +15,11 @@ subjects:Subject[] =[];
   constructor(private multiService:MultiService, private router:ActivatedRoute) { }
 
   ngOnInit(): void {
+
+    //inittializes the component with a call to this method
+    this.router.paramMap.subscribe(()=>{
+      this.getSubject();
+    })
   }
 
   getSubject(){
