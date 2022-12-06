@@ -31,8 +31,8 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 	List<SubjectNamesOnly> findByExamCategoryAndYear(String categoryName, Integer year);
 	
 	/*
-	 * Returns Subject entities for the given year and name
+	 * Returns Subject entities for the given year, name and exam category
 	 */
-	@Query(value ="SELECT * FROM Subject WHERE name =:name AND YEAR(exam_year) =:examYear", nativeQuery = true)
-	Page<Subject> findByNameAndExamDate(@RequestParam("name")String name, @RequestParam("examYear")String examYear, Pageable pageable);
+	@Query(value ="SELECT * FROM Subject WHERE name =:name AND YEAR(exam_year) =:examYear AND course_category =:categoryId", nativeQuery = true)
+	Page<Subject> findByNameAndExamDate(@RequestParam("name")String name, @RequestParam("examYear")String examYear, @RequestParam("categoryId")Integer categoryId, Pageable pageable);
 }
