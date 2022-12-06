@@ -3,6 +3,7 @@ import { Options } from "./options";
 export class Subject {
     public id: number;
     public name:string;
+    public question: string;
     public questionNumber:string;
     public number:number;
     public date:Date;
@@ -11,6 +12,7 @@ export class Subject {
     constructor(
         id:number,
         name:string,
+        question:string,
         questionNumber:string,
         number: number,
         date: Date,
@@ -19,6 +21,7 @@ export class Subject {
 
         this.id = id;
         this.name = name;
+        this.question= question,
         this.questionNumber= questionNumber;
         this.number = number;
         this.date = date;
