@@ -37,6 +37,9 @@ export class DateComponent implements OnInit {
   //declares and initialize an array of SubjectName 
   subjectName: SubjectName[] = [];
 
+  //declares the categoryId
+  categoryId?:number;
+
   //Inject the multi-service and activated Routes instances here
   constructor(private multiService: MultiService,
     private route: ActivatedRoute, private router:Router) { }
@@ -61,7 +64,7 @@ export class DateComponent implements OnInit {
     if (idAndNameExist) {
 
       //converts the id param to a number
-      const categoryId = Number(this.route.snapshot.paramMap.get("id")!);
+       this.categoryId = Number(this.route.snapshot.paramMap.get("id")!);
 
 
       //extract the categoryName parameter
@@ -69,7 +72,7 @@ export class DateComponent implements OnInit {
 
       console.log(`category name is ${this.categoryName}`);
 
-      this.multiService.fetchAvailableExamDates(categoryId).subscribe(data => {
+      this.multiService.fetchAvailableExamDates(this.categoryId).subscribe(data => {
         this.availableDates = data;
 
         //extract only unique date values
@@ -99,7 +102,7 @@ export class DateComponent implements OnInit {
   //method that routes to the a component
   goToSubject(examYear:string){
   
-    this.router.navigateByUrl(`exam/${this.categoryName}/${examYear}`);
+    this.router.navigateByUrl(`exam/${this.categoryName}/${examYear}/${this.categoryId}`);
 
 
   }

@@ -15,7 +15,7 @@ import { SubjectNameComponent } from './components/subject-name/subject-name.com
 
 const routes: Routes=[
   {path: 'category/:categoryName/:id', component: DateComponent},
-  {path: 'exam/:categoryName/:examYear', component: SubjectNameComponent},
+  {path: 'exam/:categoryName/:examYear/:categoryId', component: SubjectNameComponent},
   {path: "question/:categoryId/:examName:/:examYear", component: SubjectComponent}
 ]
 
