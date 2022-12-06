@@ -1,1 +1,12 @@
-<p>subject works!</p>
+<div class="question-area bg-white mt-o  pt-1 px-1 pb-1">
+    <ul>
+        <li *ngFor="let record of subjects" >
+            <em>{{record.questionNumber}}</em><span>{{record.question}}</span><p>
+                <em>A</em><span>{{record.options.a}}</span>
+                <em>B</em><span>{{record.options.b}}</span>
+                <em>C</em><span>{{record.options.c}}</span>
+                <em>D</em><span>{{record.options.d}}</span>
+                <em>E</em><span>{{record.options.e}}</span>
+        </li>
+    </ul>
+</div>
