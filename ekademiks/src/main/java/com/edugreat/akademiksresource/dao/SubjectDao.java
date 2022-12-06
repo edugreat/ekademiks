@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.projection.DatesOnly;
-import com.edugreat.akademiksresource.projection.SubjectAndOptions;
 import com.edugreat.akademiksresource.projection.SubjectNamesOnly;
 //Jpa interface to manage the Subject entity
 //@RepositoryRestResource(excerptProjection = DatesOnly.class)
@@ -31,5 +30,5 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 			+ "(Select id From Category Where name =:categoryName)", nativeQuery = true)
 	List<SubjectNamesOnly> findByExamCategoryAndYear(String categoryName, Integer year);
 	
-	Page<SubjectAndOptions> findByNameContaining(@RequestParam("subjectName")String subjectName, Pageable pageable);
+	
 }
