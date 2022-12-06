@@ -16,6 +16,12 @@ subjectName: SubjectName[] = [];
 //declares & initializes the categoryName here
 categoryName:string='';
 
+//declares categoryId
+categoryId?:number;
+
+//declares exam year
+examYear?:string;
+
 //declares an initializes a string array for storing unique Subject names
 uniqueSubjectName:string[] = [];
 
@@ -41,10 +47,13 @@ constructor(private multiService:MultiService,
     this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
 
    //gets the exam year from the activated route object
-   const examYear = this.route.snapshot.paramMap.get("examYear")!;
+   this.examYear = this.route.snapshot.paramMap.get("examYear")!;
+
+   //get categoryId
+   this.categoryId = +this.route.snapshot.paramMap.get("categoryId")!
 
    //call the service method to retrieve our SubjectName array
-   this.multiService.fetchSubjectNames(examYear, this.categoryName).subscribe(data => {
+   this.multiService.fetchSubjectNames(this.examYear, this.categoryName).subscribe(data => {
      
     this.subjectName = data;
 
