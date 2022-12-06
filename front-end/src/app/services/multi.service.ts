@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Category } from '../model/category';
+import { Subject } from '../model/subject';
 import { SubjectDate } from '../util/subject-date';
 import { SubjectName } from '../util/subject-name';
 
@@ -50,4 +51,11 @@ interface fetchResponse{
  _embedded:{
   categories:Category[]
  }
+}
+
+//declares an abstraction to fetch Subjects when implemented
+interface fetchSubjects{
+  _embedded:{
+    subjects:Subject[]
+  }
 }
