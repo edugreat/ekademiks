@@ -13,7 +13,7 @@ export class MultiService {
 
   private dateEndpoint = "http://localhost:8080/subject";
  
-  private baseUrl:string = "http://localhost:8080/akad/categories";
+  private baseUrl:string = "http://localhost:8080/akad";
 
   private subjectNameEndpoint = this.dateEndpoint+"/date";
 
@@ -24,7 +24,7 @@ export class MultiService {
    */
   public getCourseCategories():Observable<Category[]>{
 
-    return this.httpClient.get<fetchResponse>(this.baseUrl).pipe(
+    return this.httpClient.get<fetchResponse>(`${this.baseUrl}/categories`).pipe(
 
     map(response =>response._embedded.categories)
 
@@ -42,6 +42,21 @@ export class MultiService {
     //routes to the controller class's GET method in the database
     
     return this.httpClient.get<SubjectName[]>(`${this.subjectNameEndpoint}?date=${examYear}&categoryName=${categoryName}`);
+
+  }
+/**
+ * Implements the fetchSubjects abstraction
+ * @param examYear the year record to query against
+ * @param examName the examination name (eg Mathematics)
+ * @param categoryId the category id (eg JAMB's category id) to further streamline the search
+ */
+  fetchSubjects(examYear:string, examName:string, categoryId:number):Observable<Subject[]>{
+   
+    return this.httpClient.get<fetchSubjects>
+    (`${this.baseUrl}/subjects/search/findByNameAndExamDate?name=${examName}&categoryId=${categoryId}&examYear=${examYear}`).pipe(
+      map(response=>response._embedded.subjects
+        
+      ))
 
   }
    
