@@ -1,12 +1,12 @@
 import { Options } from "./options";
 
 export class Subject {
-    private id: number;
-    private name:string;
-    private questionNumber:string;
-    private number:number;
-    private date:Date;
-    private options:Options;
+    public id: number;
+    public name:string;
+    public questionNumber:string;
+    public number:number;
+    public date:Date;
+    public options:Options;
 
     constructor(
         id:number,
