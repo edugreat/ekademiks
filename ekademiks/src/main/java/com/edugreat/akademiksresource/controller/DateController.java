@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.edugreat.akademiksresource.custom.dao.DatesOnly;
-import com.edugreat.akademiksresource.custom.dao.SubjectNamesOnly;
 import com.edugreat.akademiksresource.dao.SubjectDao;
+import com.edugreat.akademiksresource.projection.DatesOnly;
+import com.edugreat.akademiksresource.projection.SubjectNamesOnly;
 
 /*
  * This controller class is used to retrieve an array of dates from the SubjectDao interface

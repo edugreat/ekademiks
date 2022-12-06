@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.edugreat.akademiksresource.custom.dao.DatesOnly;
-import com.edugreat.akademiksresource.custom.dao.SubjectNamesOnly;
 import com.edugreat.akademiksresource.model.Subject;
+import com.edugreat.akademiksresource.projection.DatesOnly;
+import com.edugreat.akademiksresource.projection.SubjectNamesOnly;
 //Jpa interface to manage the Subject entity
 //@RepositoryRestResource(excerptProjection = DatesOnly.class)
 @CrossOrigin(value = {"http://localhost:4200"})

@@ -1,4 +1,4 @@
-package com.edugreat.akademiksresource.custom.dao;
+package com.edugreat.akademiksresource.projection;
 
 import java.sql.Date;
 import java.time.LocalDate;
