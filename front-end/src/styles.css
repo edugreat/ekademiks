@@ -45,3 +45,16 @@ div.inline{
     padding-top: 5%;
     
 }
+#q-options{
+    list-style: none;
+}
+.quest-number{
+    padding-left: 0;
+}
+
+.option{
+    padding-left: 1.5rem;
+}
+.q-number{
+    font-weight: bold;
+}
