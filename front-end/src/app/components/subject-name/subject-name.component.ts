@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
 import { SubjectName } from 'src/app/util/subject-name';
 
@@ -26,7 +26,9 @@ examYear?:string;
 uniqueSubjectName:string[] = [];
 
 constructor(private multiService:MultiService,
-  private route:ActivatedRoute, private location:Location){}
+  private route:ActivatedRoute, 
+  private location:Location,
+  private router:Router){}
 
   ngOnInit(): void {
    this.route.paramMap.subscribe(()=>{
@@ -91,5 +93,11 @@ isUniqueName(current:string, index:number, names:string[]):boolean{
 goBack(){
 
   this.location.back();
+}
+
+//returns examination question based on users selection
+getQuestion(examName:string){
+
+  this.router.navigateByUrl(`question/${this.categoryId}/${examName}/${this.examYear}`)
 }
 }
