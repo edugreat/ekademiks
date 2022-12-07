@@ -4,14 +4,14 @@
   border-warning rounded pt-4">
     
     <div class="col-8 dateSelection mt-5">
-        <select class="custom-select mx-10" #selectedDate id="subjectName">
+        <select class="custom-select mx-10" #selectedSubject id="subjectName">
             <option [ngValue]="name"  *ngFor="let name of uniqueSubjectName">
                 {{name}}
             </option>
         </select>
     </div>
     <div class="col-4 mt-5">
-        <a  class="btn  btn-outline-success 
+        <a routerLink="question/{{selectedSubject.value}}/{{categoryId}}/{{examYear}" class="btn  btn-outline-success 
 text-nowrap" role="button">
     Ok
 </a>
