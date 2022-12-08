@@ -1,3 +1,4 @@
+
 body{
     background: url(assets/bg-folder/Main.jpg);
     background-size: cover;
@@ -58,3 +59,12 @@ div.inline{
 .q-number{
     font-weight: bold;
 }
+
+
+    @media (max-width:640px) {
+        .side-bar-container{
+            border: none !important;
+            border-style: none !important;
+        };
+    }
+    
