@@ -1,7 +1,7 @@
 <div class="question-area bg-white mt-0  pt-1 px-0 pb-1">
-    <ul class="px-0 mt-0">
+    <ul class="px-0 mt-0  px-5 list-unstyled">
         <li *ngFor="let record of subjects" id="q-options bg-warning">
-            <em class="mr-1 q-number">{{record.questionNumber}}</em><span>{{record.question}}</span><br>
+            <em class="mr-2">{{record.questionNumber}}</em><span>{{record.question}}</span><br>
                 <em class="option mr-1">A</em><span>{{record.options.a}}</span><br>
                 <em class="option mr-1">B</em><span>{{record.options.b}}</span><br>
                 <em class="option mr-1">C</em><span>{{record.options.c}}</span><br>
