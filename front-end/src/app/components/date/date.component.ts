@@ -76,7 +76,10 @@ export class DateComponent implements OnInit {
         this.availableDates = data;
 
         //extract only unique date values
-        this.uniqueDates = (this.availableDates.map(x => x.examYear)).map(isoDate => new Date(isoDate)).filter(this.isUnique).map(isoDate => isoDate.getFullYear());
+        this.uniqueDates = (this.availableDates.map(dates => dates.examYear)
+                            .filter(this.isUnique)
+                            .map(uniqueIso => new Date(uniqueIso))
+                            .map(isoDates => isoDates.getFullYear()));
 
         this.uniqueDates.forEach(x => console.log(x))
 
