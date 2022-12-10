@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { StudentAttempt } from 'src/app/model/student-attempt';
 import { Subject } from 'src/app/model/subject';
 import { MultiService } from 'src/app/services/multi.service';
 
@@ -11,6 +12,9 @@ import { MultiService } from 'src/app/services/multi.service';
 export class SubjectComponent implements OnInit {
 //declares and initializes empty Subject array
 subjects:Subject[] =[];
+
+//declares array to hold students attempts
+attempts:StudentAttempt[] =[];
 
   constructor(private multiService:MultiService, private router:ActivatedRoute) { }
 
@@ -42,5 +46,12 @@ subjects:Subject[] =[];
       })
     }
 
+  }
+  /**
+   * Method that saves student's selected options
+   * @param selectedOption Option selected by the student
+   */
+  saveAttempt(selectedOption:string){
+//More works to do here
   }
 }
