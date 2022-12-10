@@ -76,7 +76,6 @@ Insert into `Solution`(`exam_year`,`subject`, `link`) values(str_to_date('1-2-20
 Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('10m/s\u00B2', '2.5m/s\u00B2', '98m/s\u00B2', '7.8m/s\u00B2', 'None of the above',1);
 Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('Isaac Newton', 'James Clerk', 'Paschal', 'Galileo', 'None of the above',2);
 Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('6 sides', '12 sides', '4 sides', '13 sides', 'None of the above',3);
-Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('2', '1', '3', '4', '6',3);
 Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('James', 'Joule', 'Newton', 'Ronaldo', 'None of the above',4);
 Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('Maxwell', 'Joule', 'Albert Einstein', 'Faraday', 'Achimedes',5);
 Insert into `Options`(`A`,`B`, `C`, `D`, `E`, `subject_id`) values('Pressure', 'Temparature', 'Nature of substance', 'Color of substance', 'None of the above',6);
