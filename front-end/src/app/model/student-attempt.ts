@@ -10,7 +10,7 @@ export class StudentAttempt {
      */
     constructor(public subjectName:string,
                 public examYear:string,
-                public categoryName:string,
+                public categoryId:number,
                 public questionNumber?:number,
                 public selectedOption?:string){}
 }
