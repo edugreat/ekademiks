@@ -1,13 +1,15 @@
+import { R3SelectorScopeMode } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
 import { SubjectDate } from 'src/app/util/subject-date';
+import { SubjectName } from 'src/app/util/subject-name';
 
 /*
 This  component is responsible for  pupulating the view with a drop-down
 list of dates whenever a course category is selected. Therefore it receives a dates
 array from the backend end corresponding to the all the available dates
-for the subjects for which their category was selected
+for the subjects for which their category was selected. It also populates the subject name
 */
 
 
@@ -18,21 +20,33 @@ for the subjects for which their category was selected
 })
 export class DateComponent implements OnInit {
 
+  /**
+   * a button that tracks when the ok button has been clicked to
+   * search subjects that match the selected date option
+   */
+
+
   //declare field category name here
-  categoryName:string ='';
+  categoryName: string = '';
 
   //Create an empty date array
-  uniqueDates:number[] = [];  
+  uniqueDates: number[] = [];
   //create an empty array dates instance
-  availableDates: SubjectDate[] =[];
+  availableDates: SubjectDate[] = [];
+
+  //declares and initialize an array of SubjectName 
+  subjectName: SubjectName[] = [];
+
+  //declares the categoryId
+  categoryId?:number;
 
   //Inject the multi-service and activated Routes instances here
   constructor(private multiService: MultiService,
-    private route: ActivatedRoute) { }
+    private route: ActivatedRoute, private router:Router) { }
 
   ngOnInit(): void {
 
-    this.route.paramMap.subscribe(()=>{
+    this.route.paramMap.subscribe(() => {
       this.getAvailableDates();
     })
 
@@ -48,41 +62,52 @@ export class DateComponent implements OnInit {
     const idAndNameExist = this.route.snapshot.paramMap.has("id" && "categoryName");
 
     if (idAndNameExist) {
+
       //converts the id param to a number
-      const categoryId = Number(this.route.snapshot.paramMap.get("id")!);
-      
+       this.categoryId = Number(this.route.snapshot.paramMap.get("id")!);
+
+
       //extract the categoryName parameter
-       this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
+      this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
 
       console.log(`category name is ${this.categoryName}`);
 
-      this.multiService.fetchAvailableExamDates(categoryId).subscribe(data=>{
+      this.multiService.fetchAvailableExamDates(this.categoryId).subscribe(data => {
         this.availableDates = data;
 
         //extract only unique date values
-        this.uniqueDates = (this.availableDates.map(x=>x.examYear)).map(isoDate=>new Date(isoDate)).filter(this.isUnique).map(isoDate=>isoDate.getFullYear());
+        this.uniqueDates = (this.availableDates.map(dates => dates.examYear)
+                            .filter(this.isUnique)
+                            .map(uniqueIso => new Date(uniqueIso))
+                            .map(isoDates => isoDates.getFullYear()));
 
-       // this.uniqueDates.forEach(x=>console.log(x))
-       
-       } );
-                                        }
+        this.uniqueDates.forEach(x => console.log(x))
+
+      });
+
+    }
   }
 
+
   /**
-   * This method returns true if the index of the current array is equal to the current index.
-   * It is a callback function to return unique array records
-   * @param current current array value
-   * @param index The index of the current array value
-   * @param dates The array
-   * @returns 
-   */
-  isUnique(current:Date, index:number, dates:Date[]):boolean{
+  * This method returns true if the index of the current array is equal to the current index.
+  * It is a callback function to return unique array records
+  * @param current current array value
+  * @param index The index of the current array value
+  * @param dates The array
+  * @returns 
+  */
+  isUnique(current: Date, index: number, dates: Date[]): boolean {
 
     return (index === dates.indexOf(current))
   }
+  
+  //method that routes to the a component
+  goToSubject(examYear:string){
+  
+    this.router.navigateByUrl(`exam/${this.categoryName}/${examYear}/${this.categoryId}`);
 
-  getAvailableSubjects(input:string){
-    console.log(input)//continue fro here
+
   }
- 
+
 }

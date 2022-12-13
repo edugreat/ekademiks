@@ -1,0 +1,32 @@
+
+<label class="date-label ml-2 text-center mb-0 text-info">Please choose subject for {{categoryName}}</label>
+<div class="row dateDiv  bd-highlight border ml-2
+  border-warning rounded pt-4">
+    
+    <div class="col-8 dateSelection mt-5">
+        <select class="custom-select mx-10" #selectedSubject id="subjectName">
+            <option [ngValue]="name"  *ngFor="let name of uniqueSubjectName">
+                {{name}}
+            </option>
+        </select>
+    </div>
+    <div class="col-4 mt-5">
+        <a (click)="getQuestion(selectedSubject.value)" class="btn  btn-outline-success 
+text-nowrap" role="button">
+    Ok
+</a>
+    </div>
+
+    <div class="col-8 go-back mx-auto d-flex mt-0 " align="center">
+        <a (click)="goBack()" class="go-back btn btn-sm btn-outline-warning mb-3 py-auto">
+            <i class="fa-solid fa-arrow-left-long fa-fw"></i>Back
+        </a>
+        </div>
+        
+        
+        
+</div>
+
+
+
+

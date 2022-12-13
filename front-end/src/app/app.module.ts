@@ -11,9 +11,12 @@ import { MultiService } from './services/multi.service';
 import { DateComponent } from './components/date/date.component';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { SubjectNameComponent } from './components/subject-name/subject-name.component';
 
 const routes: Routes=[
-  {path: 'category/:categoryName/:id', component: DateComponent}
+  {path: 'category/:categoryName/:id', component: DateComponent},
+  {path: 'exam/:categoryName/:examYear/:categoryId', component: SubjectNameComponent},
+  {path: "question/:categoryId/:subjectName/:examYear", component: SubjectComponent}
 ]
 
 @NgModule({
@@ -22,7 +25,8 @@ const routes: Routes=[
     SubjectCategoryComponent,
     SubjectComponent,
     SolutionComponent,
-    DateComponent
+    DateComponent,
+    SubjectNameComponent
   ],
   imports: [
     RouterModule.forRoot(routes),

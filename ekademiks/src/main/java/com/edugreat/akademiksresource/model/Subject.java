@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Table(name = "Subject")
 public class Subject {
+	
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,7 +49,7 @@ public class Subject {
 
 	// The question number
 	@Column(name = "question_number")
-	private Integer number;
+	private Integer questionNumber;
 
 	// The year the particular question was asked
 	@Column(name = "exam_year")
@@ -89,12 +90,12 @@ public class Subject {
 		this.answer = answer;
 	}
 
-	public Integer getNumber() {
-		return number;
+	public Integer getQuestionNumber() {
+		return questionNumber;
 	}
 
-	public void setNumber(Integer number) {
-		this.number = number;
+	public void setQuestionNumber(Integer number) {
+		this.questionNumber = number;
 	}
 
 	public LocalDate getExamYear() {

@@ -1,17 +1,16 @@
 
 <label class="ml-2 date-label mb-0 text-info text-center">Please choose date for {{categoryName}}</label>
-<div class="d-flex bd-highlight justify-content-center 
+<div class="d-flex bd-highlight 
 dateDiv align-items-center border border-warning rounded">
-
     <div class="dateSelection inline" >
-    <select class="custom-select mx-10" #selectedDate id="examDates">
+    <select class="custom-select mx-10" #selectedDate id="subjectName">
         <option [ngValue]="date"  *ngFor="let date of uniqueDates">
             {{date}}
         </option>
     </select>
 </div>
 <a  class="btn  btn-outline-success 
-text-nowrap inline ml-2" role="button" (click)="getAvailableSubjects(selectedDate.value)">
+text-nowrap inline ml-2" role="button" (click)="goToSubject(selectedDate.value)">
     Ok
 </a>
 </div>

@@ -1,3 +1,4 @@
+
 body{
     background: url(assets/bg-folder/Main.jpg);
     background-size: cover;
@@ -22,6 +23,7 @@ text-decoration: none;
 }
 .dateSelection{
     width: fit-content;
+    height: fit-content;
     
 }
 .date-label{
@@ -33,5 +35,33 @@ text-decoration: none;
     border: none !important;
 }
 div.inline{
-    float: right;
+    float: left;
+    margin-left: 30%;
 }
+.go-back:hover{
+    text-decoration: none;
+    
+}
+.go-back{
+    padding-top: 5%;
+    
+}
+.quest-number{
+    padding-left: 0;
+}
+
+.option{
+    padding-left: 1.5rem;
+}
+.q-number{
+    font-weight: bold;
+}
+
+
+    @media (max-width:640px) {
+        .side-bar-container{
+            border: none !important;
+            border-style: none !important;
+        };
+    }
+    
