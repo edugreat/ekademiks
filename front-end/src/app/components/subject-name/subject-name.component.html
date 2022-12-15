@@ -1,32 +1,44 @@
-
-<label class="date-label ml-2 text-center mb-0 text-info">Please choose subject for {{categoryName}}</label>
-<div class="row dateDiv  bd-highlight border ml-2
-  border-warning rounded pt-4">
-    
-    <div class="col-8 dateSelection mt-5">
-        <select class="custom-select mx-10" #selectedSubject id="subjectName">
-            <option [ngValue]="name"  *ngFor="let name of uniqueSubjectName">
-                {{name}}
-            </option>
-        </select>
+<!--row starts-->
+<div class="row">
+    <div class="col-12">
+        <label class="text-center">Please choose subject for {{categoryName}}</label>
     </div>
-    <div class="col-4 mt-5">
-        <a (click)="getQuestion(selectedSubject.value)" class="btn  btn-outline-success 
-text-nowrap" role="button">
-    Ok
-</a>
-    </div>
+    <!--label div ends-->
 
-    <div class="col-8 go-back mx-auto d-flex mt-0 " align="center">
-        <a (click)="goBack()" class="go-back btn btn-sm btn-outline-warning mb-3 py-auto">
-            <i class="fa-solid fa-arrow-left-long fa-fw"></i>Back
-        </a>
+    <!--select container starts-->
+    <div class="col-12 pt-5 bd-highlight border border-warning rounded" id="select-subject" >
+        <div class="row">
+            <!--select tag starts-->
+            <div class="col-8 mt-5 mb-1">
+                <select class="custom-select" #selectedSubject>
+                    <option class="text-center" [ngValue]="name" *ngFor="let name of uniqueSubjectName">
+                        {{name}}
+                    </option>
+                </select>
+                <!--select tag ends-->
+            </div>
+            <div class="col-4 mt-5">
+                <a (click)="getQuestion(selectedSubject.value)" role="button" class="btn btn-outline-success">
+                    Ok
+                </a>
+            </div>
         </div>
+        <!--select tag ends-->
+        <div class="row">
+
+            <!--go baack button container starts-->
+            <div class="col-3">
+                <a (click)="goBack()" role="button" class="btn btn-sm btn-outline-warning">
+                    <i class="fa fa-solid fa-arrow-left-long"></i>
+                </a>
+            </div>
+            <!--go back button container ends-->
         
+            </div>
         
-        
+    </div>
+       <!--select container ends-->
 </div>
 
 
-
-
+<!--row ends-->

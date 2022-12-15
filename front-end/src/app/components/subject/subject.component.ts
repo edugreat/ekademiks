@@ -12,6 +12,7 @@ import { StudentAttemptService } from 'src/app/services/student-attempt.service'
   styleUrls: ['./subject.component.css']
 })
 export class SubjectComponent implements OnInit {
+  
 //declares and initializes empty Subject array
 subjects:Subject[] =[];
 examYear:string ='';
@@ -23,7 +24,7 @@ attempts:StudentAttempt[] =[];
 
   constructor(private multiService:MultiService, 
     private router:ActivatedRoute,
-    private attemptService:StudentAttemptService) { }
+    private attemptService:StudentAttemptService) {}
 
   ngOnInit(): void {
 

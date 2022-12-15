@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-md navbar-light bg-dark ml-0 pl-0">
+<nav class="navbar navbar-expand-md navbar-light bg-dark ml-0 pl-0" id="myNavBar">
     <div class="container-fluid">
         <a href="" class="navbar-brand"><img src="{{logo}}" class="logo img-fluid rounded-circle" alt="edukademiks Logo"></a>
         <button class="navbar-toggler bg-light" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,7 +28,7 @@
 
 <div class="container-fluid">
 <!--The side bar begins here-->
-<div class="row top-sidebar no-gutters">
+<div class="row no-gutters" id="my-side-bar">
 <div class="col-md-3 side-bar-container col-lg-1 border 
 border-top-0 border-bottom-0 border-success">
 <app-subject-category></app-subject-category>
@@ -36,7 +36,7 @@ border-top-0 border-bottom-0 border-success">
 </div>
 
 <!--The main content starts here-->
-<div class="col-md-9 col-lg-11 d-flex justify-content-center align-items-center" id="main-content">
+<div class="col-md-9 col-lg-11 d-flex justify-content-center align-items-center" id="main-container">
     <router-outlet></router-outlet>
 </div>
 
