@@ -12,6 +12,8 @@ import { DateComponent } from './components/date/date.component';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SubjectNameComponent } from './components/subject-name/subject-name.component';
+import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
+import { SearchComponent } from './components/search/search.component';
 
 const routes: Routes=[
   {path: 'category/:categoryName/:id', component: DateComponent},
@@ -26,7 +28,9 @@ const routes: Routes=[
     SubjectComponent,
     SolutionComponent,
     DateComponent,
-    SubjectNameComponent
+    SubjectNameComponent,
+    PageNotFoundComponent,
+    SearchComponent
   ],
   imports: [
     RouterModule.forRoot(routes),

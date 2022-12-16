@@ -17,10 +17,7 @@
                 <li class="nav-item"><a href="#" class="nav-link text-white">Sign up</a>
                 </li>
             </ul>
-            <form action="#" class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2"  type="search" placeholder="Search an exercise" aria-label="Search">
-                <button class="btn btn-outine-success my-2 my-sm-0" type="submit"></button>
-            </form>
+            <app-search></app-search>
         </div>
     </div>
 </nav>
@@ -37,6 +34,7 @@ border-top-0 border-bottom-0 border-success">
 
 <!--The main content starts here-->
 <div class="col-md-9 col-lg-11 d-flex justify-content-center align-items-center" id="main-container">
+    <app-page-not-found [hidden]="found"></app-page-not-found>
     <router-outlet></router-outlet>
 </div>
 

@@ -2,8 +2,10 @@ import { R3SelectorScopeMode } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
+import { SearchService } from 'src/app/services/search.service';
 import { SubjectDate } from 'src/app/util/subject-date';
 import { SubjectName } from 'src/app/util/subject-name';
+import { SearchComponent } from '../search/search.component';
 
 /*
 This  component is responsible for  pupulating the view with a drop-down
@@ -20,11 +22,8 @@ for the subjects for which their category was selected. It also populates the su
 })
 export class DateComponent implements OnInit {
 
-  /**
-   * a button that tracks when the ok button has been clicked to
-   * search subjects that match the selected date option
-   */
-
+  //determines when to display custom 'page-not-found' as well as itself
+  found = true;
 
   //declare field category name here
   categoryName: string = '';
@@ -42,14 +41,23 @@ export class DateComponent implements OnInit {
 
   //Inject the multi-service and activated Routes instances here
   constructor(private multiService: MultiService,
-    private route: ActivatedRoute, private router:Router) { }
+    private route: ActivatedRoute, private router:Router,
+    private searchService:SearchService
+    ) { 
+      
+    }
 
   ngOnInit(): void {
 
     this.route.paramMap.subscribe(() => {
-      this.getAvailableDates();
+           this.getAvailableDates();
+           console.log("before subscription:  "+this.found)
+           this.searchService.found.subscribe(result => this.found = result);
+           console.log("after subscription "+this.found);
     })
-
+    
+   
+   
   }
 
 
@@ -82,7 +90,8 @@ export class DateComponent implements OnInit {
                             .map(isoDates => isoDates.getFullYear()));
 
         this.uniqueDates.forEach(x => console.log(x))
-
+        //clears  possible previous display of custom 'page-not-found'
+        this.searchService.found.next(true);
       });
 
     }
