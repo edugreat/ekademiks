@@ -1,0 +1,10 @@
+#select-subject{
+    width:75px;
+    min-height: 30vh;
+    max-height: 30vh;
+}
+
+#select-subject:hover{
+    background-color: black;
+    border: none !important;
+}

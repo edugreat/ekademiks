@@ -1,8 +1,7 @@
-.question-area{
+#questions-area{
     min-width: 90vw;
-    min-height: 90vh;
-    margin-top: 0px;
-    margin-right: 0px;
-    margin-left: 0px;
-    margin-bottom: 0px;
+    max-height: 75vh;
+    overflow: scroll;
+    margin-left: 0px !important;
+   
 }

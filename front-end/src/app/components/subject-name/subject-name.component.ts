@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
+import { SearchService } from 'src/app/services/search.service';
 import { SubjectName } from 'src/app/util/subject-name';
 
 @Component({
@@ -10,6 +11,10 @@ import { SubjectName } from 'src/app/util/subject-name';
   styleUrls: ['./subject-name.component.css']
 })
 export class SubjectNameComponent implements OnInit{
+
+//determines when to display custom 'page-not-found' as well as itself
+found = true;
+
 //declares and initialize an array of SubjectName 
 subjectName: SubjectName[] = [];
 
@@ -28,7 +33,10 @@ uniqueSubjectName:string[] = [];
 constructor(private multiService:MultiService,
   private route:ActivatedRoute, 
   private location:Location,
-  private router:Router){}
+  private router:Router,
+  private searchService:SearchService){
+    this.searchService.found.subscribe(x => this.found =x);
+  }
 
   ngOnInit(): void {
    this.route.paramMap.subscribe(()=>{
