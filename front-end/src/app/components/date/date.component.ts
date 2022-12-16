@@ -67,9 +67,9 @@ export class DateComponent implements OnInit {
   private getAvailableDates() {
 
     //check if the id and categoryName parameters exist in the router
-    const idAndNameExist = this.route.snapshot.paramMap.has("id" && "categoryName");
+    const idAndCategoryNameExist = this.route.snapshot.paramMap.has("id" && "categoryName");
 
-    if (idAndNameExist) {
+    if (idAndCategoryNameExist) {
 
       //converts the id param to a number
        this.categoryId = Number(this.route.snapshot.paramMap.get("id")!);
