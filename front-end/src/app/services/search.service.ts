@@ -23,7 +23,6 @@ export class SearchService {
     if(index !== -1){
      //get the value that was searched
      const val = Object.values(this.searchConst)[index];
-     console.log("category name is  :"+val)
      //build url with these parameters
      const url = `category/${val}/${index+1}`;
      this.router.navigateByUrl(url);
@@ -32,7 +31,6 @@ export class SearchService {
 
     }else{
       //search key was not found
-
       return of(this.found.next(false))
     }
     

@@ -1,11 +1,9 @@
-import { R3SelectorScopeMode } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
 import { SearchService } from 'src/app/services/search.service';
 import { SubjectDate } from 'src/app/util/subject-date';
 import { SubjectName } from 'src/app/util/subject-name';
-import { SearchComponent } from '../search/search.component';
 
 /*
 This  component is responsible for  pupulating the view with a drop-down
@@ -51,16 +49,11 @@ export class DateComponent implements OnInit {
 
     this.route.paramMap.subscribe(() => {
            this.getAvailableDates();
-           console.log("before subscription:  "+this.found)
            this.searchService.found.subscribe(result => this.found = result);
-           console.log("after subscription "+this.found);
-    })
+              })
     
-   
-   
   }
-
-
+  
   /**
    * declares a method to subscribe to the multi-service and get the dates arraay
    */
@@ -68,32 +61,32 @@ export class DateComponent implements OnInit {
 
     //check if the id and categoryName parameters exist in the router
     const idAndCategoryNameExist = this.route.snapshot.paramMap.has("id" && "categoryName");
-
-    if (idAndCategoryNameExist) {
+    //extract the categoryName parameter
+    this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
 
       //converts the id param to a number
-       this.categoryId = Number(this.route.snapshot.paramMap.get("id")!);
-
-
-      //extract the categoryName parameter
-      this.categoryName = this.route.snapshot.paramMap.get("categoryName")!;
-
-      console.log(`category name is ${this.categoryName}`);
-
-      this.multiService.fetchAvailableExamDates(this.categoryId).subscribe(data => {
+      this.categoryId = Number(this.route.snapshot.paramMap.get("id")!);
+    
+      if (idAndCategoryNameExist && !Number.isNaN(this.categoryId)) {
+      this.multiService.fetchAvailableExamDates(this.categoryId, this.categoryName).subscribe(data => {
         this.availableDates = data;
-
         //extract only unique date values
         this.uniqueDates = (this.availableDates.map(dates => dates.examYear)
                             .filter(this.isUnique)
                             .map(uniqueIso => new Date(uniqueIso))
                             .map(isoDates => isoDates.getFullYear()));
-
-        this.uniqueDates.forEach(x => console.log(x))
-        //clears  possible previous display of custom 'page-not-found'
-        this.searchService.found.next(true);
+        /**
+         * clears possible previous display of custom 'page-not-found'
+         * if the was returned, else no data was found
+         */
+        this.uniqueDates.length > 0? this.searchService.found.next(true) : this.searchService.found.next(false);
+        
+        
       });
 
+    }else{
+      //the user might have forwarded bad url param for 'id'
+      this.searchService.found.next(false);
     }
   }
 

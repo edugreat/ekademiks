@@ -27,8 +27,8 @@ public class DateController {
 	private SubjectDao subjectDao;
 
 	@GetMapping()
-	public List<DatesOnly> getDates(@RequestParam("id") Integer id) {
-		return subjectDao.findAllByCategoryId(id);
+	public List<DatesOnly> getDates(@RequestParam("id") Integer id, @RequestParam("name")String name) {
+		return subjectDao.findAllByCategoryIdAndCategoryName(id, name);
 
 	}
 
