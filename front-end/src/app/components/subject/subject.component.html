@@ -1,5 +1,5 @@
 
-<div [hidden]="found == false"  class="row bg-white mt-0 mr-4" id="questions-area">
+<div [hidden]="found == false"  class="row bg-white mt-0 mr-3" id="questions-area">
 
     <ul class="list-unstyled">
         
@@ -10,12 +10,12 @@
                 <div class="col-1">
                     <label> {{record.questionNumber}} </label>
                 </div>
-                <div class="col-10">{{record.question}}</div>
+                <div class="col-10" id="question" >{{record.question}}</div>
             </div>
            </div>
            <!--question and question number ends-->  
             <!--option labels and options starts-->
-            <div class="col-12">
+            <div class="col-12 options">
                 <div class="row">
                     <div class="col-1">
                         <label>A</label>
@@ -30,7 +30,7 @@
             </div>
 
 
-            <div class="col-12">
+            <div class="col-12 options">
                 <div class="row">
                     <div class="col-1">
                         <label>B</label>
@@ -45,7 +45,7 @@
             </div>
 
 
-            <div class="col-12">
+            <div class="col-12 options">
                 <div class="row">
                     <div class="col-1">
                         <label>C</label>
@@ -60,7 +60,7 @@
             </div>
 
 
-            <div class="col-12">
+            <div class="col-12 options">
                 <div class="row">
                     <div class="col-1">
                         <label>D</label>
@@ -75,7 +75,7 @@
             </div>
 
 
-            <div class="col-12">
+            <div class="col-12 options">
                 <div class="row">
                     <div class="col-1">
                         <label>E</label>

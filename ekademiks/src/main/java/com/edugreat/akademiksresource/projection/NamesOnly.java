@@ -5,7 +5,7 @@ package com.edugreat.akademiksresource.projection;
  * name attribute
  */
 
-public interface SubjectNamesOnly {
+public interface NamesOnly {
 	//abstract method
 	String getName();
 	

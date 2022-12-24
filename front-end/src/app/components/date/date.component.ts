@@ -72,7 +72,6 @@ export class DateComponent implements OnInit {
         this.availableDates = data;
         //extract only unique date values
         this.uniqueDates = (this.availableDates.map(dates => dates.examYear)
-                            .filter(this.isUnique)
                             .map(uniqueIso => new Date(uniqueIso))
                             .map(isoDates => isoDates.getFullYear()));
         /**
@@ -88,20 +87,6 @@ export class DateComponent implements OnInit {
       //the user might have forwarded bad url param for 'id'
       this.searchService.found.next(false);
     }
-  }
-
-
-  /**
-  * This method returns true if the index of the current array is equal to the current index.
-  * It is a callback function to return unique array records
-  * @param current current array value
-  * @param index The index of the current array value
-  * @param dates The array
-  * @returns 
-  */
-  isUnique(current: Date, index: number, dates: Date[]): boolean {
-
-    return (index === dates.indexOf(current))
   }
   
   //method that routes to the a component
