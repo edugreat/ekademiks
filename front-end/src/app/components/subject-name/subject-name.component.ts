@@ -30,6 +30,9 @@ examYear?:string;
 //declares an initializes a string array for storing unique Subject names
 uniqueSubjectName:string[] = [];
 
+//tracks if the user has made a selection for disabling/enbling submit button
+hasMadeSelection = false;
+
 constructor(private multiService:MultiService,
   private route:ActivatedRoute, 
   private location:Location,
@@ -107,5 +110,14 @@ goBack(){
 getQuestion(examName:string){
 
   this.router.navigateByUrl(`question/${this.categoryId}/${examName}/${this.examYear}`)
+}
+/**
+ * method that controls the enabling/disabling of submit button
+ * @param event event trigger from the view page
+ */
+hasSelected(event:Event){
+const target = event.target as HTMLOptionElement;
+//if the user's selection is not the placeholder, enable the submit button
+(this.uniqueSubjectName.find(x => x === target.value))? this.hasMadeSelection =true : this.hasMadeSelection = false;
 }
 }

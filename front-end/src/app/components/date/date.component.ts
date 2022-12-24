@@ -22,7 +22,8 @@ export class DateComponent implements OnInit {
 
   //determines when to display custom 'page-not-found' as well as itself
   found = true;
-
+//tracks of the user has made a selection other than the placeholder
+ hasMadeSelection = false;
   //declare field category name here
   categoryName: string = '';
 
@@ -96,5 +97,15 @@ export class DateComponent implements OnInit {
 
 
   }
+  /**
+ * method that controls the enabling/disabling of submit button
+ * @param event event trigger from the view page
+ */
+hasSelected(event:Event){
+  console.log("called")
+ const target = event.target as HTMLOptionElement;
+ //if the user's selection is not the placeholder, enable the submit button
+ (this.uniqueDates.find(x => x===Number(target.value)))? this.hasMadeSelection = true : this.hasMadeSelection=false;
 
+}
 }

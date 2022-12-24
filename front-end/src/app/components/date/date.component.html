@@ -13,7 +13,8 @@
     <div class="row">
         <!--date selection starts here-->
         <div class="col-8 mt-5">
-            <select #selectedDate class="custom-select">
+            <select (change)="hasSelected($event)" #selectedDate class="custom-select">
+                <option value="" class="text-center" >Select</option>
                 <option [ngValue]="date" class="text-center"  *ngFor="let date of uniqueDates">
                     {{date}}
                 </option>
@@ -22,8 +23,8 @@
         <!--date selection ends here-->
 
   <!--submit button starts-->
-<div class="col-4 mt-5">
-    <a (click)="goToSubject(selectedDate.value)" role="button" class="btn btn-outline-success">
+<div [class.disable-click] ='hasMadeSelection===false' class="col-4 mt-5 p-0">
+    <a   (click)="goToSubject(selectedDate.value)" role="button" class="btn btn-outline-success">
         Ok
     </a>
 </div>
