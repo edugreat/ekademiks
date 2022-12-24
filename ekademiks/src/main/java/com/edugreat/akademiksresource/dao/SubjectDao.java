@@ -19,7 +19,7 @@ import com.edugreat.akademiksresource.projection.NamesOnly;
 public interface SubjectDao extends JpaRepository<Subject, Integer> {
   
 	//Return an array of date attributes contained in the subject entity whose category id matches the request parameter
-	List<DatesOnly> findDistinctByCategoryIdAndCategoryName(@RequestParam("id") Integer id, @RequestParam("name")String name);
+	List<DatesOnly> findDistinctByCategoryName(@RequestParam("name")String name);
 
 	//Returns an array of subjects with their name attribute
 	/*

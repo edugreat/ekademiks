@@ -33,8 +33,8 @@ export class MultiService {
   }
    
    //This method returns a dates array from the backend server
-  fetchAvailableExamDates(id:number, categoryName:string):Observable<SubjectDate[]> {
-    return this.httpClient.get<SubjectDate[]>(`${this.dateEndpoint}?id=${id}&name=${categoryName}`);
+  fetchAvailableExamDates(categoryName:string):Observable<SubjectDate[]> {
+    return this.httpClient.get<SubjectDate[]>(`${this.dateEndpoint}?name=${categoryName}`);
   }
 
   //Method returns Subject array with name attributes

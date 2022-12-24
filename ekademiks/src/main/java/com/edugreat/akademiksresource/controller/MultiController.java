@@ -30,8 +30,8 @@ public class MultiController {
 	private CategoryDao categoryDao;
 
 	@GetMapping()
-	public List<DatesOnly> getDates(@RequestParam("id") Integer id, @RequestParam("name")String name) {
-		return subjectDao.findDistinctByCategoryIdAndCategoryName(id, name);
+	public List<DatesOnly> getDates(@RequestParam("name")String name) {
+		return subjectDao.findDistinctByCategoryName(name);
 
 	}
 

@@ -68,7 +68,7 @@ export class DateComponent implements OnInit {
       this.categoryId = Number(this.route.snapshot.paramMap.get("id")!);
     
       if (idAndCategoryNameExist && !Number.isNaN(this.categoryId)) {
-      this.multiService.fetchAvailableExamDates(this.categoryId, this.categoryName).subscribe(data => {
+      this.multiService.fetchAvailableExamDates(this.categoryName).subscribe(data => {
         this.availableDates = data;
         //extract only unique date values
         this.uniqueDates = (this.availableDates.map(dates => dates.examYear)
