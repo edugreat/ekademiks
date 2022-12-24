@@ -6,7 +6,12 @@ body{
     background-attachment: fixed;
     background-position: center;
 }
-
+.disable-click{
+    pointer-events: none;
+    background-color: gray;
+    max-width: fit-content;
+    
+}
 
 @media (max-width:640px) {
         .side-bar-container{

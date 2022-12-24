@@ -16,6 +16,7 @@ export class MultiService {
   private baseUrl:string = "http://localhost:8080/akad";
 
   private subjectNameEndpoint = this.dateEndpoint+"/date";
+  private searchUrl = "http://localhost:8080/subject/search";
 
   constructor(private httpClient: HttpClient) { }
 
@@ -32,8 +33,8 @@ export class MultiService {
   }
    
    //This method returns a dates array from the backend server
-  fetchAvailableExamDates(id:number):Observable<SubjectDate[]> {
-    return this.httpClient.get<SubjectDate[]>(`${this.dateEndpoint}?id=${id}`);
+  fetchAvailableExamDates(categoryName:string):Observable<SubjectDate[]> {
+    return this.httpClient.get<SubjectDate[]>(`${this.dateEndpoint}?name=${categoryName}`);
   }
 
   //Method returns Subject array with name attributes
@@ -58,6 +59,16 @@ export class MultiService {
         
       ))
 
+  }
+  /**
+   * returns dates to select when user types a particular subject name in the search box
+   * @param category the category the subject searched belongs
+   * @param subject the subject the user intends to take exercise on
+   * @param return Observable of SubjectDate array
+   */
+  searchDates(category:string, subject:string):Observable<SubjectDate[]>{
+  
+    return this.httpClient.get<SubjectDate[]>(`${this.searchUrl}?category=${category}&subject=${subject}`);
   }
    
 }

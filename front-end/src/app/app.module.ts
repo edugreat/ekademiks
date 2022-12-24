@@ -14,11 +14,18 @@ import { FormsModule } from '@angular/forms';
 import { SubjectNameComponent } from './components/subject-name/subject-name.component';
 import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
 import { SearchComponent } from './components/search/search.component';
+import { SearchProcessingComponent } from './components/search-processing/search-processing.component';
+import { SearchOutputComponent } from './components/search-output/search-output.component';
 
 const routes: Routes=[
+  
   {path: 'category/:categoryName/:id', component: DateComponent},
   {path: 'exam/:categoryName/:examYear/:categoryId', component: SubjectNameComponent},
-  {path: "question/:categoryId/:subjectName/:examYear", component: SubjectComponent}
+  {path: "question/:categoryId/:subjectName/:examYear", component: SubjectComponent},
+  {path: 'search/:keyword', component: SearchProcessingComponent},
+  {path:'search/category/:cate_name/id/:cate_id/subj/:sub', component: SearchOutputComponent}
+  
+  
 ]
 
 @NgModule({
@@ -30,7 +37,9 @@ const routes: Routes=[
     DateComponent,
     SubjectNameComponent,
     PageNotFoundComponent,
-    SearchComponent
+    SearchComponent,
+    SearchProcessingComponent,
+    SearchOutputComponent
   ],
   imports: [
     RouterModule.forRoot(routes),
@@ -38,6 +47,7 @@ const routes: Routes=[
     HttpClientModule,
     FormsModule
   ],
+ // exports:[RouterModule],
   providers: [MultiService],
   bootstrap: [AppComponent]
 })

@@ -10,14 +10,15 @@
         <div class="row">
             <!--select tag starts-->
             <div class="col-8 mt-5 mb-1">
-                <select class="custom-select" #selectedSubject>
+                <select (change)="hasSelected($event)" class="custom-select" #selectedSubject>
+                    <option value="" class="text-center">Select</option>
                     <option class="text-center" [ngValue]="name" *ngFor="let name of uniqueSubjectName">
                         {{name}}
                     </option>
                 </select>
                 <!--select tag ends-->
             </div>
-            <div class="col-4 mt-5">
+            <div [class.disable-click] ='!hasMadeSelection' class="col-4 mt-5 p-0">
                 <a (click)="getQuestion(selectedSubject.value)" role="button" class="btn btn-outline-success">
                     Ok
                 </a>

@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SearchService } from 'src/app/services/search.service';
+import { NameAndId } from 'src/app/util/name-and-id';
 
 
 @Component({
@@ -7,19 +8,20 @@ import { SearchService } from 'src/app/services/search.service';
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.css']
 })
-export class SearchComponent {
-   constructor(private searchService:SearchService) { }
+export class SearchComponent implements OnInit{
+  categoryNameAndId:NameAndId[] =[];
+  searchKeyword = '';
+  //tracks if the questions are populated to clear off the search box
+   constructor(private searchService:SearchService){ }
 
-  /**
-   * 
-   * @param keyword the keyword (subject) the student wishes to lookup for
-   */
-  searchFor(keyword: string) {
-    this.searchService.search(keyword);
-        
-    }
+  ngOnInit(): void {
+    this.searchService.questionDisplay.subscribe(displayed =>{
+      if(displayed)
+      this.searchKeyword = '';
+    })
+  }
 
-
+    
   }
 
 
