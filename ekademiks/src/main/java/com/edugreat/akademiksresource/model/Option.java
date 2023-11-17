@@ -1,11 +1,12 @@
 package com.edugreat.akademiksresource.model;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,6 +17,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import enums.Options;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -25,36 +27,32 @@ import lombok.Setter;
 @Table
 @Data
 @Builder
-//models the academic subject for an online test
-public class Subject {
+//models the options for question asked in an academic test
+public class Option {
 	
-	
-	@Column
+	@Column(updatable = false)
 	@Setter(AccessLevel.NONE)
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
 	@Column
- 	@NotNull(message = "Required field for subject is missing")
-	private String subjectName;
+	@NotNull(message = "Required field for option text is missing")
+	private String optionText;//an option which is probably the correct answer
 	
-	//bidirectional relationship with Level
+	@Enumerated(EnumType.STRING)
+	@Column
+	@NotNull(message = "Required field for option letter is missing")
+	private Options optionLetter;//the option letter(e.g 'A','B','C','D')
+	
 	@ManyToOne
-	@JoinColumn(name = "level_id")
-	private Level level;
+	@JoinColumn(name = "question_id")
+	private Question question;
 	
-	//one to many relationship with test object
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "subject")
-	private Set<Test> tests;
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "option")
+	private Set<StudentSelectedOption> studentSelectedOptions;
 	
-	//convenience method
-	public void addTest(Test test) {
-		
-		if(tests == null)
-			tests = new HashSet<>();
-		tests.add(test);
-	}
+	
 	
 
 }
