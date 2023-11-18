@@ -10,7 +10,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
@@ -20,7 +19,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Setter;
-import net.bytebuddy.dynamic.TypeResolutionStrategy.Lazy;
 
 @Entity
 @Table
@@ -63,8 +61,10 @@ public class Student {
 			+ "and one special character")
 	private String password;
 	
-	//one to many relationship with the student_test
+	
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "student")
+	//one to many relationship with the student_test
+	//a student can have more than tests they have taken
 	private Set<StudentTest> studentTest;
 	
 	//convenience method

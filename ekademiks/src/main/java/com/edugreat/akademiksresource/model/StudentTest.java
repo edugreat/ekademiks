@@ -39,29 +39,37 @@ public class StudentTest {
 	
 	@Column
 	@NotNull(message = "Required field for score is missings")
-	private double score;
+	//every student who participated in a test has some score
+ 	private double score;
 	
 	@Column(updatable = false)
 	@Temporal(TemporalType.TIMESTAMP)
+	//this is the date a student first attempted a test.
+	//this date is expected not to change after its first creation
 	private Date dateStarted;
 	
 	
 	@Column(updatable = true)
 	@Temporal(TemporalType.TIMESTAMP)
-	private Date lastResumedOn;//last date the student resumed on this test
+	//last date since the student resumed on this test
+	//this field is always updatable based on how frequent the student retries
+	private Date lastResumedOn;
 	
 	
-	//many-to-one relationship with the test object; a test can have many students
+	
 	@ManyToOne
 	@JoinColumn(name  = "test_id")
+	//many-to-one relationship with the test object; a test can be taken by multiple students
 	private Test test;
 	
-	//many to one relationship between the student_test and Student table; a Student can take multiple tests
+	
 	@ManyToOne
 	@JoinColumn(name = "student_id")
+	//many to one relationship between the student_test and Student table; a Student can take multiple tests
 	private Student student;
 	
     @OneToMany(cascade =CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval= true, mappedBy = "studentTest")
+    //options(likely answers) selected by a student while taking test  
     private Set<StudentSelectedOption> studentSelectedOptions;
     
     

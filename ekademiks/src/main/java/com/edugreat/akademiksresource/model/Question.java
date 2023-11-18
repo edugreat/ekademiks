@@ -36,25 +36,31 @@ public class Question {
 	
 	@Column
 	@NotNull(message = "Required field for question number is missing")
+	//question number
 	private int questionNumber;
 	
 	@Column
 	@NotNull(message = "Required field for question topic is missing")
-	private String topic;//topic for which this question was asked
+	//topic for which this question was asked
+	private String topic;
 	
 	@Column
 	@NotNull(message = "Required field for question text is missing")
-	private String questionText;//the actual problem 
+	//the actual problem being asked 
+	private String questionText;
 	
 	@Column
 	@NotNull(message = "Required field for question answer is missing")
+	//the answer to the question
 	private String answer;
 	
 	@ManyToOne(optional = true)
 	@JoinColumn(name = "test_id")
+	//information about the test in which this question was test
 	private Test test;
 	
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "question")
+	//options(likely answers) associated with this question
 	private Set<Option> options;
 	
 	

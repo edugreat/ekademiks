@@ -27,7 +27,7 @@ import lombok.Setter;
 @Table
 @Data
 @Builder
-//models the options for question asked in an academic test
+//models information about the option(likely answer) for a particular question asked in an academic test
 public class Option {
 	
 	@Column(updatable = false)
@@ -38,18 +38,22 @@ public class Option {
 	
 	@Column
 	@NotNull(message = "Required field for option text is missing")
-	private String optionText;//an option which is probably the correct answer
+	//an option which is probably the correct answer
+	private String optionText;
 	
 	@Enumerated(EnumType.STRING)
 	@Column
 	@NotNull(message = "Required field for option letter is missing")
-	private Options optionLetter;//the option letter(e.g 'A','B','C','D')
+	//the option letter(e.g 'A','B','C','D')
+	private Options optionLetter;
 	
 	@ManyToOne
 	@JoinColumn(name = "question_id")
+	//information about the question a particular option is associated to
 	private Question question;
 	
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "option")
+	//bidirectional relationship with the information about the students and their selected options
 	private Set<StudentSelectedOption> studentSelectedOptions;
 	
 	

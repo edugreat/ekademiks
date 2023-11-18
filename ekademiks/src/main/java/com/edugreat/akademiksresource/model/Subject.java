@@ -25,7 +25,7 @@ import lombok.Setter;
 @Table
 @Data
 @Builder
-//models the academic subject for an online test
+//this class models an academic subject for an online test
 public class Subject {
 	
 	
@@ -39,16 +39,18 @@ public class Subject {
  	@NotNull(message = "Required field for subject is missing")
 	private String subjectName;
 	
-	//bidirectional relationship with Level
+	//bidirectional relationship with Level.
+	//the level is the academic level this subject belongs to
 	@ManyToOne
 	@JoinColumn(name = "level_id")
 	private Level level;
 	
 	//one to many relationship with test object
+	//each academic subject is expected to feature in one of more academic tests
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "subject")
 	private Set<Test> tests;
 	
-	//convenience method
+	//convenience method to associate a test with a subject
 	public void addTest(Test test) {
 		
 		if(tests == null)

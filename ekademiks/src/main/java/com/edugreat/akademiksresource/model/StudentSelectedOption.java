@@ -20,7 +20,8 @@ import lombok.Setter;
 @Data
 @Builder
 
-//models a student who's finished an academic test and information about the informations selected
+//models a student who's finished an academic test and the 
+//information about the options(likely answers) they selected
 public class StudentSelectedOption {
 	
 	@Column
@@ -29,19 +30,23 @@ public class StudentSelectedOption {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	//boolean variable that asserts the correctness of the option selected by the student
+	
 	@Column
+	
 	@NotNull(message = "Required field missing! Can't assert the correctness of selected options")
+	//boolean variable that asserts the correctness of the option selected by the student
 	private boolean isCorrect;
 
 	@ManyToOne
 	@JoinColumn(name = "option_id")
+	//the option that student selected, identified by its ID
 	private Option option;
 	
 	
-	//many-to-one association with the student_test object
+	
 	@ManyToOne
 	@JoinColumn(name = "student_test_id")
+	//many-to-one association with the student_test object
 	private StudentTest studentTest;
 	
 }

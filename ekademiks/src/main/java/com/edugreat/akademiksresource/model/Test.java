@@ -41,25 +41,31 @@ public class Test {
 	
 	@Column(updatable = false)
 	@NotNull(message = "Required field for test duration is missing")
-	private int duration; //maximum duration for this test
+	//expected duration for this test
+	private int duration; 
 	
-	//many to one relationship with subject object
+	
 	@ManyToOne
 	@JoinColumn(name = "subject_id")
+	//many to one relationship with subject object
 	private Subject subject;
 	
-	//one to many relationship with the question object
+	
 	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, mappedBy = "test")
+	//one to many relationship with the question object.
+	//Every test has one or more questions associated with
 	private Set<Question> questions;
 	
 	//many to one association with student_test object
 	@OneToMany(mappedBy = "test", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
 	private Set<StudentTest> studentTests;
 	
-	//many-to-one relationship with level
+	
 	
 	@ManyToOne
 	@JoinColumn(name = "level_id")
+	//many-to-one relationship with level
+	//each academic level has multiple test associated with it
 	private Level level;
 	
 	

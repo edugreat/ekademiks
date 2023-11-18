@@ -39,14 +39,17 @@ public class Level {
 	@Column
 	@Enumerated(EnumType.STRING)
 	@NotNull(message = "Required field, category is missing")
+	//each academic level has a category it belongs to.
 	private Levels category;
 	
-	//one-to-one relationship with subject
+	
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "level")
+	//the subjects that belong to this academic level
 	private Set<Subject> subjects;
 	
 	//one-to-many relationship with test
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "level")
+	//information about the tests in this academic level
 	private Set<Test> tests;
 	
 	
