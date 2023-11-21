@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.model;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -11,7 +12,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
@@ -19,14 +19,17 @@ import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 @Entity
-@Table
+@Table(name ="student_test")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 
 //models a student who'd participated in an academic test
 public class StudentTest {
@@ -56,21 +59,20 @@ public class StudentTest {
 	private Date lastResumedOn;
 	
 	
-	
-	@ManyToOne
-	@JoinColumn(name  = "test_id")
-	//many-to-one relationship with the test object; a test can be taken by multiple students
-	private Test test;
-	
-	
-	@ManyToOne
-	@JoinColumn(name = "student_id")
-	//many to one relationship between the student_test and Student table; a Student can take multiple tests
-	private Student student;
-	
-    @OneToMany(cascade =CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval= true, mappedBy = "studentTest")
+    @OneToMany(cascade =CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval= true)
+    @JoinColumn(name = "student_test_id")
     //options(likely answers) selected by a student while taking test  
     private Set<StudentSelectedOption> studentSelectedOptions;
+    
+    
+    //convenience method 
+    public void addStudentSelectedOption(StudentSelectedOption selectedOption) {
+    	if(this.studentSelectedOptions == null)
+    		this.studentSelectedOptions = new HashSet<StudentSelectedOption>();
+    	
+    	this.studentSelectedOptions.add(selectedOption);
+    	
+    }
     
     
 }

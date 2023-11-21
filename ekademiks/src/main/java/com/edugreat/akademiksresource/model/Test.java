@@ -11,20 +11,26 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import com.edugreat.akademiksresource.views.TestView;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table
+@Table(name = "test")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 //models the academic test
 public class Test {
 	
@@ -33,10 +39,12 @@ public class Test {
 	@Setter(AccessLevel.NONE)
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@JsonView(TestView.class)
 	private Integer id;
 	
 	@Column
 	@NotNull(message = "Required field for test name is missing")
+	@JsonView(TestView.class)
 	private String testName;//the name for this particular test
 	
 	@Column(updatable = false)
@@ -45,29 +53,16 @@ public class Test {
 	private int duration; 
 	
 	
-	@ManyToOne
-	@JoinColumn(name = "subject_id")
-	//many to one relationship with subject object
-	private Subject subject;
-	
-	
-	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, mappedBy = "test")
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+	@JoinColumn(name = "test_id")
 	//one to many relationship with the question object.
 	//Every test has one or more questions associated with
 	private Set<Question> questions;
 	
 	//many to one association with student_test object
-	@OneToMany(mappedBy = "test", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	@JoinColumn(name = "test_id")
 	private Set<StudentTest> studentTests;
-	
-	
-	
-	@ManyToOne
-	@JoinColumn(name = "level_id")
-	//many-to-one relationship with level
-	//each academic level has multiple test associated with it
-	private Level level;
-	
 	
 	
 	//convenience method

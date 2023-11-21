@@ -11,20 +11,26 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import com.edugreat.akademiksresource.views.QuestionView;
+import com.fasterxml.jackson.annotation.JsonView;
+
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table
+@Table(name = "question")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 //models a question for an academic test exercise
 public class Question {
 	
@@ -32,20 +38,24 @@ public class Question {
 	@Setter(AccessLevel.NONE)
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@JsonView(QuestionView.class)
 	private Integer id;
 	
 	@Column
 	@NotNull(message = "Required field for question number is missing")
+	@JsonView(QuestionView.WithQuestionTextAndNumber.class)
 	//question number
 	private int questionNumber;
 	
 	@Column
 	@NotNull(message = "Required field for question topic is missing")
+	@JsonView(QuestionView.class)
 	//topic for which this question was asked
 	private String topic;
 	
 	@Column
 	@NotNull(message = "Required field for question text is missing")
+	@JsonView(QuestionView.WithQuestionTextAndNumber.class)
 	//the actual problem being asked 
 	private String questionText;
 	
@@ -54,12 +64,10 @@ public class Question {
 	//the answer to the question
 	private String answer;
 	
-	@ManyToOne(optional = true)
-	@JoinColumn(name = "test_id")
-	//information about the test in which this question was test
-	private Test test;
 	
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "question")
+	
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	@JoinColumn(name = "question_id")
 	//options(likely answers) associated with this question
 	private Set<Option> options;
 	

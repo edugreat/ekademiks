@@ -10,20 +10,25 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table
+@Table(name = "student")
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 
 //models a student taking an academic test
 public class Student {
@@ -62,7 +67,8 @@ public class Student {
 	private String password;
 	
 	
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "student")
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	@JoinColumn(name = "question_id")
 	//one to many relationship with the student_test
 	//a student can have more than tests they have taken
 	private Set<StudentTest> studentTest;

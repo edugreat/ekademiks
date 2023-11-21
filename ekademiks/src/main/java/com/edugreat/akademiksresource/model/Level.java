@@ -19,14 +19,18 @@ import javax.validation.constraints.NotNull;
 
 import enums.Levels;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 //models the academic level(example 'SENIOR' or 'JUNION) suitable for an online test
 public class Level {
 	
@@ -43,12 +47,15 @@ public class Level {
 	private Levels category;
 	
 	
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY, mappedBy = "level")
+	
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "level_id")
 	//the subjects that belong to this academic level
 	private Set<Subject> subjects;
 	
-	//one-to-many relationship with test
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true, mappedBy = "level")
+	
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	@JoinColumn(name = "level_id")
 	//information about the tests in this academic level
 	private Set<Test> tests;
 	
