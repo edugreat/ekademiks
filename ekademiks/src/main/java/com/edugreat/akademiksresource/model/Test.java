@@ -1,85 +1,100 @@
 package com.edugreat.akademiksresource.model;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
-import com.edugreat.akademiksresource.views.TestView;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
-@Table(name = "test")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-//models the academic test
+@Table
 public class Test {
 	
 	
-	@Column(updatable = false)
-	@Setter(AccessLevel.NONE)
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@JsonView(TestView.class)
 	private Integer id;
 	
-	@Column
-	@NotNull(message = "Required field for test name is missing")
-	@JsonView(TestView.class)
-	private String testName;//the name for this particular test
+	@Column(nullable = false)
+	private String testName;
 	
-	@Column(updatable = false)
-	@NotNull(message = "Required field for test duration is missing")
-	//expected duration for this test
-	private int duration; 
-	
-	
-	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@JoinColumn(name = "test_id")
-	//one to many relationship with the question object.
-	//Every test has one or more questions associated with
-	private Set<Question> questions;
+	private Set<Question> questions = new HashSet<>();
 	
-	//many to one association with student_test object
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-	@JoinColumn(name = "test_id")
-	private Set<StudentTest> studentTests;
-	
-	
-	//convenience method
-	public void addQuestion(Question question) {
-		
-		if(questions == null)
-			questions = new HashSet<>();
-		questions.add(question);
+	public Subject getSubject() {
+		return subject;
 	}
 
-	//convenience method
-	public void addStudentTest(StudentTest studentTest) {
+	public void setSubject(Subject subject) {
+		this.subject = subject;
+	}
+
+	@Column
+	private long duration;
+	
+	@ManyToOne
+	@JoinColumn(name = "subject_id", nullable = false)
+	private Subject subject;
+	
+	public Test() {}
+
+	public Test(String testName, Set<Question> questions, long duration) {
+		this.testName = testName;
+		this.questions = questions;
+		this.duration = duration;
+	}
+
+	public Test(String testName, long duration) {
+		this.testName = testName;
+		this.duration = duration;
+	}
+
+	public String getTestName() {
+		return testName;
+	}
+
+	public void setTestName(String testName) {
+		this.testName = testName;
+	}
+
+	public Set<Question> getQuestions() {
+		return Collections.unmodifiableSet(questions);
+	}
+
+	public void setQuestions(Set<Question> questions) {
+		this.questions = questions;
+	}
+
+	public long getDuration() {
+		return duration;
+	}
+
+	public void setDuration(long duration) {
+		this.duration = duration;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	
+	public void addQuestion(Question question) {
 		
-		if(this.studentTests == null)
-			this.studentTests = new HashSet<>();
-		
-		this.studentTests.add(studentTest);
+		questions.add(question);
 		
 	}
+	
+
 }

@@ -1,7 +1,7 @@
 package com.edugreat.akademiksresource.model;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -11,57 +11,90 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
-import com.edugreat.akademiksresource.views.SubjectView;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
-@Table(name = "subject")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-//this class models an academic subject for an online test
+@Table
 public class Subject {
 	
-	
-	@Column
-	@Setter(AccessLevel.NONE)
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@JsonView(SubjectView.class)//forms part of the object view for object serialization
 	private Integer id;
 	
-	@Column
- 	@NotNull(message = "Required field for subject is missing")
-	@JsonView(SubjectView.class)//forms part of the object view for object serialization
+	@Column(nullable = false, unique = true)
 	private String subjectName;
 	
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "level_id",nullable = false)
+	private Level level;
+
+	@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.LAZY)
+	private List<Test> tests = new ArrayList<>();
 	
 	
-	//one to many relationship with test object
-	//each academic subject is expected to feature in one of more academic tests
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-	@JoinColumn(name = "subject_id")
-	private Set<Test> tests;
+	public Subject() {}
 	
-	//convenience method to associate a test with a subject
-	public void addTest(Test test) {
-		
-		if(tests == null)
-			tests = new HashSet<>();
-		tests.add(test);
+	public Subject(String subjectName, Level levelId) {
+		this.subjectName = subjectName;
+		this.level = levelId;
+	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	public String getSubjectName() {
+		return subjectName;
+	}
+
+	public void setSubjectName(String subjectName) {
+		this.subjectName = subjectName;
+	}
+
+	public Level getLevel() {
+		return level;
+	}
+
+	public void setLevel(Level levelId) {
+		this.level = levelId;
 	}
 	
+	
+	
+	public List<Test> getTest() {
+		return tests;
+	}
 
+	public void setTest(List<Test> tests) {
+		this.tests = tests;
+	}
+
+	
+	//convenience method to add test to a list tests
+	public void addTest(Test test) {
+		
+		tests.add(test);
+		
+		
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		
+		if(this == o) return true;
+		
+		if(this == null || getClass() != o.getClass()) return false;
+		
+		Subject that = (Subject)o;
+		
+		return subjectName.equals(that.getSubjectName());
+		
+	}
+	
 }
