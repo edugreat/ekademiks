@@ -19,7 +19,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
-@Table
+@Table(name = "test")
 public class Test {
 	
 	
@@ -30,8 +30,7 @@ public class Test {
 	@Column(nullable = false)
 	private String testName;
 	
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	@JoinColumn(name = "test_id")
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "test", orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Question> questions = new HashSet<>();
 	
 	public Subject getSubject() {
@@ -92,7 +91,12 @@ public class Test {
 	
 	public void addQuestion(Question question) {
 		
-		questions.add(question);
+		//TODO: Would provide an exception to handle attempt to add null question 
+		if(question!= null) questions.add(question);
+		
+		//if the question object has already been associated with a test, we shouldn't re-associate it 
+		if(question.getTest() != null) question.setTest(this);
+		
 		
 	}
 	

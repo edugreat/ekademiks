@@ -17,6 +17,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -34,9 +35,20 @@ public class StudentTest {
 	
 	
 	//tests which the student has taken
+	//A student may or may not have taken a test. So the StudentTest may have
+	//zero or more tests the student has taken
 	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "test_id", nullable = false)
+	@JoinColumn(name = "student_test_id", nullable = true)
 	private Set<Test> tests = new HashSet<>();
+	
+	
+	
+	
+	//references the student. When a student object is created, it's 
+	//id is referenced in the StudentTest table, whether they've taken a test or not
+	@OneToOne
+	@JoinColumn(name = "student_id", nullable = false)
+	private Student student;
 	
 	// a collection of true and or false showing the number of options that are correct or wrong
 	@ElementCollection

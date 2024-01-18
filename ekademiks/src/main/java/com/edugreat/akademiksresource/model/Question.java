@@ -13,9 +13,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import com.edugreat.akademiksresource.embeddable.Options;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @Entity
@@ -34,6 +36,11 @@ public class Question {
 	
 	@Column(nullable = false)
 	private String answer;
+	
+	@JsonIgnore
+	@ManyToOne
+	@JoinColumn(name = "test_id", nullable = false)
+	private Test test;
 	
 	@ElementCollection
 	@CollectionTable(name = "options", joinColumns = @JoinColumn(name = "question_id"))
@@ -73,6 +80,33 @@ public class Question {
 	}
 	
 	
+	
+	//convenience method that sets options for a given question
+	public void addOption(Options option) {
+		
+		this.options.add(option);
+		
+		
+	}
+	
+
+	public Set<Options> getOptions() {
+		return options;
+	}
+
+	public void setOptions(Set<Options> options) {
+		this.options = options;
+	}
+
+	
+	
+	public void setTest(Test test) {
+		this.test = test;
+	}
+
+	public Test getTest() {
+		return test;
+	}
 
 	@Override
 	public boolean equals(Object o) {

@@ -15,6 +15,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table
 public class Subject {
@@ -26,6 +28,7 @@ public class Subject {
 	@Column(nullable = false, unique = true)
 	private String subjectName;
 	
+	@JsonIgnore
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "level_id",nullable = false)
 	private Level level;

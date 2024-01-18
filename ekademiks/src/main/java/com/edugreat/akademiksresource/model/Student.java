@@ -40,8 +40,8 @@ public class Student {
 		this.password = password;
 	}
 
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-	@JoinTable(name = "student_user_test")
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "student", fetch = FetchType.LAZY, orphanRemoval = true)
+	//@JoinTable(name = "student_user_test")
 	private List<StudentTest> studentTests = new ArrayList<>();
 	
 	
