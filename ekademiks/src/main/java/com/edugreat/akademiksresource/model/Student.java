@@ -1,16 +1,14 @@
 package com.edugreat.akademiksresource.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -40,9 +38,8 @@ public class Student {
 		this.password = password;
 	}
 
-	@OneToMany(cascade = CascadeType.ALL, mappedBy = "student", fetch = FetchType.LAZY, orphanRemoval = true)
-	//@JoinTable(name = "student_user_test")
-	private List<StudentTest> studentTests = new ArrayList<>();
+	@OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "student")
+	private Set<StudentTest> studentTests = new HashSet<>();
 	
 	
 	public String getName() {
@@ -71,6 +68,24 @@ public class Student {
 
 	public Integer getId() {
 		return id;
+	}
+
+	public Set<StudentTest> getStudentTests() {
+		return studentTests;
+	}
+
+	public void setTests(Set<StudentTest> studentTests) {
+		this.studentTests = studentTests;
+	}
+	
+	
+		//convenience method
+	public void addStudentTest(StudentTest studentTest) {
+		
+		if(studentTest != null) {
+			this.studentTests.add(studentTest);
+		}
+		
 	}
 	
 	

@@ -11,6 +11,7 @@ import org.hibernate.annotations.Parent;
 
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.model.Question;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Embeddable
 public class Options {
@@ -23,6 +24,7 @@ public class Options {
 	private OptionLetter letter;
 	
 	@Parent
+	@JsonIgnore
 	private Question question;
 	
 	public Options() {}
@@ -48,7 +50,6 @@ public class Options {
 		this.letter = letter;
 	}
 
-	
 	
 
 	public Question getQuestion() {

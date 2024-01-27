@@ -1,28 +1,36 @@
 package com.edugreat.akademiksresource.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.CreationTimestamp;
+import com.edugreat.akademiksresource.enums.OptionLetter;
 
-//object that models a student who has taken one or more tests
+/*
+ * A StudentTest entity is an intermediate entity between the Student entity and the Test entity.
+ * For every student who has taken one or more tests, their information along with the test taken
+ * should persisted in this table. 
+ * The student_test table can hold a reference to one student and many tests taken taken.
+ * It can also hold the reference to a particular test and many students who have taken.
+ * Therefore StudentTest should've the Many-To-Many relationships with the respective Student and Test
+ * entities.
+ * For the purpose of allowing a particular student take a particular test multiple times, we would
+ * declare the field to store the time each test was taken by a student, so we can pull different
+ * performances for different attempt.
+ */
 
 @Entity
 @Table(name = "student_test")
@@ -32,58 +40,46 @@ public class StudentTest {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	
-	
-	//tests which the student has taken
-	//A student may or may not have taken a test. So the StudentTest may have
-	//zero or more tests the student has taken
-	@OneToMany(fetch = FetchType.LAZY)
-	@JoinColumn(name = "student_test_id", nullable = true)
-	private Set<Test> tests = new HashSet<>();
-	
-	
-	
-	
-	//references the student. When a student object is created, it's 
-	//id is referenced in the StudentTest table, whether they've taken a test or not
-	@OneToOne
-	@JoinColumn(name = "student_id", nullable = false)
-	private Student student;
-	
-	// a collection of true and or false showing the number of options that are correct or wrong
-	@ElementCollection
-	@CollectionTable(name = "selected_option")
-	private Collection<Boolean> selectedOptions = new ArrayList<>();
-	
-	
-	@Column(name = "started_on", updatable = false, nullable = false)
-	@CreationTimestamp
-	private LocalDate startedOn;
-	
-	@Column(name = "score", nullable = false)
+	//score made by the student in the test.
+	//the score for each test can not be updated or manipulated
+	@Column(nullable = false, updatable = false)
 	private double score;
 	
+	//time the test was started or taken as received from the ui framework.
+	//This time is read only(can not be updated once created)
+	@Column(name = "_when",nullable = false, updatable = false)
+	private  LocalDateTime when;
+	
+	@ManyToOne
+	@JoinColumn(name = "student_id", nullable = false, updatable = false)
+	private  Student student;
+	
+	@ManyToOne
+	@JoinColumn(name = "test_id", nullable = false, updatable = false)
+	private  Test test;
+	
+	
+	//student's response to academic test questions
+	@ElementCollection(targetClass = OptionLetter.class)
+	@Enumerated(EnumType.STRING)
+	@CollectionTable(name = "student_response", 
+	joinColumns = @JoinColumn(name = "student_test_id"))
+	@Column(name = "selected_option")
+	private List<OptionLetter> studentResponses = new ArrayList<>();
+	
 	public StudentTest() {}
+	
+	
+	
+	
 
-	public StudentTest(LocalDate startedOn, double score) {
-		this.startedOn = startedOn;
+	public StudentTest(double score, LocalDateTime when, Student student, Test test,
+			List<OptionLetter> studentResponses) {
 		this.score = score;
-	}
-
-	public Set<Test> getTests() {
-		return Collections.unmodifiableSet(tests);
-	}
-
-	public void setTests(Set<Test> tests) {
-		this.tests = tests;
-	}
-
-	public LocalDate getStartedOn() {
-		return startedOn;
-	}
-
-	public void setStartedOn(LocalDate startedOn) {
-		this.startedOn = startedOn;
+		this.when = when;
+		this.student = student;
+		this.test = test;
+		this.studentResponses = studentResponses;
 	}
 
 	public double getScore() {
@@ -94,31 +90,77 @@ public class StudentTest {
 		this.score = score;
 	}
 
+	public LocalDateTime getWhen() {
+		return when;
+	}
+
+	
+	
+
 	public Integer getId() {
 		return id;
 	}
-	
-	
-	
-	
-	public Collection<Boolean> getSelectedOptions() {
-		return selectedOptions;
+
+	public Student getStudent() {
+		return student;
 	}
 
-	public void setSelectedOptions(Collection<Boolean> selectedOptions) {
-		this.selectedOptions = selectedOptions;
+	public void setStudent(Student student) {
+		this.student = student;
 	}
 
-	//convenience method to add tests taken by a student
-	public void addTest(Test test) {
-		
-		this.tests.add(test);
+	public Test getTest() {
+		return test;
 	}
 
-	//convenience method to set student selected options(logical values only)
-	public void addSelectedOption(boolean selected) {
+	public void setTest(Test test) {
+		this.test = test;
+	}
+	
+	
+	
+
+	public List<OptionLetter> getStudentResponse() {
+		return studentResponses;
+	}
+
+	
+	
+	
+	@Override
+	public int hashCode() {
 		
-		this.selectedOptions.add(selected);
+		 final int value = 35;
+	
+		int x = 31 * (value + (id == null ? 0 : id.hashCode()));
+		
+		
+		return x;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		
+		if(obj == null) return false;
+		
+		if(getClass() != obj.getClass()) return false;
+		
+		StudentTest that = (StudentTest)obj;
+		
+		if(id == null) {
+			
+			
+			if(that.getId() != null) return false;
+			
+		} return id == that.getId();
+		
+		
 		
 	}
+	
+	
+	
+	
 }
+
+

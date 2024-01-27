@@ -6,7 +6,6 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -33,7 +32,7 @@ public class Subject {
 	@JoinColumn(name = "level_id",nullable = false)
 	private Level level;
 
-	@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "subject", cascade = CascadeType.ALL)
 	private List<Test> tests = new ArrayList<>();
 	
 	
@@ -82,7 +81,12 @@ public class Subject {
 	//convenience method to add test to a list tests
 	public void addTest(Test test) {
 		
+		//if this test is not null, and has't been associated to any Subject, add it the set of tests for this Subject
+		if(test != null && test.getSubject() == null) {
+			
 		tests.add(test);
+		test.setSubject(this);
+		}
 		
 		
 	}

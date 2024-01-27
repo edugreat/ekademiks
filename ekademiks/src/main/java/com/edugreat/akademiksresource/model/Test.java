@@ -5,9 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -33,6 +31,19 @@ public class Test {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "test", orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Question> questions = new HashSet<>();
 	
+	@OneToMany(mappedBy = "test", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	private Set<StudentTest> studentTests = new HashSet<>();
+	
+	
+	
+	@Column
+	private long duration;
+	
+	@ManyToOne
+	@JoinColumn(name = "subject_id", nullable = false)
+	private Subject subject;
+	
+	
 	public Subject getSubject() {
 		return subject;
 	}
@@ -41,12 +52,7 @@ public class Test {
 		this.subject = subject;
 	}
 
-	@Column
-	private long duration;
 	
-	@ManyToOne
-	@JoinColumn(name = "subject_id", nullable = false)
-	private Subject subject;
 	
 	public Test() {}
 
@@ -85,20 +91,44 @@ public class Test {
 		this.duration = duration;
 	}
 
-	public void setId(Integer id) {
-		this.id = id;
+	public Integer getId() {
+		
+		return this.id;
 	}
 	
+	public Integer getTestId() {
+		return id;
+	}
+
 	public void addQuestion(Question question) {
 		
 		//TODO: Would provide an exception to handle attempt to add null question 
-		if(question!= null) questions.add(question);
 		
-		//if the question object has already been associated with a test, we shouldn't re-associate it 
-		if(question.getTest() != null) question.setTest(this);
-		
+		//if this question is not null and hasn't been associated to any test object,
+		//add it the set of questions asked for this test, then do the bidirectional association
+		if(question != null && question.getTest() == null) {
+			questions.add(question);
+			question.setTest(this);
+		}
 		
 	}
-	
 
+	public Set<StudentTest> getStudentTests() {
+		return studentTests;
+	}
+
+	public void setStudentTests(Set<StudentTest> studentTests) {
+		this.studentTests = studentTests;
+	}
+
+	//convenience method
+	public void addStudentTest(StudentTest studentTest) {
+		
+		if(studentTest != null) {
+			
+			this.studentTests.add(studentTest);
+		}
+	}
+
+	
 }
