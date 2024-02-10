@@ -3,26 +3,31 @@ package com.edugreat.akademiksresource.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import javax.validation.Valid;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 
 //Utility class for the Question object
 public class QuestionUtil {
 	
-	@Pattern(regexp = "^[1-9][0-9]+$", message = "question number not supported!")
+	@Digits(integer = 2, fraction = 0,  message = "Question number not supported!")
+	@Min(value = 1, message = "Question number must be greater than 0")
+	@Max(value = 50, message = "Question number must not be greater than 50")
 	private int questionNumber;
 	
-	@NotNull(message = "expected question text not found")
-	@Pattern(regexp = "\\b[\\w\\s\\d!@#$%^&*()-_+=,.;:]+\\b")
-	private String text;
+	@NotEmpty(message = "expected question text not found")
+		private String text;
 	
-	@NotNull(message = "Expected property answer not found")
-	@Pattern(regexp = "\\b[\\w\\s\\d!@#$%^&*()-_+=,.;:]+\\b")
+	@NotEmpty(message = "Expected property answer not found")
 	private String answer;
 	
+	@Valid
+	@NotEmpty(message = "Options have not been provided")
 	private List<OptionUtil> options = new ArrayList<>();
-	public QuestionUtil(int questioNumber, String text, String answer, List<OptionUtil> options) {
-		this.questionNumber = questioNumber;
+	public QuestionUtil(int questionNumber, String text, String answer, List<OptionUtil> options) {
+		this.questionNumber = questionNumber;
 		this.text = text;
 		this.answer = answer;
 		this.options = options;
@@ -39,22 +44,25 @@ public class QuestionUtil {
 	public List<OptionUtil> getOptions() {
 		return options;
 	}
-	public void setQuestionNumber(int questioNumber) {
-		this.questionNumber = questioNumber;
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
 	}
-	public void setText(String text) {
-		this.text = text;
-	}
-	public void setAnswer(String answer) {
+	@Override
+	public boolean equals(Object o) {
 		
-		if(answer.trim().length() == 0) {
-			throw new IllegalArgumentException("Answer not provided!");
-		}
-		this.answer = answer;
+		if(this == o) return true;
+		if(o == null ||  getClass()!= o.getClass()) return false;
+		
+		QuestionUtil that = (QuestionUtil)o;
+		return this.questionNumber == that.getQuestionNumber();
+		
+		
 	}
-	public void setOptions(List<OptionUtil> options) {
-		this.options = options;
-	}
+	
+	//Override the equals and hash code so that no two questions in a test can have same question numbers
+	
 	
 	
 

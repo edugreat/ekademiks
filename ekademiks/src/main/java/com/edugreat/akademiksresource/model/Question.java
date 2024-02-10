@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table
-public class Question {
+public class Question implements Comparable<Question>{
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -128,6 +128,16 @@ public class Question {
 	public int hashCode() {
 		
 		return Objects.hash(questionNumber);
+	}
+
+	//for sorting capability
+	@Override
+	public int compareTo(Question o) {
+		
+		if(this.getQuestionNumber() < o.getQuestionNumber()) return -1;
+		else if(this.getQuestionNumber() == o.getQuestionNumber()) return 0;
+		
+		return 1;
 	}
 
 }

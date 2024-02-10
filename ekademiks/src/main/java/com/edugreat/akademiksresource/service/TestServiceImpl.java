@@ -1,9 +1,8 @@
 package com.edugreat.akademiksresource.service;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -14,11 +13,14 @@ import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.embeddable.Options;
+import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
+import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
+import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.OptionUtil;
 import com.edugreat.akademiksresource.util.QuestionUtil;
 import com.edugreat.akademiksresource.util.TestUtil;
@@ -45,17 +47,29 @@ public class TestServiceImpl implements TestInterface{
 	@Override
 	public void setTest(TestUtil testUtil) {
 		
+		//check if test name exists in the database
+		Test t = testDao.findByTestName(testUtil.getTestName());
+		if(t  != null) {
+			System.out.println("test not null");
+			
+			throw new AcademicException(t.getTestName()+" already exists", 
+					Exceptions.TEST_ALREADY_EXISTS.name());
+		}
+		
 		//create a new Test object and populate its fields from the TestUtil object
 		Test test = new Test(testUtil.getTestName(), testUtil.getDuration());
 		
 		//get the subject associated with this question
 		Subject subject = subjectDao.findBySubjectName(testUtil.getSubjectName());
+		//throw exception if the subject o which the test is to associated does not exist
+		if(subject == null) {
+			throw new AcademicException("subject, '"+testUtil.getSubjectName()+ "' does not exist", Exceptions.RECORD_NOT_FOUND.name());
+		}
 		
-		
-		//associate the retrieved Subject object to the new created Test object
+		//associate the retrieved Subject object to the newly created Test object
 		subject.addTest(test);
 		//get the Questions asked on this test
-		List<QuestionUtil> questions = testUtil.getQuestions();
+		Set<QuestionUtil> questions = testUtil.getQuestions();
 		
 		
 		for(QuestionUtil q: questions) {
@@ -80,27 +94,28 @@ public class TestServiceImpl implements TestInterface{
 		
 		Optional<Test> optional = testDao.findById(id);
 		
-		if(optional.isPresent())  return testDao.findById(id).get();
+		if(!optional.isPresent()) {
+			
+			throw new AcademicException("Record not found for test id: "+id, Exceptions.RECORD_NOT_FOUND.name());
+			
+		}
+			
+			
+			return testDao.findById(id).get();
 		
-		//TODO: Throw exception for non existent object
 		
-		return null;
 	}
 
 
 	@Override
-	public Collection<Question> getQuestions(Integer testId) {
-		Collection<Question> list = new ArrayList<>();
+	public TestWrapper getQuestions(Integer testId) {
+		TestWrapper wrapper = null;;
 		//we may need some attributes of this test object in the future(eg test duration etc)
 		Test test = getTest(testId);
 		
-		//TODO: remove the if statement in the future when exception handling for getTest(id) has been implemented
-		if(test != null) {
-			list = test.getQuestions();
-		}
+		 wrapper = new TestWrapper(test.getQuestions());
 		
-		
-		return list;
+		return wrapper;
 	}
 
 

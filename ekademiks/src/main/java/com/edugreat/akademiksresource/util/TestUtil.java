@@ -1,9 +1,11 @@
 package com.edugreat.akademiksresource.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -19,8 +21,9 @@ public class TestUtil {
 	@Pattern(regexp = "\\b\\w+\\b\\s*", message = "test name not supported")
 	private String testName;
 	
-	@NotNull(message = "property questions missing")
-	private List<QuestionUtil> questions = new ArrayList<>();
+	@Valid
+	@NotEmpty(message = "property questions, missing or empty")
+	private Set<QuestionUtil> questions = new HashSet<>();
 	
 	
 	@Min(value = 30, message = "duration must be greater than or equal to 30 mins")
@@ -28,7 +31,7 @@ public class TestUtil {
 	
 	
 	@NotNull(message = "property subject name missing")
-	@Pattern(regexp = "\\b\\w+\\s*\\w+\\b")
+	@Pattern(regexp = "^[a-zA-Z\\s]+$", message = "subject name no acceptable")
 	//subject that this test is to be associated to; retrievable from the database
 	private String subjectName;
 
@@ -36,49 +39,22 @@ public class TestUtil {
 		return testName;
 	}
 
-	public void setTestName(String testName) {
-		
-		if(testName.trim().length() == 0) {
-			throw new IllegalArgumentException("blank test name not allowed!");
-		}
-		
-		this.testName = testName.trim();
-	}
-
-	public List<QuestionUtil> getQuestions() {
-		return questions;
-	}
-
-	public void setQuestions(List<QuestionUtil> questions) {
-		this.questions = questions;
-	}
-
+	
 	public long getDuration() {
 		return duration;
 	}
 
-	public void setDuration(long duration) {
-		
-		
-		this.duration = duration;
-	}
+	
 
 	public String getSubjectName() {
 		return subjectName;
 	}
 
-	public void setSubjectName(String subjectName) {
+
+	public Set<QuestionUtil> getQuestions() {
 		
-		if(subjectName.trim().length() == 0) {
-			throw new IllegalArgumentException("blank subject name not allowed!");
-		}
-		
-		this.subjectName = subjectName.trim();
+		return questions;
 	}
-	
-	
-	
-	
-	
+
 
 }

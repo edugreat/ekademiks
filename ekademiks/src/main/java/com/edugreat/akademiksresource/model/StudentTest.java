@@ -16,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.Pattern;
 
 import com.edugreat.akademiksresource.enums.OptionLetter;
 
@@ -44,6 +45,11 @@ public class StudentTest {
 	//the score for each test can not be updated or manipulated
 	@Column(nullable = false, updatable = false)
 	private double score;
+	
+	//student's grade after a test
+	@Column(updatable = false)
+	@Pattern(regexp = "^\\d+(\\.\\d+)?%$")
+	private String grade;
 	
 	//time the test was started or taken as received from the ui framework.
 	//This time is read only(can not be updated once created)
@@ -86,9 +92,20 @@ public class StudentTest {
 		return score;
 	}
 
-	public void setScore(double score) {
-		this.score = score;
+	
+	
+	public String getGrade() {
+		return grade;
 	}
+
+
+	public void setGrade(String grade) {
+		this.grade = grade + "%";
+	}
+
+
+
+
 
 	public LocalDateTime getWhen() {
 		return when;
