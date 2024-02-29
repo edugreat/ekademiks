@@ -1,5 +1,9 @@
 package com.edugreat.akademiksresource.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,10 +11,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,6 +26,7 @@ import com.edugreat.akademiksresource.contract.StudentService;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.TestDao;
+import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
@@ -29,22 +37,85 @@ import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
+import lombok.RequiredArgsConstructor;
+
 //implementation for the StudentService interface which declares contracts for the Students
 @Service
+@RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
 
-	private TestDao testDao;
-	private StudentDao studentDao;
-	private StudentTestDao studentTestDao;
+	private final TestDao testDao;
+	private final StudentDao studentDao;
+	private final StudentTestDao studentTestDao;
+	private final ModelMapper mapper;
 
 	private List<OptionLetter> responses = new ArrayList<>();
 
-	public StudentServiceImpl(TestDao testDao, StudentDao studentDao, StudentTestDao studentTestDao) {
-		this.testDao = testDao;
-		this.studentDao = studentDao;
-		this.studentTestDao = studentTestDao;
+	
+	
+	//registers new student and return student dto thereafter
+	@Override
+	public StudentDTO registerStudent(StudentDTO dto, String password) throws NoSuchAlgorithmException {
+	
+		
+		//extracts the email field in the dto
+		final String email = dto.getEmail();
+		
+		//extract the phone number field in the dto
+		final String mobile = dto.getPhoneNumber();
+		
+		//checks if the record already exist in the database
+		final boolean exists = (email == null ? studentDao.existsByMobile(mobile) : studentDao.existsByEmail(email));
+		
+		//throws exception if the record already exist in the database
+		if(exists) {
+			throw new AcademicException("Student already exists", Exceptions.BAD_REQUEST.name());
+		}
+		
+		//converts the dto to a student object
+		var student = convertToStudent(dto);
+		
+		//creates new salt
+		byte[] salt = createSalt();
+		//hash the password with the newly created salt
+		byte[] hashedPassword = createPasswordHash(password, salt);
+		student.setStoredSalt(salt);
+		student.setStoredHash(hashedPassword);
+		
+		studentDao.save(student);
+		
+		return convertToDTO(student);
+		
 	}
 
+	//finds all the students there are in the database, then map each to the student dto
+	@Override
+	public List<StudentDTO> getAll() {
+		var studentList = new ArrayList<>(studentDao.findAll());
+		
+	  
+		return	 studentList.stream().map(this::convertToDTO).collect(Collectors.toList());
+	
+	}
+
+	//finds a student by their email address, then converts the object to student dto
+	@Override
+	public StudentDTO findByEmail(String email) {
+		var student = findByOrThrow(email);
+		
+		return convertToDTO(student);
+	}
+
+	//finds a student by their mobile number, then convert to student dto
+	@Override
+	public StudentDTO findByPhoneNumber(String mobile) {
+		var student = findByOrThrow(mobile);
+		
+		return convertToDTO(student);
+	}
+	
+	
+	
 	// return the questions associated with the test if test exists, else return
 	// null
 	@Override
@@ -192,6 +263,64 @@ public class StudentServiceImpl implements StudentService {
 			throw new AcademicException("illegal options '"+res+"'", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
+	}
+
+	//private helper method that converts a student dto to the actual student object for the purpose of registration
+	private Student convertToStudent(StudentDTO dto) {
+		
+		return mapper.map(dto, Student.class);
+	}
+	
+	//private method that converts a student object to the student dto for the purpose of network request
+	private StudentDTO convertToDTO(Student student) {
+		
+		return mapper.map(student, StudentDTO.class);
+	}
+	
+	//private helper method that retrieves students by their email or phone number
+	private Student findByOrThrow(String parameter) {
+		
+		final String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+		final String mobileRegex = "^(?:\\+234|\\b0)([789]\\d{9})$";
+		
+		if(Pattern.matches(emailRegex, parameter)) {
+			
+			final Student s = studentDao.findByEmail(parameter);
+			if(s == null)
+				throw new AcademicException("No record found for '"+parameter+"'", Exceptions.RECORD_NOT_FOUND.name());
+			
+			return s;
+		}else if(Pattern.matches(mobileRegex, parameter)) {
+			
+			final Student s = studentDao.findByPhoneNumber(parameter);
+			
+			if(s == null)
+				throw new AcademicException("No record found for '"+parameter+"'", Exceptions.RECORD_NOT_FOUND.name());
+			return s;
+		}
+		
+		throw new AcademicException("invalid input '"+parameter+"'", Exceptions.BAD_REQUEST.name());
+		
+	}
+	
+	//private helper method that creates cryptographic salt for password encryption
+	private byte[] createSalt() {
+		
+		var random = new SecureRandom();
+		var salt = new byte[128];
+		random.nextBytes(salt);
+		
+		return salt;
+	}
+	
+	//private method that creates hash keys for password hashing
+	private byte[] createPasswordHash(String password, byte[] salt) throws NoSuchAlgorithmException {
+		
+		
+		var messageDigest = MessageDigest.getInstance("SHA-512");
+		messageDigest.update(salt);
+		
+		return messageDigest.digest(password.getBytes(StandardCharsets.UTF_8));
 	}
 
 }

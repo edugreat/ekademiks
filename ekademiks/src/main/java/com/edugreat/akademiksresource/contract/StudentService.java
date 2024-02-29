@@ -1,12 +1,13 @@
 package com.edugreat.akademiksresource.contract;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
+import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.model.Question;
-import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
 /*
@@ -25,6 +26,16 @@ public interface StudentService {
 	//this particular test more than once, so returning a list of their scores and associated time is appropriate a
 	public ResponseEntity<Object> getTestScore(int studentId, int testId);
 	
+	//contract that returns all the students in the database
+	public List<StudentDTO> getAll();
 	
+	//contract that the returns a student record by their email
+	public StudentDTO findByEmail(String email);
+	
+	//contract that returns student by their phone number
+	public StudentDTO findByPhoneNumber(String mobile);
+	
+	//Contract that registers new student
+	public StudentDTO registerStudent(StudentDTO dto, String password) throws NoSuchAlgorithmException;
 	
 }

@@ -34,6 +34,8 @@ public class AcademicExceptionHandler {
 
 		else if(errorCode.equals(Exceptions.TEST_ALREADY_EXISTS.name())){
 			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.ALREADY_REPORTED);
+		} else if(errorCode.equals(Exceptions.BAD_REQUEST.name())) {
+			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity<>(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 
