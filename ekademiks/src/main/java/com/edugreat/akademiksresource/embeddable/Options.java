@@ -70,8 +70,8 @@ public class Options {
 		
 		//When options objects are added to a set, we consider two options having same 
 		//texts or letters. This helps ensure non repetitive options 
-		return (text.equals(that.getText()) || letter.equals(that.getLetter())) 
-				&& question.equals(that.getQuestion());
+		return (text.equals(that.getText()) || letter.equals(that.getLetter())); 
+				
 	
 	}
 	

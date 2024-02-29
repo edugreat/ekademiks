@@ -1,95 +1,86 @@
 package com.edugreat.akademiksresource.service;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import javax.transaction.Transactional;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
+import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
+import com.edugreat.akademiksresource.dto.QuestionDTO;
+import com.edugreat.akademiksresource.dto.SubjectDTO;
+import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.embeddable.Options;
+import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.OptionUtil;
-import com.edugreat.akademiksresource.util.QuestionUtil;
-import com.edugreat.akademiksresource.util.TestUtil;
+
+import lombok.RequiredArgsConstructor;
 
 
 //Test service implementation class that provides implementation for Test interface
 @Service
+@RequiredArgsConstructor
 public class TestServiceImpl implements TestInterface{
 	
-	private TestDao testDao;
+	private final TestDao testDao;
 	
-	private StudentTestDao studentTestDao;
+	private final StudentTestDao studentTestDao;
 	
-	private SubjectDao subjectDao;
+	private final SubjectDao subjectDao;
+	private final LevelDao levelDao;
 	
-	public TestServiceImpl(TestDao testDao, StudentTestDao studentTestDao, SubjectDao subjectDao) {
-		
-		this.testDao = testDao;
-		this.studentTestDao = studentTestDao;
-		this.subjectDao = subjectDao;
-	}
+	private final ModelMapper mapper;
+	
 	
 	@Transactional
 	@Override
-	public void setTest(TestUtil testUtil) {
+	public void setTest(TestDTO testDTO) {
+		
 		
 		//check if test name exists in the database
-		Test t = testDao.findByTestName(testUtil.getTestName());
+		Test t = testDao.findByTestName(testDTO.getTestName());
 		if(t  != null) {
-			System.out.println("test not null");
+			
 			
 			throw new AcademicException(t.getTestName()+" already exists", 
 					Exceptions.TEST_ALREADY_EXISTS.name());
 		}
+	
+
+		//fetches from the database, subject to which the test is associated
+		Subject loadedSubject = findSubjectOrThrow(testDTO.getSubjectName());
+		Set<Question> validQuestions = validateQuestions(testDTO.getQuestions());
 		
-		//create a new Test object and populate its fields from the TestUtil object
-		Test test = new Test(testUtil.getTestName(), testUtil.getDuration());
+		//map the TestDTO object to test object
+		Test validTest = mapper.map(testDTO, Test.class);
+		validTest.setQuestions(validQuestions);
+		//performs the bidirectional association between test and question objects
+		validQuestions.stream().forEach(x -> x.setTest(validTest));
+		loadedSubject.addTest(validTest);
 		
-		//get the subject associated with this question
-		Subject subject = subjectDao.findBySubjectName(testUtil.getSubjectName());
-		//throw exception if the subject o which the test is to associated does not exist
-		if(subject == null) {
-			throw new AcademicException("subject, '"+testUtil.getSubjectName()+ "' does not exist", Exceptions.RECORD_NOT_FOUND.name());
-		}
-		
-		//associate the retrieved Subject object to the newly created Test object
-		subject.addTest(test);
-		//get the Questions asked on this test
-		Set<QuestionUtil> questions = testUtil.getQuestions();
-		
-		
-		for(QuestionUtil q: questions) {
-			
-			//create a new Question object
-			Question question = createQuestion(q);
-			
-			//add the question to the list of questions for this test
-			test.addQuestion(question);
-			
-			
-		}
-		
-		//save the test
-		testDao.save(test);
 	}
 
 
 
-	//helper method that gets the test for the test id
+	//helper method that gets from the database test whose id is given
 	private Test getTest(Integer id) {
 		
 		Optional<Test> optional = testDao.findById(id);
@@ -108,12 +99,24 @@ public class TestServiceImpl implements TestInterface{
 
 
 	@Override
-	public TestWrapper getQuestions(Integer testId) {
-		TestWrapper wrapper = null;;
+	//returns a test wrapper containing all questions for the given test id
+	public TestWrapper takeTest(Integer testId) {
+		TestWrapper wrapper = new TestWrapper();
 		//we may need some attributes of this test object in the future(eg test duration etc)
 		Test test = getTest(testId);
 		
-		 wrapper = new TestWrapper(test.getQuestions());
+		//get all the questions associated with the test
+		Collection<Question> questions = test.getQuestions();
+		
+		//map each of the questions to dto and add to the test wrapper class
+		//also map each of the options contained in the question to optionUtil object
+		for(Question question : questions) {
+			QuestionDTO questionDTO = mapper.map(question, QuestionDTO.class);
+
+			
+			wrapper.addQuestion(questionDTO);
+			
+		}
 		
 		return wrapper;
 	}
@@ -135,26 +138,72 @@ public class TestServiceImpl implements TestInterface{
 	}
 	
 
-	//private helper method that creates and populates new Question object from the given QuestionUtil argument
-	private Question createQuestion(QuestionUtil questionUtil) {
+	//validates the question dto by validating each of the objections
+	//provided in the question and mapping the dto to a question object
+	private Set<Question> validateQuestions(Collection<QuestionDTO> dtos) {
 	
-		//create new Question object
-		Question question = new Question(questionUtil.getQuestionNumber(), 
-				questionUtil.getText(), questionUtil.getAnswer());
-		
-		//get the options associated with given QuestionUtil;
-		List<OptionUtil> optionUtil = questionUtil.getOptions(); 
-		
-		//iterate through OptionUtil, creating new Options object
-		for(OptionUtil util:optionUtil) {
-			Options option = new Options(util.getText(), OptionLetter.valueOf(util.getLetter()));
+		Set<Question> validQuestions = new HashSet<>();
+		//for each question in the collection, validate the question and return if valid
+		for(QuestionDTO dto: dtos) {
+			Set<Options> options = validateOptions(dto.getOptions());//validate and return validated options for each of the questions
 			
-			//populate the options for the newly created Question object
-			question.addOption(option);
-			
+			//map each question dto to question object and associate options to it
+			Question mappedQuestion = mapper.map(dto, Question.class);
+			mappedQuestion.setOptions(options);
+			validQuestions.add(mappedQuestion);
+		
 		}
-		return question;
+		
+		
+		return validQuestions;
 	}
 	
+	//checks if the options supplied by the admin when setting Test.questions are valid options
+	//valid options for each question must be any of the alphabets Q-E.
+	//validate and return successfully validated options, throw exception if validation fails
+	private Set<Options> validateOptions(List<OptionUtil> options) {
+		
+		Set<Options> validOptions = new HashSet<>();
+		try {
+			
+			for(OptionUtil option: options) {
+				 OptionLetter.valueOf(option.getLetter());//validate the options, can throw exception is validations fails
+					validOptions.add(mapper.map(option, Options.class));
+			}
+			
+			
+		} catch (IllegalArgumentException e) {
+			validOptions = null;//for garbage collection
+			throw new AcademicException("illegal option", Exceptions.ILLEGAL_DATA_FIELD.name());
+		}
+		
+		return validOptions;
+	}
+	
+	private Subject findSubjectOrThrow(String subjectName) {
+		
+		Subject subj = subjectDao.findBySubjectName(subjectName);
+		
+		if(subj != null) return subj;
+		
+		throw new AcademicException("subject, '"+subjectName+"' not found", Exceptions.RECORD_NOT_FOUND.name());
+	}
+
+
+
+	@Override
+	@Transactional
+	public void setSubject(SubjectDTO subjectDTO) {
+		
+		//get the academic level for the subject
+		Category category  = Category.valueOf(subjectDTO.getCategory());
+		Level level = levelDao.findByCategory(category);
+		
+		if(level == null) throw new AcademicException("category, '"+category+"' not found", Exceptions.RECORD_NOT_FOUND.name());
+		Subject subject = new Subject(subjectDTO.getSubjectName(), level);
+		level.addSubject(subject);
+		
+		
+	}
 
 }

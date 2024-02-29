@@ -18,9 +18,14 @@ import javax.persistence.Table;
 import com.edugreat.akademiksresource.embeddable.Options;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 
 @Entity
 @Table
+@Data
+@NoArgsConstructor
 public class Question implements Comparable<Question>{
 	
 	@Id
@@ -46,65 +51,12 @@ public class Question implements Comparable<Question>{
 	private Set<Options>options = new HashSet<>();
 	
 	
-	public Question() {}
+	
 	
 	public Question(int questionNumber, String text, String answer) {
 		this.questionNumber = questionNumber;
 		this.text = text;
 		this.answer = answer;
-	}
-
-	public int getQuestionNumber() {
-		return questionNumber;
-	}
-
-	public void setQuestionNumber(int questionNumber) {
-		this.questionNumber = questionNumber;
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public void setText(String text) {
-		this.text = text;
-	}
-
-	public String getAnswer() {
-		return answer;
-	}
-
-	public void setAnswer(String answer) {
-		this.answer = answer;
-	}
-	
-	
-	
-	//convenience method that sets options for a given question
-	public void addOption(Options option) {
-		
-		this.options.add(option);
-		
-		
-	}
-	
-
-	public Set<Options> getOptions() {
-		return options;
-	}
-
-	public void setOptions(Set<Options> options) {
-		this.options = options;
-	}
-
-	
-	
-	public void setTest(Test test) {
-		this.test = test;
-	}
-
-	public Test getTest() {
-		return test;
 	}
 
 	@Override

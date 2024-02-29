@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
+import com.edugreat.akademiksresource.dto.SubjectDTO;
+import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.projection.TestWrapper;
-import com.edugreat.akademiksresource.util.TestUtil;
 
 @RestController
-@RequestMapping("acad/tests")
+@RequestMapping("acad/v1")
 @Validated
 public class TestController {
 	
@@ -28,24 +29,31 @@ public class TestController {
 		this.testInterface = testInterface;
 	}
 	
-	@GetMapping("/{id}")
-	//get mapping that serves question for the given test id
-	public ResponseEntity<Object> getQuestion(@PathVariable("id") Integer testId){
+	@GetMapping("/test/{id}")
+	//get mapping that serves questions for the given test id
+	public ResponseEntity<Object> takeTest(@PathVariable("id") Integer testId){
 		
-		TestWrapper questions = testInterface.getQuestions(testId);
+		TestWrapper questions = testInterface.takeTest(testId);
 		return new ResponseEntity<>(questions, HttpStatus.OK);
 		
 		
 	}
 	
 	//set a new academic test
-	@PostMapping
-	public ResponseEntity<Object> setTest(@RequestBody @Valid TestUtil testUtil) {
+	@PostMapping("/tests")
+	public ResponseEntity<Object> setTest(@RequestBody @Valid TestDTO testDTO) {
 		
-		testInterface.setTest(testUtil);
+		testInterface.setTest(testDTO);
 		
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 	
+	@PostMapping("/subject")
+	public ResponseEntity<Object> setSubject(@RequestBody @Valid SubjectDTO dto){
+		
+		testInterface.setSubject(dto);
+		
+		return new ResponseEntity<>(HttpStatus.CREATED);
+	}
 	
 }

@@ -59,7 +59,7 @@ public class Level {
 		this.subjects = subjects;
 	}
 	
-	public void addSubjects(Subject subject) {
+	public void addSubject(Subject subject) {
 		
 		this.subjects.add(subject);
 	}

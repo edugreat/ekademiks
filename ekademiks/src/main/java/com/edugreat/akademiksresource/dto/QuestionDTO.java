@@ -1,4 +1,4 @@
-package com.edugreat.akademiksresource.util;
+package com.edugreat.akademiksresource.dto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,8 +9,17 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 
+import com.edugreat.akademiksresource.util.OptionUtil;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 //Utility class for the Question object
-public class QuestionUtil {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class QuestionDTO {
 	
 	@Digits(integer = 2, fraction = 0,  message = "Question number not supported!")
 	@Min(value = 1, message = "Question number must be greater than 0")
@@ -26,24 +35,8 @@ public class QuestionUtil {
 	@Valid
 	@NotEmpty(message = "Options have not been provided")
 	private List<OptionUtil> options = new ArrayList<>();
-	public QuestionUtil(int questionNumber, String text, String answer, List<OptionUtil> options) {
-		this.questionNumber = questionNumber;
-		this.text = text;
-		this.answer = answer;
-		this.options = options;
-	}
-	public int getQuestionNumber() {
-		return questionNumber;
-	}
-	public String getText() {
-		return text;
-	}
-	public String getAnswer() {
-		return answer;
-	}
-	public List<OptionUtil> getOptions() {
-		return options;
-	}
+	
+	
 	@Override
 	public int hashCode() {
 		// TODO Auto-generated method stub
@@ -55,14 +48,15 @@ public class QuestionUtil {
 		if(this == o) return true;
 		if(o == null ||  getClass()!= o.getClass()) return false;
 		
-		QuestionUtil that = (QuestionUtil)o;
+		QuestionDTO that = (QuestionDTO)o;
 		return this.questionNumber == that.getQuestionNumber();
 		
 		
 	}
-	
-	//Override the equals and hash code so that no two questions in a test can have same question numbers
-	
+   public void addOption(OptionUtil option) {
+	   
+	   this.options.add(option);
+   }
 	
 	
 

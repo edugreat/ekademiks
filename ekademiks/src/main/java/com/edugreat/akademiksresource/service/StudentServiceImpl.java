@@ -37,7 +37,7 @@ public class StudentServiceImpl implements StudentService {
 	private StudentDao studentDao;
 	private StudentTestDao studentTestDao;
 
-	private List<OptionLetter> response = new ArrayList<>();
+	private List<OptionLetter> responses = new ArrayList<>();
 
 	public StudentServiceImpl(TestDao testDao, StudentDao studentDao, StudentTestDao studentTestDao) {
 		this.testDao = testDao;
@@ -120,7 +120,7 @@ public class StudentServiceImpl implements StudentService {
 
 			// create new StudentTest object to associate the records with and return the
 			// object
-			StudentTest studentTest = new StudentTest(score, now, student, test, response);
+			StudentTest studentTest = new StudentTest(score, now, student, test, responses);
 			studentTest.setGrade(String.valueOf(2 * score));
 			studentTestDao.save(studentTest);
 
@@ -172,7 +172,7 @@ public class StudentServiceImpl implements StudentService {
 	}
 
 	// check options submitted by students if they match with the set of enumerated
-	// values.
+	// values, then updates the list of responses made by the student
 	private synchronized void checkResponse(String res) {
 
 		// response must be any of the alphabetic letter(A-E). So only one character is
@@ -181,15 +181,15 @@ public class StudentServiceImpl implements StudentService {
 
 			if (res.trim().length() == 1) {
 
-				this.response.add(OptionLetter.valueOf(res));
+				this.responses.add(OptionLetter.valueOf(res));
 			} else if (res.trim().length() < 1) {
 				// if the student did not provide answer to a question, add NILL to show no
 				// option selected
-				this.response.add(OptionLetter.NILL);
+				this.responses.add(OptionLetter.NILL);
 			}
 
 		} catch (IllegalArgumentException e) {
-			//System.out.println("option " + res + " not allowed!");
+			throw new AcademicException("illegal options '"+res+"'", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
 	}

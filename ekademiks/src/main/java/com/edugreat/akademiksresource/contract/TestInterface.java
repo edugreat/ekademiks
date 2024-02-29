@@ -2,18 +2,19 @@ package com.edugreat.akademiksresource.contract;
 
 import java.util.List;
 
+import com.edugreat.akademiksresource.dto.SubjectDTO;
+import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.projection.TestWrapper;
-import com.edugreat.akademiksresource.util.TestUtil;
 
 //declare contracts that would be implemented
 public interface TestInterface {
 	
 	//sets new test
-	public void setTest(TestUtil testUtil);
+	public void setTest(TestDTO testDTO);
 	
 	//Return a wrapper class which contains a collection of questions associated with the given testId
-	public TestWrapper getQuestions(Integer testId);
+	public TestWrapper takeTest(Integer testId);
 	
 	
 	//for the given testId and studentId, retrieve the list of scores
@@ -22,5 +23,7 @@ public interface TestInterface {
 	//appropriate to return list of scores made
 	public List<ScoreAndDate> getScore(int studentId, int testId);
 	
+	public void setSubject(SubjectDTO subjectDTO);
+
 
 }

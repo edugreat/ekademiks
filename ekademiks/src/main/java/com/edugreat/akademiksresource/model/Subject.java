@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -38,9 +39,9 @@ public class Subject {
 	
 	public Subject() {}
 	
-	public Subject(String subjectName, Level levelId) {
+	public Subject(String subjectName, Level level) {
 		this.subjectName = subjectName;
-		this.level = levelId;
+		this.level = level;
 	}
 
 	public Integer getId() {
@@ -80,9 +81,8 @@ public class Subject {
 	
 	//convenience method to add test to a list tests
 	public void addTest(Test test) {
-		
 		//if this test is not null, and has't been associated to any Subject, add it the set of tests for this Subject
-		if(test != null && test.getSubject() == null) {
+		if(test != null) {
 			
 		tests.add(test);
 		test.setSubject(this);
@@ -102,6 +102,11 @@ public class Subject {
 		
 		return subjectName.equals(that.getSubjectName());
 		
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(subjectName);
 	}
 	
 }

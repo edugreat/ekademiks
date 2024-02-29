@@ -1,7 +1,9 @@
 package com.edugreat.akademiksresource.model;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -100,16 +102,25 @@ public class Test {
 		return id;
 	}
 
-	public void addQuestion(Question question) {
+	public void addQuestions(Collection<Question> questions) {
 		
 		//TODO: Would provide an exception to handle attempt to add null question 
 		
-		//if this question is not null and hasn't been associated to any test object,
-		//add it the set of questions asked for this test, then do the bidirectional association
-		if(question != null && question.getTest() == null) {
-			questions.add(question);
-			question.setTest(this);
+		if(this.questions == null) {
+			System.out.println("questions are null");
+			questions = new HashSet<>();
 		}
+		
+		for(Question question: questions) {
+			//if this question is not null and hasn't been associated to any test object,
+			//add it to the set of questions asked for this test, then do the bidirectional association
+			if(question != null && question.getTest() == null) {
+				System.out.println(this==null);
+				this.questions.add(question);
+				question.setTest(this);
+			}
+		}
+		
 		
 	}
 
@@ -128,6 +139,24 @@ public class Test {
 			
 			this.studentTests.add(studentTest);
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		
+		return Objects.hash(testName, subject.getSubjectName());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj) return true;
+		
+		if(obj == null || getClass() != obj.getClass()) return false;
+		
+		Test that = (Test)obj;
+		
+		
+		return (this.getTestName() == that.getTestName() && this.getSubject() == that.getSubject());
 	}
 
 	
