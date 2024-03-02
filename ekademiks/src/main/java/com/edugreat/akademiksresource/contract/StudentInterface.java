@@ -13,7 +13,7 @@ import com.edugreat.akademiksresource.util.AttemptUtil;
 /*
  * Interface which defines contracts for the student
  */
-public interface StudentService {
+public interface StudentInterface {
 
 	
 	//method that serves a collection of questions for the given testId
@@ -29,13 +29,23 @@ public interface StudentService {
 	//contract that returns all the students in the database
 	public List<StudentDTO> getAll();
 	
-	//contract that the returns a student record by their email
+	//contract that returns a student record by their email
 	public StudentDTO findByEmail(String email);
 	
 	//contract that returns student by their phone number
-	public StudentDTO findByPhoneNumber(String mobile);
+	public StudentDTO findByMobileNumber(String mobile);
 	
 	//Contract that registers new student
-	public StudentDTO registerStudent(StudentDTO dto, String password) throws NoSuchAlgorithmException;
+	public StudentDTO registerStudent(StudentDTO dto) throws NoSuchAlgorithmException;
+	
+	//provides contract that updates student's password
+	public void updatePassword(StudentDTO dto) throws NoSuchAlgorithmException;
+	
+	//provides contract that updates student's records
+	
+	public void updateStudent(StudentDTO dto)throws NoSuchAlgorithmException;
+	
+	//contract for deletion of student by their identity
+	public void delete(Integer id);
 	
 }

@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.dto;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
@@ -13,6 +14,9 @@ import lombok.NoArgsConstructor;
 //Data transfer object for the Student object
 public class StudentDTO {
 
+	@Min(value = 0, message = "id must be greater than 0")
+	private Integer id;
+	
 	@NotBlank(message = "first name must be provided")
 	@Pattern(regexp = "^[a-zA-Z]{2,}$")
 	private String firstName;
@@ -27,7 +31,7 @@ public class StudentDTO {
 
 	@Pattern(regexp = "^(?:\\+234|\\b0)([789]\\d{9})$", message = "Unsupported mobile number")
 	@NotBlank(message = "mobile number required")
-	private String phoneNumber;
+	private String mobileNumber;
 
 	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "email required")
 	private String email;
@@ -36,7 +40,7 @@ public class StudentDTO {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.password = password;
-		this.phoneNumber = phoneNumber;
+		this.mobileNumber = phoneNumber;
 	}
 
 }

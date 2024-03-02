@@ -63,6 +63,27 @@ public class Level {
 		
 		this.subjects.add(subject);
 	}
+
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		return super.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		Level that = (Level)obj;
+		
+		return sameCategory(getCategory(), that.getCategory());
+	}
+	
+	private boolean sameCategory(Category cate1, Category cate2) {
+		
+		return cate1.name().equals(cate2.name());
+	}
 	
 
 }

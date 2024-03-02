@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -22,7 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.edugreat.akademiksresource.contract.StudentService;
+import com.edugreat.akademiksresource.contract.StudentInterface;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.TestDao;
@@ -42,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 //implementation for the StudentService interface which declares contracts for the Students
 @Service
 @RequiredArgsConstructor
-public class StudentServiceImpl implements StudentService {
+public class StudentServiceImpl implements StudentInterface {
 
 	private final TestDao testDao;
 	private final StudentDao studentDao;
@@ -55,14 +54,15 @@ public class StudentServiceImpl implements StudentService {
 	
 	//registers new student and return student dto thereafter
 	@Override
-	public StudentDTO registerStudent(StudentDTO dto, String password) throws NoSuchAlgorithmException {
+	@Transactional
+	public StudentDTO registerStudent(StudentDTO dto) throws NoSuchAlgorithmException {
 	
 		
 		//extracts the email field in the dto
 		final String email = dto.getEmail();
 		
 		//extract the phone number field in the dto
-		final String mobile = dto.getPhoneNumber();
+		final String mobile = dto.getMobileNumber();
 		
 		//checks if the record already exist in the database
 		final boolean exists = (email == null ? studentDao.existsByMobile(mobile) : studentDao.existsByEmail(email));
@@ -78,7 +78,7 @@ public class StudentServiceImpl implements StudentService {
 		//creates new salt
 		byte[] salt = createSalt();
 		//hash the password with the newly created salt
-		byte[] hashedPassword = createPasswordHash(password, salt);
+		byte[] hashedPassword = createPasswordHash(dto.getPassword(), salt);
 		student.setStoredSalt(salt);
 		student.setStoredHash(hashedPassword);
 		
@@ -87,6 +87,51 @@ public class StudentServiceImpl implements StudentService {
 		return convertToDTO(student);
 		
 	}
+	
+	//provides implementation that updates student's password
+	//TODO: More functions such as sending otp to phone numbers or email should implemented in the future
+	@Override
+	@Transactional
+	public void updatePassword(StudentDTO dto) throws NoSuchAlgorithmException {
+		
+		//check if the record exists in the database
+		var student = studentDao.findById(dto.getId()).orElseThrow(() ->  new AcademicException("Record not found", Exceptions.BAD_REQUEST.name()));
+		
+		
+		byte[] salt = createSalt();
+		byte[] hashedPassword = createPasswordHash(dto.getPassword(), salt);
+	    student.setStoredSalt(salt);
+	    student.setStoredHash(hashedPassword);
+	    
+		
+		studentDao.save(student);
+		
+	}
+	
+	//provides implementation that updates student's records
+	//TODO: More functions such as sending otp to phone numbers or email should implemented in the future
+	@Override
+	@Transactional
+	public void updateStudent(StudentDTO dto)throws NoSuchAlgorithmException{
+		//check if the student's record exists
+		var student = studentDao.findById(dto.getId()).orElseThrow(() -> new AcademicException("Record not found for the student", Exceptions.BAD_REQUEST.name()));
+		student.setEmail(dto.getEmail());
+		student.setMobileNumber(dto.getMobileNumber());
+	
+		
+	}
+	
+	@Override
+	@Transactional
+	public void delete(Integer id) {
+		
+	boolean exists  = studentDao.existsById(id);
+	if(exists) {
+		studentDao.deleteById(id);
+	}else throw new AcademicException("Intended record does not exist", Exceptions.BAD_REQUEST.name());
+		
+	}
+		
 
 	//finds all the students there are in the database, then map each to the student dto
 	@Override
@@ -108,7 +153,7 @@ public class StudentServiceImpl implements StudentService {
 
 	//finds a student by their mobile number, then convert to student dto
 	@Override
-	public StudentDTO findByPhoneNumber(String mobile) {
+	public StudentDTO findByMobileNumber(String mobile) {
 		var student = findByOrThrow(mobile);
 		
 		return convertToDTO(student);
@@ -292,7 +337,7 @@ public class StudentServiceImpl implements StudentService {
 			return s;
 		}else if(Pattern.matches(mobileRegex, parameter)) {
 			
-			final Student s = studentDao.findByPhoneNumber(parameter);
+			final Student s = studentDao.findByMobileNumber(parameter);
 			
 			if(s == null)
 				throw new AcademicException("No record found for '"+parameter+"'", Exceptions.RECORD_NOT_FOUND.name());
@@ -322,5 +367,7 @@ public class StudentServiceImpl implements StudentService {
 		
 		return messageDigest.digest(password.getBytes(StandardCharsets.UTF_8));
 	}
+
+	
 
 }
