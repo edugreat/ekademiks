@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.edugreat.akademiksresource.model.Subject;
 
+
 public interface SubjectDao extends JpaRepository<Subject, Integer>{
 	
 	//finds subject by the subject name

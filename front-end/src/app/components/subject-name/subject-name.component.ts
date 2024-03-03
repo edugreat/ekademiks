@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MultiService } from 'src/app/services/multi.service';
+import { SearchService } from 'src/app/services/search.service';
 import { SubjectName } from 'src/app/util/subject-name';
 
 @Component({
@@ -10,6 +11,10 @@ import { SubjectName } from 'src/app/util/subject-name';
   styleUrls: ['./subject-name.component.css']
 })
 export class SubjectNameComponent implements OnInit{
+
+//determines when to display custom 'page-not-found' as well as itself
+found = true;
+
 //declares and initialize an array of SubjectName 
 subjectName: SubjectName[] = [];
 
@@ -25,10 +30,16 @@ examYear?:string;
 //declares an initializes a string array for storing unique Subject names
 uniqueSubjectName:string[] = [];
 
+//tracks if the user has made a selection for disabling/enbling submit button
+hasMadeSelection = false;
+
 constructor(private multiService:MultiService,
   private route:ActivatedRoute, 
   private location:Location,
-  private router:Router){}
+  private router:Router,
+  private searchService:SearchService){
+    this.searchService.found.subscribe(x => this.found =x);
+  }
 
   ngOnInit(): void {
    this.route.paramMap.subscribe(()=>{
@@ -99,5 +110,14 @@ goBack(){
 getQuestion(examName:string){
 
   this.router.navigateByUrl(`question/${this.categoryId}/${examName}/${this.examYear}`)
+}
+/**
+ * method that controls the enabling/disabling of submit button
+ * @param event event trigger from the view page
+ */
+hasSelected(event:Event){
+const target = event.target as HTMLOptionElement;
+//if the user's selection is not the placeholder, enable the submit button
+(this.uniqueSubjectName.find(x => x === target.value))? this.hasMadeSelection =true : this.hasMadeSelection = false;
 }
 }

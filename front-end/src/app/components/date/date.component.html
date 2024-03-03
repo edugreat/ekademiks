@@ -1,16 +1,39 @@
+<!--date row start here-->
+<div class="row" [hidden]="found==false">
+    <!--label column start here-->
+    <div class="col-12">
+        <label class="text-info text-center">Please choose date for {{categoryName}}</label>
+    </div>
+    <!--label column end here-->
 
-<label class="ml-2 date-label mb-0 text-info text-center">Please choose date for {{categoryName}}</label>
-<div class="d-flex bd-highlight 
-dateDiv align-items-center border border-warning rounded">
-    <div class="dateSelection inline" >
-    <select class="custom-select mx-10" #selectedDate id="subjectName">
-        <option [ngValue]="date"  *ngFor="let date of uniqueDates">
-            {{date}}
-        </option>
-    </select>
+    <!--date container starts here-->
+   <div class="col-12 bd-highlight border pt-5 border-warning rounded"
+    id="date-container">
+    <!--2nd row starts-->
+    <div class="row">
+        <!--date selection starts here-->
+        <div class="col-8 mt-5">
+            <select (change)="hasSelected($event)" #selectedDate class="custom-select">
+                <option value="" class="text-center" >Select</option>
+                <option [ngValue]="date" class="text-center"  *ngFor="let date of uniqueDates">
+                    {{date}}
+                </option>
+            </select>
+        </div>
+        <!--date selection ends here-->
+
+  <!--submit button starts-->
+<div [class.disable-click] ='hasMadeSelection===false' class="col-4 mt-5 p-0">
+    <a   (click)="goToSubject(selectedDate.value)" role="button" class="btn btn-outline-success">
+        Ok
+    </a>
 </div>
-<a  class="btn  btn-outline-success 
-text-nowrap inline ml-2" role="button" (click)="goToSubject(selectedDate.value)">
-    Ok
-</a>
+  <!--submit button ends-->
+        <!--2nd row ends-->
+    </div>
+   </div>
+    <!--date container ends here-->
+  
+    <!--ok button for date selection ends here-->
 </div>
+<!--date row ends here-->

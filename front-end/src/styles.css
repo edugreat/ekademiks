@@ -6,59 +6,14 @@ body{
     background-attachment: fixed;
     background-position: center;
 }
-.top-sidebar{
-    min-height: 80vh;
-}
-.side-bar-link{
-    text-decoration: none;
+.disable-click{
+    pointer-events: none;
+    background-color: gray;
+    max-width: fit-content;
     
-}
-.side-bar-link:hover{
-text-decoration: none;
-}
-.dateDiv{
-   
-    width: 300px;
-    min-height: 30vh;
-}
-.dateSelection{
-    width: fit-content;
-    height: fit-content;
-    
-}
-.date-label{
-    font-weight: bold;
-    font-size: larger;
-}
-.dateDiv:hover{
-    background-color: black;
-    border: none !important;
-}
-div.inline{
-    float: left;
-    margin-left: 30%;
-}
-.go-back:hover{
-    text-decoration: none;
-    
-}
-.go-back{
-    padding-top: 5%;
-    
-}
-.quest-number{
-    padding-left: 0;
 }
 
-.option{
-    padding-left: 1.5rem;
-}
-.q-number{
-    font-weight: bold;
-}
-
-
-    @media (max-width:640px) {
+@media (max-width:640px) {
         .side-bar-container{
             border: none !important;
             border-style: none !important;

@@ -1,8 +1,13 @@
-.question-area{
-    min-width: 90vw;
-    min-height: 90vh;
-    margin-top: 0px;
-    margin-right: 0px;
-    margin-left: 0px;
-    margin-bottom: 0px;
+#questions-area{
+    min-width: 89vw;
+    max-height: 75vh;
+    overflow: scroll;
+    margin-left: 0px !important;
+   
+}
+#question{
+    min-width: fit-content;
+}
+.options{
+    margin-left: 20px;
 }

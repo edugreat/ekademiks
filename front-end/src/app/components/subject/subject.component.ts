@@ -1,9 +1,9 @@
-import { JsonPipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentAttempt } from 'src/app/model/student-attempt';
 import { Subject } from 'src/app/model/subject';
 import { MultiService } from 'src/app/services/multi.service';
+import { SearchService } from 'src/app/services/search.service';
 import { StudentAttemptService } from 'src/app/services/student-attempt.service';
 
 @Component({
@@ -12,6 +12,9 @@ import { StudentAttemptService } from 'src/app/services/student-attempt.service'
   styleUrls: ['./subject.component.css']
 })
 export class SubjectComponent implements OnInit {
+  
+  //determines when to display the custom 'page-not-found' as well as itself
+found = true;
 //declares and initializes empty Subject array
 subjects:Subject[] =[];
 examYear:string ='';
@@ -23,7 +26,10 @@ attempts:StudentAttempt[] =[];
 
   constructor(private multiService:MultiService, 
     private router:ActivatedRoute,
-    private attemptService:StudentAttemptService) { }
+    private attemptService:StudentAttemptService,
+    private searchService:SearchService) {
+    this.searchService.found.subscribe(x => this.found = x);
+    }
 
   ngOnInit(): void {
 
@@ -49,7 +55,11 @@ attempts:StudentAttempt[] =[];
      const categoryId = this.categoryId = +this.router.snapshot.paramMap.get("categoryId")!
       
       this.multiService.fetchSubjects(examYear, subjectName, categoryId).subscribe(response=>{
-      this.subjects = response
+      this.subjects = response;
+      //emits observable to clear off the search box
+      (this.subjects.length !==0) ? this.searchService.questionDisplay.next(true):this.searchService.questionDisplay.next(false);
+
+      console.log(JSON.stringify(this.subjects))
       })
       
     }

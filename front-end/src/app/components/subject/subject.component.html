@@ -1,54 +1,99 @@
-<div class="question-area bg-white mt-0  pt-1 px-0 pb-1">
-    <ul class="px-0 mt-0  px-5 list-unstyled">
-        <li *ngFor="let record of subjects" id="q-options bg-warning">
-            <em class="mr-2 font-weight-bold">{{record.questionNumber}}</em><span>{{record.question}}</span><br>
-        <div class="row">
-            <div class="col-0 ml-4 mr-1">A</div>
-            <div class="form-check col-10">
-                <label for="" class="form-check-label">
-                <input (click)="saveAttempt($event)" type="radio" [value]="record.options.a"
-                class="form-check-input" name="{{record.questionNumber}}">{{record.options.a}}
-            </label>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-0 ml-4 mr-1">B</div>
-            <div class="form-check col-10"><label for="" class="form-check-label">
-                <input (click)="saveAttempt($event)" type="radio" [value]="record.options.b"
-                class="form-check-input" name="{{record.questionNumber}}">{{record.options.b}}
-            </label>
-            </div>
-        </div>
+<div [hidden]="found == false"  class="row bg-white mt-0 mr-3" id="questions-area">
 
-        <div class="row">
-            <div class="col-0 ml-4 mr-1">C</div>
-            <div class="form-check col-10"><label for="" class="form-check-label">
-                <input (click)="saveAttempt($event)" type="radio" [value]="record.options.c"
-                class="form-check-input" name="{{record.questionNumber}}">{{record.options.c}}
-            </label>
+    <ul class="list-unstyled">
+        
+        <li *ngFor="let record of subjects">
+            <!--question and question number starts-->
+           <div class="col-12">
+            <div class="row">
+                <div class="col-1">
+                    <label> {{record.questionNumber}} </label>
+                </div>
+                <div class="col-10" id="question" >{{record.question}}</div>
             </div>
-        </div>
+           </div>
+           <!--question and question number ends-->  
+            <!--option labels and options starts-->
+            <div class="col-12 options">
+                <div class="row">
+                    <div class="col-1">
+                        <label>A</label>
+                    </div>
+                    <div class="form-check col-10">
+                        <label class="form-check-label">
+                        <input (click)="saveAttempt($event)" type="radio" [value]="record.options.a"
+                        class="form-check-input" name="{{record.questionNumber}}">{{record.options.a}}
+                    </label>
+                    </div>
+                </div>
+            </div>
 
-        <div class="row">
-            <div class="col-0 ml-4 mr-1">D</div>
-            <div class="form-check col-10">
-                <label for="" class="form-check-label">
-                <input (click)="saveAttempt($event)" type="radio" [value]="record.options.d"
-                class="form-check-input" name="{{record.questionNumber}}">{{record.options.d}}
-            </label>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-0 ml-4 mr-1">E</div>
-            <div class="form-check col-10">
-                <label for="" class="form-check-label">
-                <input (click)="saveAttempt($event)" type="radio" [value]="record.options.e"
-                class="form-check-input" name="{{record.questionNumber}}">{{record.options.e}}
-            </label>
+            <div class="col-12 options">
+                <div class="row">
+                    <div class="col-1">
+                        <label>B</label>
+                    </div>
+                    <div class="form-check col-10">
+                        <label class="form-check-label">
+                        <input (click)="saveAttempt($event)" type="radio" [value]="record.options.b"
+                        class="form-check-input" name="{{record.questionNumber}}">{{record.options.b}}
+                    </label>
+                    </div>
+                </div>
             </div>
-        </div>
+
+
+            <div class="col-12 options">
+                <div class="row">
+                    <div class="col-1">
+                        <label>C</label>
+                    </div>
+                    <div class="form-check col-10">
+                        <label class="form-check-label">
+                        <input (click)="saveAttempt($event)" type="radio" [value]="record.options.c"
+                        class="form-check-input" name="{{record.questionNumber}}">{{record.options.c}}
+                    </label>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-12 options">
+                <div class="row">
+                    <div class="col-1">
+                        <label>D</label>
+                    </div>
+                    <div class="form-check col-10">
+                        <label class="form-check-label">
+                        <input (click)="saveAttempt($event)" type="radio" [value]="record.options.c"
+                        class="form-check-input" name="{{record.questionNumber}}">{{record.options.c}}
+                    </label>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-12 options">
+                <div class="row">
+                    <div class="col-1">
+                        <label>E</label>
+                    </div>
+                    <div class="form-check col-10">
+                        <label class="form-check-label">
+                        <input (click)="saveAttempt($event)" type="radio" [value]="record.options.e"
+                        class="form-check-input" name="{{record.questionNumber}}">{{record.options.e}}
+                    </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!--option labels and options ends-->
+
         </li>
+    
     </ul>
+
 </div>
