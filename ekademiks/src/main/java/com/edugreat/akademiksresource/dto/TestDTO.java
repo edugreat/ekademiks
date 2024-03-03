@@ -23,6 +23,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TestDTO {
 		
+	@Min(value = 0, message = "id must not be negative or alphabetic")
+	private Integer id;
+	
+	
 	@NotNull(message = "property test name missing")
 	@Size(min = 4, message = "property test name must not be less than 4 characters")
 	//@Pattern(regexp = "\\b\\w+\\b\\s*", message = "test name not supported")

@@ -12,19 +12,15 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
-import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
-import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.embeddable.Options;
-import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
-import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
@@ -44,8 +40,6 @@ public class TestServiceImpl implements TestInterface {
 	private final StudentTestDao studentTestDao;
 
 	private final SubjectDao subjectDao;
-	private final LevelDao levelDao;
-
 	private final ModelMapper mapper;
 
 	@Transactional
@@ -181,19 +175,6 @@ public class TestServiceImpl implements TestInterface {
 		throw new AcademicException("subject, '" + subjectName + "' not found", Exceptions.RECORD_NOT_FOUND.name());
 	}
 
-	@Override
-	@Transactional
-	public void setSubject(SubjectDTO subjectDTO) {
-
-		// get the academic level for the subject
-		Category category = Category.valueOf(subjectDTO.getCategory());
-		Level level = levelDao.findByCategory(category);
-
-		if (level == null)
-			throw new AcademicException("category, '" + category + "' not found", Exceptions.RECORD_NOT_FOUND.name());
-		Subject subject = new Subject(subjectDTO.getSubjectName(), level);
-		level.addSubject(subject);
-
-	}
+	
 
 }

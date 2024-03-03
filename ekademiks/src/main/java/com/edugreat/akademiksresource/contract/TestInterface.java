@@ -2,7 +2,6 @@ package com.edugreat.akademiksresource.contract;
 
 import java.util.List;
 
-import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.projection.TestWrapper;
@@ -22,8 +21,6 @@ public interface TestInterface {
 	//since students are allowed to re-take a tests, it's 
 	//appropriate to return list of scores made
 	public List<ScoreAndDate> getScore(int studentId, int testId);
-	
-	public void setSubject(SubjectDTO subjectDTO);
 
 
 }

@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.dto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Digits;
@@ -39,8 +40,8 @@ public class QuestionDTO {
 	
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		return super.hashCode();
+		
+		return Objects.hash(getQuestionNumber());
 	}
 	@Override
 	public boolean equals(Object o) {
