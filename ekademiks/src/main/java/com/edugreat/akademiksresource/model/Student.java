@@ -1,3 +1,4 @@
+
 package com.edugreat.akademiksresource.model;
 
 import java.util.HashSet;
@@ -37,17 +38,17 @@ public class Student {
 	@Pattern(regexp = "^[a-zA-Z]{2,}$")
 	private String lastName;
 
-	@Column(name = "email", unique = true, nullable = true)
-	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "email required")
+	@Column(name = "email", unique = true, nullable = false)
+	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "invalid email type")
 	private String email;
 
-	@Column(name = "mobile", unique = true, nullable = false)
+	@Column(name = "mobile", unique = true, nullable = true)
 	@Pattern(regexp = "^(?:\\+234|\\b0)([789]\\d{9})$", message = "Unsupported mobile number")
 	@NotBlank(message = "mobile number required")
 	private String mobileNumber;
 
 	@Column(name = "password", nullable = false)
-	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()-_+=<>?]).{8,}$")
+	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()-_+=<>?]).{8,}$", message = "password must be at lest eight characters with")
 	@NotBlank(message = "password required")
 	private String password;
 

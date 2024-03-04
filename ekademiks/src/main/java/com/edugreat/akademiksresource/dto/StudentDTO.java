@@ -33,7 +33,7 @@ public class StudentDTO {
 	@NotBlank(message = "mobile number required")
 	private String mobileNumber;
 
-	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "email required")
+	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "invalid email type")
 	private String email;
 
 	public StudentDTO(String firstName, String lastName, String password, String phoneNumber) {

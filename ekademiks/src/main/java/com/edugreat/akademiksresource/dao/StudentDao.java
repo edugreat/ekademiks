@@ -15,7 +15,6 @@ public interface StudentDao extends JpaRepository<Student, Integer>{
 	@Query("SELECT CASE WHEN COUNT(s.mobileNumber) > 0 THEN true ELSE false END FROM Student s WHERE s.mobileNumber =:mobile")
 	public boolean existsByMobile(String mobile);
 	
-	
 	//finds student by their phone number
 	public Student findByMobileNumber(String mobileNumber);
 	

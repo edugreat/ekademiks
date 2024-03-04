@@ -65,7 +65,7 @@ public class StudentServiceImpl implements StudentInterface {
 		final String mobile = dto.getMobileNumber();
 		
 		//checks if the record already exist in the database
-		final boolean exists = (email == null ? studentDao.existsByMobile(mobile) : studentDao.existsByEmail(email));
+		final boolean exists = (mobile == null ? studentDao.existsByEmail(email) : studentDao.existsByMobile(mobile));
 		
 		//throws exception if the record already exist in the database
 		if(exists) {
