@@ -13,6 +13,6 @@ public class AuthenticationResponse implements Serializable {
 
 	
 	private static final long serialVersionUID = 1L;
-	private String toke;
+	private String token;
 
 }

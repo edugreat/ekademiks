@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.model.Question;
+import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
 /*
@@ -47,5 +48,8 @@ public interface StudentInterface {
 	
 	//contract for deletion of student by their identity
 	public void delete(Integer id);
+	
+	//for authentication purposes only where a student object is needed internally and not the dto
+	public Student searchByEmail(String email);
 	
 }

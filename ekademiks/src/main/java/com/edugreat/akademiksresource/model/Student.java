@@ -52,12 +52,8 @@ public class Student {
 	@NotBlank(message = "password required")
 	private String password;
 
-	@Setter
-	@Getter
 	private byte storedHash[];
 
-	@Setter
-	@Getter
 	private byte storedSalt[];
 
 	public Student() {

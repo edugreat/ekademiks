@@ -9,9 +9,18 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.edugreat.akademiksresource.auth.StudentUserDetailsService;
+import com.edugreat.akademiksresource.filter.JwtRequestFilter;
+
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
+	
+	private final StudentUserDetailsService userDetailsService;
+	private final JwtRequestFilter jwtFilter;
 	
 @Bean
 SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -26,5 +35,7 @@ SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
     return http.build();
 	
 }
+
+
 
 }

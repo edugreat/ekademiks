@@ -248,6 +248,13 @@ public class StudentServiceImpl implements StudentInterface {
 					Exceptions.RECORD_NOT_FOUND.name());
 
 	}
+	
+	//implements the contract 'searchByEmail' that retrieves a student by their email for authentication purposes only
+	@Override
+	public Student searchByEmail(String email) {
+		
+		return studentDao.findByEmail(email); 	
+	}
 
 	// scores a test the student submitted and return their score
 	// it takes the Question and selected options just to compare the answer field
