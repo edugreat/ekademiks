@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.dao;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -19,6 +21,9 @@ public interface StudentDao extends JpaRepository<Student, Integer>{
 	public Student findByMobileNumber(String mobileNumber);
 	
 	//finds student by their email address
-	public Student findByEmail(String email);
+	public Optional<Student> findByEmail(String email);
+
+	@Query("DELETE FROM Student WHERE email =:email")
+	public void deleByEmail(String email);
 
 }

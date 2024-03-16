@@ -1,9 +1,5 @@
 package com.edugreat.akademiksresource.service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,12 +7,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,7 +19,6 @@ import com.edugreat.akademiksresource.contract.StudentInterface;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.TestDao;
-import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
@@ -41,123 +34,13 @@ import lombok.RequiredArgsConstructor;
 //implementation for the StudentService interface which declares contracts for the Students
 @Service
 @RequiredArgsConstructor
-public class StudentServiceImpl implements StudentInterface {
+public class StudentService implements StudentInterface {
 
 	private final TestDao testDao;
 	private final StudentDao studentDao;
 	private final StudentTestDao studentTestDao;
-	private final ModelMapper mapper;
-
 	private List<OptionLetter> responses = new ArrayList<>();
 
-	
-	
-	//registers new student and return student dto thereafter
-	@Override
-	@Transactional
-	public StudentDTO registerStudent(StudentDTO dto) throws NoSuchAlgorithmException {
-	
-		
-		//extracts the email field in the dto
-		final String email = dto.getEmail();
-		
-		//extract the phone number field in the dto
-		final String mobile = dto.getMobileNumber();
-		
-		//checks if the record already exist in the database
-		final boolean exists = (mobile == null ? studentDao.existsByEmail(email) : studentDao.existsByMobile(mobile));
-		
-		//throws exception if the record already exist in the database
-		if(exists) {
-			throw new AcademicException("Student already exists", Exceptions.BAD_REQUEST.name());
-		}
-		
-		//converts the dto to a student object
-		var student = convertToStudent(dto);
-		
-		//creates new salt
-		byte[] salt = createSalt();
-		//hash the password with the newly created salt
-		byte[] hashedPassword = createPasswordHash(dto.getPassword(), salt);
-		student.setStoredSalt(salt);
-		student.setStoredHash(hashedPassword);
-		
-		studentDao.save(student);
-		
-		return convertToDTO(student);
-		
-	}
-	
-	//provides implementation that updates student's password
-	//TODO: More functions such as sending otp to phone numbers or email should implemented in the future
-	@Override
-	@Transactional
-	public void updatePassword(StudentDTO dto) throws NoSuchAlgorithmException {
-		
-		//check if the record exists in the database
-		var student = studentDao.findById(dto.getId()).orElseThrow(() ->  new AcademicException("Record not found", Exceptions.BAD_REQUEST.name()));
-		
-		
-		byte[] salt = createSalt();
-		byte[] hashedPassword = createPasswordHash(dto.getPassword(), salt);
-	    student.setStoredSalt(salt);
-	    student.setStoredHash(hashedPassword);
-	    
-		
-		studentDao.save(student);
-		
-	}
-	
-	//provides implementation that updates student's records
-	//TODO: More functions such as sending otp to phone numbers or email should implemented in the future
-	@Override
-	@Transactional
-	public void updateStudent(StudentDTO dto)throws NoSuchAlgorithmException{
-		//check if the student's record exists
-		var student = studentDao.findById(dto.getId()).orElseThrow(() -> new AcademicException("Record not found for the student", Exceptions.BAD_REQUEST.name()));
-		student.setEmail(dto.getEmail());
-		student.setMobileNumber(dto.getMobileNumber());
-	
-		
-	}
-	
-	@Override
-	@Transactional
-	public void delete(Integer id) {
-		
-	boolean exists  = studentDao.existsById(id);
-	if(exists) {
-		studentDao.deleteById(id);
-	}else throw new AcademicException("Intended record does not exist", Exceptions.BAD_REQUEST.name());
-		
-	}
-		
-
-	//finds all the students there are in the database, then map each to the student dto
-	@Override
-	public List<StudentDTO> getAll() {
-		var studentList = new ArrayList<>(studentDao.findAll());
-		
-	  
-		return	 studentList.stream().map(this::convertToDTO).collect(Collectors.toList());
-	
-	}
-
-	//finds a student by their email address, then converts the object to student dto
-	@Override
-	public StudentDTO findByEmail(String email) {
-		var student = findByOrThrow(email);
-		
-		return convertToDTO(student);
-	}
-
-	//finds a student by their mobile number, then convert to student dto
-	@Override
-	public StudentDTO findByMobileNumber(String mobile) {
-		var student = findByOrThrow(mobile);
-		
-		return convertToDTO(student);
-	}
 	
 	
 	
@@ -249,13 +132,6 @@ public class StudentServiceImpl implements StudentInterface {
 
 	}
 	
-	//implements the contract 'searchByEmail' that retrieves a student by their email for authentication purposes only
-	@Override
-	public Student searchByEmail(String email) {
-		
-		return studentDao.findByEmail(email); 	
-	}
-
 	// scores a test the student submitted and return their score
 	// it takes the Question and selected options just to compare the answer field
 	// in the question
@@ -315,64 +191,6 @@ public class StudentServiceImpl implements StudentInterface {
 			throw new AcademicException("illegal options '"+res+"'", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
-	}
-
-	//private helper method that converts a student dto to the actual student object for the purpose of registration
-	private Student convertToStudent(StudentDTO dto) {
-		
-		return mapper.map(dto, Student.class);
-	}
-	
-	//private method that converts a student object to the student dto for the purpose of network request
-	private StudentDTO convertToDTO(Student student) {
-		
-		return mapper.map(student, StudentDTO.class);
-	}
-	
-	//private helper method that retrieves students by their email or phone number
-	private Student findByOrThrow(String parameter) {
-		
-		final String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
-		final String mobileRegex = "^(?:\\+234|\\b0)([789]\\d{9})$";
-		
-		if(Pattern.matches(emailRegex, parameter)) {
-			
-			final Student s = studentDao.findByEmail(parameter);
-			if(s == null)
-				throw new AcademicException("No record found for '"+parameter+"'", Exceptions.RECORD_NOT_FOUND.name());
-			
-			return s;
-		}else if(Pattern.matches(mobileRegex, parameter)) {
-			
-			final Student s = studentDao.findByMobileNumber(parameter);
-			
-			if(s == null)
-				throw new AcademicException("No record found for '"+parameter+"'", Exceptions.RECORD_NOT_FOUND.name());
-			return s;
-		}
-		
-		throw new AcademicException("invalid input '"+parameter+"'", Exceptions.BAD_REQUEST.name());
-		
-	}
-	
-	//private helper method that creates cryptographic salt for password encryption
-	private byte[] createSalt() {
-		
-		var random = new SecureRandom();
-		var salt = new byte[128];
-		random.nextBytes(salt);
-		
-		return salt;
-	}
-	
-	//private method that creates hash keys for password hashing
-	private byte[] createPasswordHash(String password, byte[] salt) throws NoSuchAlgorithmException {
-		
-		
-		var messageDigest = MessageDigest.getInstance("SHA-512");
-		messageDigest.update(salt);
-		
-		return messageDigest.digest(password.getBytes(StandardCharsets.UTF_8));
 	}
 
 	
