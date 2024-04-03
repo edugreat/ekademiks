@@ -1,25 +1,14 @@
 package com.edugreat.akademiksresource.model;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.MappedSuperclass;
 
-import org.springframework.data.annotation.Transient;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import com.edugreat.akademiksresource.enums.Roles;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -60,11 +49,15 @@ public class AppUser implements UserDetails{
 	@Column(name = "password", nullable = false)
 	private String password;
 	
-
-	@ElementCollection
-	@CollectionTable(name = "options", joinColumns = @JoinColumn(name = "student_id"))
-	@Enumerated(EnumType.STRING)
-	private Set<Roles> roles = new HashSet<>();
+	@Column
+	private boolean accountEnabled = true;
+	@Column
+	private boolean lockedAccount = true;
+	@Column
+	private boolean expiredAccount = true;
+	@Column
+	private boolean expiredCredentials = true;
+	
 
 	public AppUser(String firstName, String lastName, String email, String mobileNumber, String password) {
 		this.firstName = firstName;
@@ -82,10 +75,7 @@ public class AppUser implements UserDetails{
 		this.password = password;
 	}
 
-	public void AddRole(Roles role) {
-
-		roles.add(role);
-	}
+	
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -102,25 +92,25 @@ public class AppUser implements UserDetails{
 	@Override
 	public boolean isAccountNonExpired() {
 		
-		return true;
+		return isExpiredAccount();
 	}
 
 	@Override
 	public boolean isAccountNonLocked() {
 		// TODO Auto-generated method stub
-		return false;
+		return isLockedAccount();
 	}
 
 	@Override
 	public boolean isCredentialsNonExpired() {
 		
-		return true;
+		return isExpiredAccount();
 	}
 
 	@Override
 	public boolean isEnabled() {
 		
-		return true;
+		return isAccountEnabled();
 	}
 
 	

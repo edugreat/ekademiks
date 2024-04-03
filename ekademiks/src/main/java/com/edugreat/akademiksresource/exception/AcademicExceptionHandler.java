@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.exception;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +11,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.edugreat.akademiksresource.enums.Exceptions;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 @ControllerAdvice
 public class AcademicExceptionHandler {
@@ -59,6 +63,26 @@ public class AcademicExceptionHandler {
 	  
 		
 	    return new ResponseEntity<>(msg, HttpStatus.BAD_REQUEST);
+	}
+	
+	//this is token or roles related exception, called when a user tends to access 
+	//protected resources with invalid token or roles for those resource
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<String> handleAccessDenied(AccessDeniedException exception){
+		
+		return new ResponseEntity<>("Access Denied", HttpStatus.UNAUTHORIZED);
+	}
+	
+	@ExceptionHandler(SignatureException.class)
+	public ResponseEntity<String>handleInvalidToken(SignatureException exception){
+		
+		return handleAccessDenied(new AccessDeniedException(""));
+	}
+	
+	@ExceptionHandler(ExpiredJwtException.class)
+	public ResponseEntity<String> handleExpiredJWT(ExpiredJwtException exc){
+		
+		return new ResponseEntity<>("Unable to authenticate, please log in again", HttpStatus.UNAUTHORIZED);
 	}
 
 }

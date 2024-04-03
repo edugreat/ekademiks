@@ -10,7 +10,7 @@ import com.edugreat.akademiksresource.model.Admins;
 public interface AdminsDao extends JpaRepository<Admins, Integer> {
 	
 	//checks if an admin exists.Returns true if exists, otherwise, false
-	@Query("SELECT CASE WHEN COUNT(a.email) > 0 THEN true ELSE false END FROM Admins a")
+	@Query("SELECT CASE WHEN COUNT(a.email) > 0 THEN true ELSE false END FROM Admins a WHERE a.email =:email")
 	public boolean existsByEmail(String email);
 	
 	//find an admin by their email

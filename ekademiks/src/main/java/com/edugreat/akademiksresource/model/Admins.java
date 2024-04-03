@@ -3,8 +3,12 @@ package com.edugreat.akademiksresource.model;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Table;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +24,9 @@ public class Admins extends AppUser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	@ElementCollection(fetch = FetchType.EAGER)
+	private Set<UserRoles> roles = new HashSet<>();
 
 	public Admins() {
 		super();
@@ -40,12 +47,28 @@ public class Admins extends AppUser {
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		
 		Set<GrantedAuthority> authorities = new HashSet<>();
-		for(Roles role: super.getRoles()) {
-			authorities.add(new SimpleGrantedAuthority(role.name()));
+		for(String role: this.getRoles()) {
+			authorities.add(new SimpleGrantedAuthority(role));
 			
 		}
 		
 		return authorities;
+	}
+
+	public Set<String> getRoles() {
+		return roles.stream().map(role -> role.getRole().toString()).collect(Collectors.toSet());
+	}
+
+	public void setRoles(Set<UserRoles> roles) {
+		this.roles = roles;
+	}
+
+	public void addRoles(Set<String> userRoles) {
+		
+		for(String role:userRoles) {
+			this.roles.add(new UserRoles(Roles.valueOf(role)));
+		}
+		
 	}
 	
 	

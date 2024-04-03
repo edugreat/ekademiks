@@ -5,9 +5,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -25,6 +29,9 @@ public class Student extends AppUser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	@ElementCollection(fetch = FetchType.EAGER)
+	private Set<UserRoles> roles = new HashSet<>();
 
 	public Student() {
 		super();
@@ -41,7 +48,7 @@ public class Student extends AppUser {
 
 	}
 
-	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, mappedBy = "student")
+	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, mappedBy = "student", orphanRemoval = true)
 	private Set<StudentTest> studentTests = new HashSet<>();
 
 	// convenience method
@@ -57,6 +64,28 @@ public class Student extends AppUser {
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		
 		return List.of(new SimpleGrantedAuthority(Roles.Student.name()));
+	}
+
+	public Set<StudentTest> getStudentTests() {
+		return studentTests;
+	}
+
+	public void setStudentTests(Set<StudentTest> studentTests) {
+		this.studentTests = studentTests;
+	}
+
+	public Set<String> getRoles() {
+		return roles.stream().map(role -> role.getRole().toString()).collect(Collectors.toSet());
+	}
+
+	public void setRoles(Set<UserRoles> roles) {
+		this.roles = roles;
+	}
+	
+	public void addRoles(Set<String> roles) {
+		for(String role: roles) {
+			this.roles.add(new UserRoles(Roles.valueOf(role)));
+		}
 	}
 	
 	

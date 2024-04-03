@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.contract;
 
+import com.edugreat.akademiksresource.auth.AuthenticationRequest;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 
 /*
@@ -11,6 +12,6 @@ public interface AppAuthInterface {
 	public <T extends AppUserDTO> T signUp(T dto) ;
 	
 
-	public <T extends AppUserDTO> T signIn(T dto);
+	public <T extends AppUserDTO> T signIn(AuthenticationRequest request);
 	
 }

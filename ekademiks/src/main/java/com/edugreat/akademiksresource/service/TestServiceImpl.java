@@ -1,10 +1,13 @@
 package com.edugreat.akademiksresource.service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -12,21 +15,19 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
+import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
-import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
-import com.edugreat.akademiksresource.dto.TestDTO;
-import com.edugreat.akademiksresource.embeddable.Options;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Question;
-import com.edugreat.akademiksresource.model.Subject;
+import com.edugreat.akademiksresource.model.Student;
+import com.edugreat.akademiksresource.model.StudentTest;
 import com.edugreat.akademiksresource.model.Test;
-import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.projection.TestWrapper;
-import com.edugreat.akademiksresource.util.OptionUtil;
+import com.edugreat.akademiksresource.util.AttemptUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,33 +40,12 @@ public class TestServiceImpl implements TestInterface {
 
 	private final StudentTestDao studentTestDao;
 
-	private final SubjectDao subjectDao;
 	private final ModelMapper mapper;
+	private List<OptionLetter> responses = new ArrayList<>();
 
-	@Transactional
-	@Override
-	public void setTest(TestDTO testDTO) {
+	private final StudentDao studentDao;
 
-		// check if test name exists in the database
-		Test t = testDao.findByTestName(testDTO.getTestName());
-		if (t != null) {
-
-			throw new AcademicException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
-		}
-
-		// fetches from the database, subject to which the test is associated
-		Subject loadedSubject = findSubjectOrThrow(testDTO.getSubjectName());
-		Set<Question> validQuestions = validateQuestions(testDTO.getQuestions());
-
-		// map the TestDTO object to test object
-		Test validTest = mapper.map(testDTO, Test.class);
-		validTest.setQuestions(validQuestions);
-		// performs the bidirectional association between test and question objects
-		validQuestions.stream().forEach(x -> x.setTest(validTest));
-		loadedSubject.addTest(validTest);
-
-	}
-
+	
 	// helper method that gets from the database test whose id is given
 	private Test getTest(Integer id) {
 
@@ -104,77 +84,125 @@ public class TestServiceImpl implements TestInterface {
 		return wrapper;
 	}
 
+	
+	
+
+	@Transactional
 	@Override
-	public List<ScoreAndDate> getScore(int studentId, int testId) {
+	public void submitTest(AttemptUtil attempt) {
 
-		List<ScoreAndDate> scores = studentTestDao.getScore(studentId, testId);
+		// get the student's identifier
+		Integer studentId = attempt.getStudentId();
 
-		if (!scores.isEmpty()) {
+		// get the Test object identifier
+		Integer testId = attempt.getTestId();
 
-			return scores;
-		}
+		// check that the student taking the test exists in the database
+		// as well as information for the test they are taking.
+		// TODO: Modify this method in the future to allow for non-registered students
+		if (exist(studentId, testId)) {
 
-		// TODO: Throw exception with descriptive message if list is null to indicate
-		// there's not records for the given arguments
+			// get the student who took the test
+			Student student = studentDao.findById(studentId).get();
 
-		return null;
-	}
+			// get the test that was taken
+			Test test = testDao.findById(testId).get();
 
-	// validates the question dto by validating each of the objections
-	// provided in the question and mapping the dto to a question object
-	private Set<Question> validateQuestions(Collection<QuestionDTO> dtos) {
+			// get the list of selected options
+			List<String> selectedOptions = attempt.getSelectedOptions();
+			// get the time of submission
+			LocalDateTime now = LocalDateTime.now();// might review this code later to allow fetching from the front-end
 
-		Set<Question> validQuestions = new HashSet<>();
-		// for each question in the collection, validate the question and return if
-		// valid
-		for (QuestionDTO dto : dtos) {
-			Set<Options> options = validateOptions(dto.getOptions());// validate and return validated options for each
-																		// of the questions
-
-			// map each question dto to question object and associate options to it
-			Question mappedQuestion = mapper.map(dto, Question.class);
-			mappedQuestion.setOptions(options);
-			validQuestions.add(mappedQuestion);
-
-		}
-
-		return validQuestions;
-	}
-
-	// checks if the options supplied by the admin when setting Test.questions are
-	// valid options
-	// valid options for each question must be any of the alphabets Q-E.
-	// validate and return successfully validated options, throw exception if
-	// validation fails
-	private Set<Options> validateOptions(List<OptionUtil> options) {
-
-		Set<Options> validOptions = new HashSet<>();
-		try {
-
-			for (OptionUtil option : options) {
-				OptionLetter.valueOf(option.getLetter());// validate the options, can throw exception is validations
-															// fails
-				validOptions.add(mapper.map(option, Options.class));
+			// add the selected options
+			for (String opt : selectedOptions) {
+				checkResponse(opt);
 			}
 
-		} catch (IllegalArgumentException e) {
-			validOptions = null;// for garbage collection
-			throw new AcademicException("illegal option", Exceptions.ILLEGAL_DATA_FIELD.name());
+			// get the question which the student attempted in the test
+			List<Question> questions = new ArrayList<>();
+			Set<Question> set = testDao.findById(testId).get().getQuestions();
+			questions.addAll(set);
+
+			// Now score the student
+			double score = scoreTest(questions, selectedOptions);
+
+			// create new StudentTest object to associate the records with and return the
+			// object
+			StudentTest studentTest = new StudentTest(score, now, student, test, responses);
+			studentTest.setGrade(String.valueOf(2 * score));
+			studentTestDao.save(studentTest);
+
+		} 
+			// TODO: Modify this declaration in the future to allow for non-registered
+			// students
+		else
+			throw new AcademicException("student and or test information not found",
+					Exceptions.RECORD_NOT_FOUND.name());
+
+	}
+	
+	// scores a test the student submitted and return their score
+		// it takes the Question and selected options just to compare the answer field
+		// in the question
+		// and the corresponding selected option
+		private double scoreTest(List<Question> questions, List<String> selectedOptions) {
+
+			double score = 0.0;
+
+			// sort the questions(implemented to sort by question number)
+			Collections.sort(questions);
+
+			List<String> answers = null;
+
+			// map each question in the list to their corresponding answer
+			answers = questions.stream().map(Question::getAnswer).collect(Collectors.toList());
+
+			// iterate the two records and increment score if they're same, otherwise just
+			// increment by zero
+			for (int i = 0; i < selectedOptions.size(); i++) {
+
+				score += (answers.get(i).compareTo(selectedOptions.get(i)) == 0 ? 1 : 0);
+
+			}
+
+			return score;
 		}
 
-		return validOptions;
-	}
+		// check options submitted by students if they match with the set of enumerated
+		// values, then updates the list of responses made by the student
+		private synchronized void checkResponse(String res) {
 
-	private Subject findSubjectOrThrow(String subjectName) {
+			// response must be any of the alphabetic letter(A-E). So only one character is
+			// allowed
+			try {
 
-		Subject subj = subjectDao.findBySubjectName(subjectName);
+				if (res.trim().length() == 1) {
 
-		if (subj != null)
-			return subj;
+					this.responses.add(OptionLetter.valueOf(res));
+				} else if (res.trim().length() < 1) {
+					// if the student did not provide answer to a question, add NILL to show no
+					// option selected
+					this.responses.add(OptionLetter.NILL);
+				}
 
-		throw new AcademicException("subject, '" + subjectName + "' not found", Exceptions.RECORD_NOT_FOUND.name());
-	}
+			} catch (IllegalArgumentException e) {
+				throw new AcademicException("illegal options '"+res+"'", Exceptions.ILLEGAL_DATA_FIELD.name());
+			}
 
+		}
+		
+		// checks if the student and test whose identifiers are provided exist
+		private boolean exist(int studentId, int testId) {
+
+			Optional<Student> op1 = studentDao.findById(studentId);
+
+			Optional<Test> op2 = testDao.findById(testId);
+
+			return (op1.isPresent() && op2.isPresent());
+
+		}
+
+	
 	
 
 }

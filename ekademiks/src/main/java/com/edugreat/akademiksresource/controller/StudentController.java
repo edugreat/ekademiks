@@ -1,17 +1,12 @@
 package com.edugreat.akademiksresource.controller;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,13 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Question;
+import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.service.StudentService;
-import com.edugreat.akademiksresource.util.AttemptUtil;
-
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping("student")
+@RequestMapping("/students")
 @AllArgsConstructor
 public class StudentController {
 	
@@ -33,9 +27,9 @@ public class StudentController {
 	
 	
 
-	@GetMapping
-	public ResponseEntity<Object> getScore(@RequestParam("id") String stId, 
-			@PathVariable("testId") String tId) {
+	@GetMapping("/score")
+	public ResponseEntity<Object> getScore(@RequestParam("stud") String stId, 
+			@RequestParam("test") String tId) {
 		
 		//check if the input path variables match the regular expression for only non white spaced digits
 		Pattern pattern = Pattern.compile("^\\d+$");
@@ -51,13 +45,13 @@ public class StudentController {
 		Integer studentId = Integer.parseInt(stId);
 		Integer testId = Integer.parseInt(tId);
 		
-		ResponseEntity<Object> response = service.getTestScore(studentId, testId);
+		List<ScoreAndDate> response = service.getScore(studentId, testId);
 		
-		return response;
+		return ResponseEntity.ok(response);
 		
 	}
 	
-	@GetMapping
+	@GetMapping("/test")
 	public Collection<Question> takeTest(@RequestParam("test_id") String tId){
 		
 		//CHECK TO CONFIRM THE ARGUMENT IS A VALID INTEGER
@@ -76,21 +70,7 @@ public class StudentController {
 		
 	}
 	
-	//receives the test attempt for submission
-	@PostMapping("/submit")
-	public void submitTest(@Valid @RequestBody AttemptUtil attempt) {
-		
-		
-		try {
-			
-			service.submitTest(attempt);
-			
-		} catch (ConstraintViolationException e) {
-			
-			throw new AcademicException("Invalid input detected", Exceptions.ILLEGAL_DATA_FIELD.name());
-		}
-		
-	}
+	
 	
 	
 	

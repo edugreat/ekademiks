@@ -12,10 +12,14 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.edugreat.akademiksresource.auth.AppUserDetailsService;
+import com.edugreat.akademiksresource.exception.CustomAccessDenied;
+import com.edugreat.akademiksresource.exception.CustomAuthenticationEntryPoint;
 import com.edugreat.akademiksresource.filter.JwtAuthtFilter;
 
 import lombok.AllArgsConstructor;
@@ -25,18 +29,31 @@ import lombok.AllArgsConstructor;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 	
-	private static final String[] PUBLIC_API = {"/sign-in/**","/sign-up/**","/logout/**","/take-test/**"};
+	private static final String[] PUBLIC_API = {"/auth/**"};
 	
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
-	
+
+
+    @Bean
+    AccessDeniedHandler accessDeniedHandler() {
+        return new CustomAccessDenied();
+    }
+
+    @Bean
+    AuthenticationEntryPoint authenticationEntryPoint() {
+        return new CustomAuthenticationEntryPoint();
+    }
 @Bean
 SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+	
+	
 
 	return http.csrf(AbstractHttpConfigurer::disable)
 .authorizeHttpRequests(request -> request.antMatchers(PUBLIC_API).permitAll()
-		.antMatchers("/admin/**").hasAnyAuthority("Admin")
-		.antMatchers("/student/**").hasAnyAuthority("Admin","Student")
+		.antMatchers("/admins/**").hasAnyAuthority("Admin")
+		.antMatchers("/students/**").hasAnyAuthority("Admin","Student")
+		.antMatchers("/test").hasAnyAuthority("Admin","Student")
 		
 		).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 .authenticationProvider(authenticationProvider()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
@@ -46,7 +63,7 @@ SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 }
 
 @Bean
-private AuthenticationProvider authenticationProvider() {
+ AuthenticationProvider authenticationProvider() {
 	
 	DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
 	daoAuthenticationProvider.setUserDetailsService(userDetailsService);
@@ -57,13 +74,13 @@ private AuthenticationProvider authenticationProvider() {
 }
 
 @Bean
-private PasswordEncoder passwordEncoder() {
+ PasswordEncoder passwordEncoder() {
 	
 	return new BCryptPasswordEncoder();
 }
 
 @Bean
-private AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+ AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
 	
 	return authenticationConfiguration.getAuthenticationManager();
 }
