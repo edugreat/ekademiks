@@ -2,8 +2,7 @@
 ## Introduction
 ### This is a basic online academic test platform
 ### Description
-ekademiks tends to provide academic services for secondary school students as well as school leavers who intend to take online tests on subjects of their choice, then get feedbacks afterwrds to assess their academic performances.
-Academic tests are grouped into **categories** of examinations provided by different exaamination bodies such as [The West AfricanExamination Council](www.waec.org), the [General Cerfication Examination(GCE)](https://www.myschoolgist.com/ng/waec-gce/) etc. Stuents intending to sit for any of these exams can take a prior assessment of their performance before embarking on it.
+Welcome to our GitHub repository! Here, we house the code for our online test assessment platform tailored for high school students. With easy login access, students can engage in multi-choice assessments spanning various academic levels and subjects. Instant feedback ensures timely evaluation of their performance, fostering continuous learning and growth. Join us in shaping the future of education!
 ## Technologies used
 This project's evolution heavily relies on three main separate concerns - **database management**, **Server side implementation** and **front-end service**. 
 Technologies used are shown below
@@ -12,7 +11,7 @@ Technology | Implements
 SQL|Database management
 Java's spring boot framework|Backend/server side implementation
 angular framework|frontend/client side implementation
-Bootstrap | css design management
+Bootstrap & Angular material design | css design management
 Typescript | frontend model classes and component
 
 The choice of [spring boot framework](https://spring.io/projects/spring-boot) is based upon its saving time in project developement, easy configurations and its great abstraction implemetations with _minimal code_.
@@ -27,8 +26,8 @@ For local use of the project follow these steps:
    * ``git remote add [chosen-name] https://github.com/edugreat/ekademiks.git`` [to add](https://git-scm.com/docs/git-remote) the remote url
    * ``git clone chosen-name`` to [clone](https://git-scm.com/docs/git-clone) to your local machine
    
-2 Your can skip the step one above
-   * download the [zip project](https://github.com/edugreat/ekademiks/archive/refs/heads/dev.zip)
+2 You can skip the step one above by simply
+   * downloading the [zip project](https://github.com/edugreat/ekademiks/archive/refs/heads/dev.zip)
    * unzip to your desired folder
    
 3 Run the database scripts in the [starter folder](https://github.com/edugreat/ekademiks/blob/dev/starter/database.sql) on your MYSQL workbench or command line interface   
