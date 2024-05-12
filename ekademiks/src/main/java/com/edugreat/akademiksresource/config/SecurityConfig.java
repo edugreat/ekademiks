@@ -29,7 +29,8 @@ import lombok.AllArgsConstructor;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 	
-	private static final String[] PUBLIC_API = {"/auth/**"};
+	private static final String[] PUBLIC_API = {"/auth/**","/admins/**",
+			"/students/**","/test"};
 	
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
@@ -51,10 +52,10 @@ SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
 	return http.csrf(AbstractHttpConfigurer::disable)
 .authorizeHttpRequests(request -> request.antMatchers(PUBLIC_API).permitAll()
-		.antMatchers("/admins/**").hasAnyAuthority("Admin")
-		.antMatchers("/students/**").hasAnyAuthority("Admin","Student")
-		.antMatchers("/test").hasAnyAuthority("Admin","Student")
-		
+//		.antMatchers("/admins/**").hasAnyAuthority("Admin")
+//		.antMatchers("/students/**").hasAnyAuthority("Admin","Student")
+//		.antMatchers("/test").hasAnyAuthority("Admin","Student")
+//		
 		).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 .authenticationProvider(authenticationProvider()).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
 

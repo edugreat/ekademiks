@@ -1,9 +1,0 @@
-#date-container{
-    width:75px;
-    min-height: 30vh;
-}
-
-#date-container:hover{
-    background-color: black;
-    border: none !important;
-}
