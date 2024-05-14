@@ -5,6 +5,7 @@ import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,8 @@ import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
 @RestController
-@RequestMapping("test")
+@RequestMapping("/tests")
+//@CrossOrigin(origins ="http://localhost:4200", maxAge = 3600)
 public class TestController {
 	
 	private TestInterface service;
@@ -29,7 +31,7 @@ public class TestController {
 		this.service = testInterface;
 	}
 	
-	@GetMapping("{id}")
+	@GetMapping("/{id}")
 	//get mapping that serves questions for the given test id
 	public ResponseEntity<Object> takeTest(@PathVariable("id") Integer testId){
 		

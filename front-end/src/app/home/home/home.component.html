@@ -1,0 +1,13 @@
+
+
+<mat-grid-list class="gridList" rowHeight="100px" gutterSize="6px" [cols]="4"  >
+  <mat-grid-tile [colspan]="2"[rowspan]="1" [style.background]="'red'" >Take Assessment</mat-grid-tile>
+  <mat-grid-tile  [colspan]="2"[rowspan]="1" [style.background]="'green'"  >Account</mat-grid-tile>
+ 
+  <mat-grid-tile [colspan]="4"[rowspan]="1" [style.background]="'grey'"  >Read Article</mat-grid-tile>
+  <mat-grid-tile class="ma-grid-list-description" [colspan]="4"[rowspan]="2" [style.background]="'dark'"  >
+  {{welcomeMsg}}
+  </mat-grid-tile>
+
+  <mat-grid-tile  [colspan]="4"[rowspan]="1" [style.background]="'teal'"  >Recommended Test</mat-grid-tile>
+</mat-grid-list>
