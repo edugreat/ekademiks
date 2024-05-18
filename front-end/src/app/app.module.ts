@@ -18,6 +18,7 @@ import { ContactComponent } from './contact/contact.component';
 import { LogoutComponent } from './logout/logout.component';
 import { HomeModule } from './home/home.module';
 import { FlexLayoutModule } from '@angular/flex-layout';
+import { MaterialModule } from './material/material.module';
 
   
 
@@ -36,15 +37,8 @@ import { FlexLayoutModule } from '@angular/flex-layout';
     BrowserModule,
     BrowserAnimationsModule,
     HttpClientModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatMenuModule,
-    MatIconModule,
-    MatSidenavModule,
-    FlexLayoutModule,
-
-
-    HomeModule
+    HomeModule,
+    MaterialModule
    
   ],
  // exports:[RouterModule],

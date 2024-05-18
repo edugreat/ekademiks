@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { HomeComponent } from './home/home.component';
-import {MatGridListModule} from '@angular/material/grid-list';
-import { FlexLayoutModule } from '@angular/flex-layout';
+import { MaterialModule } from '../material/material.module';
+import { CommonModule } from '@angular/common';
 
 
 
@@ -13,9 +12,9 @@ import { FlexLayoutModule } from '@angular/flex-layout';
   ],
   imports: [
     CommonModule,
-    MatGridListModule,
-    FlexLayoutModule
+    MaterialModule
    
-  ]
+  ],
+  exports:[HomeComponent]
 })
 export class HomeModule { }

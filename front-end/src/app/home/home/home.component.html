@@ -1,13 +1,35 @@
-
-
-<mat-grid-list class="gridList" rowHeight="100px" gutterSize="6px" [cols]="4"  >
-  <mat-grid-tile [colspan]="2"[rowspan]="1" [style.background]="'red'" >Take Assessment</mat-grid-tile>
-  <mat-grid-tile  [colspan]="2"[rowspan]="1" [style.background]="'green'"  >Account</mat-grid-tile>
- 
-  <mat-grid-tile [colspan]="4"[rowspan]="1" [style.background]="'grey'"  >Read Article</mat-grid-tile>
-  <mat-grid-tile class="ma-grid-list-description" [colspan]="4"[rowspan]="2" [style.background]="'dark'"  >
-  {{welcomeMsg}}
+ <!--For large screen rendering-->
+ <mat-grid-list class="gridList" rowHeight="100px" gutterSize="6px" [cols]="4" >
+  <mat-grid-tile *ngIf="!deviceXs"  colspan="4" [style.background]="'dark'">
+   <mat-card class="welcome" >
+    <mat-card-title style="font-weight: bold; text-align: center;">WELCOME</mat-card-title>
+    <mat-card-content style="font-style: italic;" >{{welcomeMsg}}</mat-card-content>
+   </mat-card>
   </mat-grid-tile>
 
-  <mat-grid-tile  [colspan]="4"[rowspan]="1" [style.background]="'teal'"  >Recommended Test</mat-grid-tile>
+  <!--End. For small screen rendering-->
+
+<!--For small screen rendering-->
+  <mat-grid-tile *ngIf="deviceXs"  colspan="4" [style.background]="'dark'">
+    <mat-card class="welcome" >
+     <mat-card-title style="font-weight: bold; text-align: center;">WELCOME</mat-card-title>
+     <mat-card-content style="font-style: italic;" >{{weclome2}}</mat-card-content>
+    </mat-card>
+   </mat-grid-tile>
+
+   <!--End. For small screen rendering-->
+  <mat-grid-tile [colspan]="colspan" [style.background]="'red'">
+    Take Assessment{{colspan}} {{deviceXs}}
+  </mat-grid-tile>
+  <mat-grid-tile [colspan]="colspan"  [style.background]="'green'">
+    Account {{colspan}}
+  </mat-grid-tile>
+
+  <mat-grid-tile [colspan]="colspan" [style.background]="'grey'">
+    Read Article {{colspan}} {{deviceXs}}  </mat-grid-tile>
+  
+
+  <mat-grid-tile [colspan]="colspan"  [style.background]="'teal'">
+    Recommended Test {{colspan}}
+  </mat-grid-tile>
 </mat-grid-list>
