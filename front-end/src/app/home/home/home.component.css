@@ -22,3 +22,20 @@ mat-card{
   display: flex;
   flex-direction: column;
 }
+
+#example-radio-group-label{
+  font-weight: bolder;
+  font-size: large;
+}
+
+.example-radio-button{
+  font-style: italic;
+}
+
+#radio-label-div{
+  text-align: center;
+}
+.levelRadioGroup{
+  text-align: center;
+  margin-top: 50px;
+}

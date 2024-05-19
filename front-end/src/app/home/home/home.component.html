@@ -1,6 +1,6 @@
  <!--For large screen rendering-->
- <mat-grid-list class="gridList" rowHeight="100px" gutterSize="6px" [cols]="4" >
-  <mat-grid-tile *ngIf="!deviceXs"  colspan="4" [style.background]="'dark'">
+ <mat-grid-list *ngIf="!levels$" class="gridList" rowHeight="100px" gutterSize="6px" [cols]="4" >
+  <mat-grid-tile *ngIf="!deviceXs"   colspan="4" [style.background]="'dark'">
    <mat-card class="welcome" >
     <mat-card-title style="font-weight: bold; text-align: center;">WELCOME</mat-card-title>
     <mat-card-content style="font-style: italic;" >{{welcomeMsg}}</mat-card-content>
@@ -19,8 +19,9 @@
 
    <!--End. For small screen rendering-->
   <mat-grid-tile [colspan]="colspan" [style.background]="'red'">
-    Take Assessment{{colspan}} {{deviceXs}}
+   <a mat-button (click)="getAcademicLevels()" >Take Assessments</a>
   </mat-grid-tile>
+
   <mat-grid-tile [colspan]="colspan"  [style.background]="'green'">
     Account {{colspan}}
   </mat-grid-tile>
@@ -33,3 +34,32 @@
     Recommended Test {{colspan}}
   </mat-grid-tile>
 </mat-grid-list>
+
+
+
+
+<div class="levelRadioGroup" *ngIf="levels$">
+  <div id="radio-label-div">
+    <label id="example-radio-group-label">Pick assessment level</label>
+  </div>
+  <mat-radio-group name="_level" (change)="handleSelection($event)" *ngFor="let level of levels$ | async"
+    aria-labelledby="example-radio-group-label"
+    class="example-radio-group">
+    
+    <mat-radio-button  class="example-radio-button" [value]="level.category">{{level.category}}</mat-radio-button>
+ 
+  </mat-radio-group>
+
+  <div>
+    <button color="primary" style="width: 25vw; text-align: end; " mat-raised-button>
+      <mat-icon  >arrow_forward</mat-icon>
+    </button>
+  </div>
+</div>
+
+
+
+
+
+
+
