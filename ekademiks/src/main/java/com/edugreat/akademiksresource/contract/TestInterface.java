@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.contract;
 
+import java.util.List;
+
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
@@ -14,6 +16,8 @@ public interface TestInterface {
 	//method that submits student's attempt in a test
 		public void submitTest(AttemptUtil attempt);
 		
+		//method that retrieves all the test subject for the given academic level
+		public List<String> testSubjectFor(String level);
 	
 
 }

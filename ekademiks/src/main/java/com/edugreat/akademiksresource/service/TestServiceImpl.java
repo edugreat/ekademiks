@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import com.edugreat.akademiksresource.contract.TestInterface;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
+import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
+import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
@@ -39,8 +41,11 @@ public class TestServiceImpl implements TestInterface {
 	private final TestDao testDao;
 
 	private final StudentTestDao studentTestDao;
+	
+	private final SubjectDao subjectDao;
 
 	private final ModelMapper mapper;
+	
 	private List<OptionLetter> responses = new ArrayList<>();
 
 	private final StudentDao studentDao;
@@ -85,6 +90,13 @@ public class TestServiceImpl implements TestInterface {
 	}
 
 	
+
+	//fetches all the subject names for the given academic level
+	@Override
+	public List<String> testSubjectFor(String level) {
+		//return all subjects for the given level,then map to their respective subject names
+		return subjectDao.findSubjetByLevelCategory(Category.valueOf(level));
+	}
 	
 
 	@Transactional
@@ -201,6 +213,7 @@ public class TestServiceImpl implements TestInterface {
 			return (op1.isPresent() && op2.isPresent());
 
 		}
+
 
 	
 	
