@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
@@ -58,5 +59,11 @@ public class TestController {
 			return ResponseEntity.ok("Submitted");
 		}
 	
+		//Retrieves from the database, all test names for the given academic level
+		@GetMapping("/level")
+		public ResponseEntity<Object> getForLevel(@RequestParam("level")String level){
+			
+			return ResponseEntity.ok(service.testSubjectFor(level));
+		}
 	
 }

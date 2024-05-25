@@ -144,8 +144,12 @@ public class AdminService implements AdminInterface {
 		
 		Subject subject = new Subject(subjectDTO.getSubjectName(), level);
 		
+		
+		
 		level.addSubject(subject);
+		
 		subject = subjectDao.save(subject);
+		
 		
 		return convertToDTO(subject);
 

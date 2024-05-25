@@ -7,7 +7,8 @@ import { Observable, map } from 'rxjs';
 })
 export class AssessmentsService {
 
-  baseUrl = `http://localhost:8080/learning/levels`
+  baseUrl = `http://localhost:8080/learning/levels`;
+  subjectNameUrl = `http://localhost:8080/tests/level`;
 
   constructor(private http:HttpClient) { }
 
@@ -16,11 +17,16 @@ export class AssessmentsService {
 
     return this.http.get<levelDTO>(`${this.baseUrl}`).pipe(
 
-    map(dtos => this.convertToLevel(dtos))
-    )
+    map(dtos => this.convertToLevel(dtos)))
 
+  
 
+  }
 
+  //fetches subject names for the given level argument
+  public fetchSubjectNames(level:string):Observable<string[]>{
+    
+    return this.http.get<[]>(`${this.subjectNameUrl}?level=${level}`);
   }
 
   //convert level object received from the server to a Level object
@@ -50,4 +56,8 @@ export interface Levels{
 category:string
 
 }
+
+
+
+
 

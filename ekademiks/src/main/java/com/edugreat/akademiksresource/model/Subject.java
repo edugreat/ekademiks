@@ -25,7 +25,7 @@ public class Subject {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false)
 	private String subjectName;
 	
 	@JsonIgnore
@@ -100,13 +100,13 @@ public class Subject {
 		
 		Subject that = (Subject)o;
 		
-		return subjectName.equals(that.getSubjectName());
+		return subjectName.equals(that.getSubjectName()) && level.getCategory() == that.getLevel().getCategory();
 		
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(subjectName);
+		return Objects.hash(subjectName.concat(level.getCategory().toString()));
 	}
 	
 }

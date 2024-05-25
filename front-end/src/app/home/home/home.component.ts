@@ -2,6 +2,8 @@ import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { Observable, Subscription } from 'rxjs';
 import { AssessmentsService, Levels } from '../../assessment/assessments.service';
+import { Router } from '@angular/router';
+import { MediaService } from '../../media-service';
 
 @Component({
   selector: 'app-home',
@@ -14,7 +16,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   //If the user's device is extra small
   deviceXs:boolean = false;
-  mediaSub?:Subscription;
+  mediaSubscription?:Subscription;
 
   //the default span for a set of mat-grid-tile
   colspan = 2;
@@ -28,27 +30,29 @@ export class HomeComponent implements OnInit, OnDestroy {
   //the user selected assessment test, as recieved from the radio button selection
   selectedLevel ='';
   
-  constructor(private mediaObserver: MediaObserver, private assessmentService:AssessmentsService){}
+  constructor(private mediaService: MediaService, 
+    private assessmentService:AssessmentsService,
+  private router:Router){}
  
 
   ngOnInit(): void {
-    this.mediaSub = this.mediaAlias();
+    this.mediaSubscription = this.mediaAlias();
     
    
   }
 
-  private mediaAlias(): Subscription {
-    return this.mediaObserver.asObservable().subscribe((changes: MediaChange[]) =>{
-     
-    
+  private mediaAlias() {
+   
+    return this.mediaService.mediaChanges().subscribe((changes:MediaChange[]) =>{
+
       this.deviceXs = changes.some(change => change.mqAlias === 'xs');
       this.colspan = this.deviceXs ? 4: 2;
-
-    });
+    })
+    
   }
 
   ngOnDestroy(): void {
-   this.mediaSub?.unsubscribe();
+   this.mediaSubscription?.unsubscribe();
   }
 
   //calls the service to retrieve the academic levels
@@ -59,9 +63,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   //handles user selection of choice of academic level for assessment to proceed
-  handleSelection(event:any){
-this.selectedLevel = event.value;
+  handleSelection(){
     
+    this.router.navigate(['/assessments', this.selectedLevel]);
   }
   
 }

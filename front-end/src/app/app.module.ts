@@ -13,6 +13,7 @@ import { ContactComponent } from './contact/contact.component';
 import { LogoutComponent } from './logout/logout.component';
 import { HomeModule } from './home/home.module';
 import { MaterialModule } from './material/material.module';
+import { AssessmentModule } from './assessment/assessment.module';
 
   
 
@@ -32,7 +33,8 @@ import { MaterialModule } from './material/material.module';
     BrowserAnimationsModule,
     HttpClientModule,
     HomeModule,
-    MaterialModule
+    MaterialModule,
+    AssessmentModule
    
   ],
  // exports:[RouterModule],
