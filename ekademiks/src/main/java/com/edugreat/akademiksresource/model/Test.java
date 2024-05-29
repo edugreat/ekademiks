@@ -27,7 +27,7 @@ public class Test {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false)
 	private String testName;
 	
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "test", orphanRemoval = true, fetch = FetchType.LAZY)

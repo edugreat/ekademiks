@@ -160,28 +160,34 @@ public class AdminService implements AdminInterface {
 	public void setTest(TestDTO testDTO) {
 
 		// check if test name exists in the database
-		Test t = testDao.findByTestName(testDTO.getTestName());
+		Test t = testDao.findByTestName(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
 		if (t != null) {
 
 			throw new AcademicException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
 		}
 
+		
 		// fetches from the database, subject to which the test is associated
-		Subject loadedSubject = findSubjectOrThrow(testDTO.getSubjectName());
+		Subject loadedSubject = findSubjectOrThrow(testDTO.getSubjectName(), testDTO.getCategory());
+		
 		Set<Question> validQuestions = validateQuestions(testDTO.getQuestions());
-
+		
 		// map the TestDTO object to test object
 		Test validTest = mapper.map(testDTO, Test.class);
+		
 		validTest.setQuestions(validQuestions);
+		
 		// performs the bidirectional association between test and question objects
 		validQuestions.stream().forEach(x -> x.setTest(validTest));
+		
 		loadedSubject.addTest(validTest);
+		
 
 	}
 	
-	private Subject findSubjectOrThrow(String subjectName) {
+	private Subject findSubjectOrThrow(String subjectName, String category) {
 
-		Subject subj = subjectDao.findBySubjectName(subjectName);
+		Subject subj = subjectDao.findBySubjectName(subjectName,  Category.valueOf(category));
 
 		if (subj != null)
 			return subj;

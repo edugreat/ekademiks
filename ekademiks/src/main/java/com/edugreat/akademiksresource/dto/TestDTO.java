@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.dto;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.Transient;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -26,6 +27,9 @@ public class TestDTO {
 	@Min(value = 0, message = "id must not be negative or alphabetic")
 	private Integer id;
 	
+	@NotNull(message = "Property category, for test is missing")
+	@Transient//Variable is only needed at runtime to fetch a single where there is possibility of having multiple subjects with same name 
+	private String category;
 	
 	@NotNull(message = "property test name missing")
 	@Size(min = 4, message = "property test name must not be less than 4 characters")
