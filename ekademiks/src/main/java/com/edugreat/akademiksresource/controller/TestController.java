@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.controller;
 
+import java.util.regex.Pattern;
+
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -64,6 +66,19 @@ public class TestController {
 		public ResponseEntity<Object> getForLevel(@RequestParam("level")String level){
 			
 			return ResponseEntity.ok(service.testSubjectFor(level));
+		}
+		
+		
+		//controller method to retrieve from the database, all test topics for the given subject and category
+		@GetMapping
+		public ResponseEntity<Object> getTestTopics(@RequestParam("subject")String subject, @RequestParam("category")String category){
+			
+			
+			final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
+			if(! (Pattern.matches(regex, category) && Pattern.matches(regex, category))) throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
+			
+			return ResponseEntity.ok(service.testTopics(subject, category));
+			
 		}
 	
 }

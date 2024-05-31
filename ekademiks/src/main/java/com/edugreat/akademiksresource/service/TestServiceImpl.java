@@ -153,6 +153,16 @@ public class TestServiceImpl implements TestInterface {
 
 	}
 	
+	//implements the testTopics method of the interface
+	@Override
+	public List<String> testTopics(String subject, String category) {
+		
+		
+		
+		return testDao.findTestTopics(subject, Category.valueOf(category));
+	}
+
+	
 	// scores a test the student submitted and return their score
 		// it takes the Question and selected options just to compare the answer field
 		// in the question
@@ -214,6 +224,7 @@ public class TestServiceImpl implements TestInterface {
 
 		}
 
+		
 
 	
 	

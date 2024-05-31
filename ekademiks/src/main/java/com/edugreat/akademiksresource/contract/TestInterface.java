@@ -18,6 +18,9 @@ public interface TestInterface {
 		
 		//method that retrieves all the test subject for the given academic level
 		public List<String> testSubjectFor(String level);
+		
+		//method that retrieves all the topics for a subject and category
+		public List<String> testTopics(String subject, String category);
 	
 
 }
