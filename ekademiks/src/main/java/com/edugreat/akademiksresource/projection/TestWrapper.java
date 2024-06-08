@@ -24,7 +24,7 @@ public class TestWrapper {
 	
 	public void addQuestion(QuestionDTO dto) {
 		
-		//checks is the QuestionDTO we intend to add is already in existence by returning
+		//checks if the QuestionDTO we intend to add is already in existence by returning
 		//a count of the dtos in the collection matches the incoming dto
 		long count = questions.stream().filter(x -> x == dto).count();
 		if(count < 1)

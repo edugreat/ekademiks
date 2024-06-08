@@ -80,5 +80,14 @@ public class TestController {
 			return ResponseEntity.ok(service.testTopics(subject, category));
 			
 		}
+		
+		@GetMapping("/start")
+		public ResponseEntity<Object> commenceTest(@RequestParam("topic")String topic, @RequestParam("category")String category ){
+			final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
+			if(! (Pattern.matches(regex, category) && Pattern.matches(regex, category))) throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
+			
+			return ResponseEntity.ok(service.takeTest(topic, category));
+			
+		}
 	
 }

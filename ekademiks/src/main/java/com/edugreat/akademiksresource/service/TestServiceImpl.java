@@ -29,6 +29,8 @@ import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.StudentTest;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TestWrapper;
+import com.edugreat.akademiksresource.projection.TopicAndDuration;
+import com.edugreat.akademiksresource.records.TestRecord;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -65,6 +67,7 @@ public class TestServiceImpl implements TestInterface {
 		return testDao.findById(id).get();
 
 	}
+	
 
 	@Override
 	// returns a test wrapper containing all questions for the given test id
@@ -155,13 +158,17 @@ public class TestServiceImpl implements TestInterface {
 	
 	//implements the testTopics method of the interface
 	@Override
-	public List<String> testTopics(String subject, String category) {
+	public List<TopicAndDuration> testTopics(String subject, String category) {
+		return testDao.findByTestNameAndCategory(subject, Category.valueOf(category));
 		
-		
-		
-		return testDao.findTestTopics(subject, Category.valueOf(category));
 	}
 
+	//implements the interface method to return a list of questions for the given argument
+	@Override
+	public List<Question> takeTest(String topic, String category) {
+		
+		return testDao.findTestQuestions(topic, Category.valueOf(category));
+	}
 	
 	// scores a test the student submitted and return their score
 		// it takes the Question and selected options just to compare the answer field
@@ -225,7 +232,8 @@ public class TestServiceImpl implements TestInterface {
 		}
 
 		
-
+		
+		
 	
 	
 

@@ -6,15 +6,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.edugreat.akademiksresource.enums.Category;
+import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Test;
+import com.edugreat.akademiksresource.projection.TopicAndDuration;
 //@CrossOrigin("http://localhost:4200")
 public interface TestDao extends JpaRepository<Test, Integer>{
 
+	//Fetches from the database a list of questions using the given arguments
+	@Query("SELECT t.questions FROM Test t JOIN t.subject s ON t.testName =:testName AND s.level.category =:category")
+	List<Question> findTestQuestions(String testName, Category category);
+	
+	//Fetches from the database, Test object using the test name and the test category
 	@Query("SELECT t FROM Test t JOIN t.subject s ON t.testName =:testName AND s.level.category =:category")
-	Test findByTestName(String testName, Category category);
+	public Test findByTestName(String testName, Category category);
 	
+	//fetches all the tests for the given subject and category
+	@Query("SELECT t FROM Test t JOIN t.subject s ON s.level.category =:category AND s.subjectName =:subjectName")
+	List<TopicAndDuration> findByTestNameAndCategory(String subjectName, Category category);
+
+
 	
-	//fetches all the testName(test topics) for the given subject and category
-	@Query("SELECT t.testName FROM Test t JOIN t.subject s ON s.level.category =:category AND s.subjectName =:subjectName")
-	List<String> findTestTopics(String subjectName, Category category);
 }
