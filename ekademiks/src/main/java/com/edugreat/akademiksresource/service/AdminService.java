@@ -1,8 +1,12 @@
 package com.edugreat.akademiksresource.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -183,6 +187,40 @@ public class AdminService implements AdminInterface {
 		loadedSubject.addTest(validTest);
 		
 
+	}
+	
+	@Override
+	public void updateTest(Integer testId, Map<String, Object> updates) {
+		
+		
+		//fetch the database,the Test object intended to update
+		Optional<Test> optionalTest = testDao.findById(testId);
+		
+		if(optionalTest.isPresent()) {
+			
+			Test existingTest = optionalTest.get();
+			updates.forEach((k, v) ->{ //for each key-value pair in the map, update the existing Test object
+				
+				switch (k) {
+				case "duration": 
+					
+					existingTest.setDuration((Integer)v);
+					break;
+				
+				case "testName":
+					existingTest.setTestName((String)v);
+					break;
+				case "instruction":
+					existingTest.setInstructions(v);
+				}
+			});
+			
+			testDao.save(existingTest);
+			return;
+		} else {
+			
+			throw new AcademicException("Record Not Found For ID = "+testId, Exceptions.RECORD_NOT_FOUND.toString());
+		}
 	}
 	
 	private Subject findSubjectOrThrow(String subjectName, String category) {

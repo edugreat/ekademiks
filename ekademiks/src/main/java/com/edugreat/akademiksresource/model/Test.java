@@ -1,13 +1,17 @@
 package com.edugreat.akademiksresource.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -41,6 +45,11 @@ public class Test {
 	@Column
 	private long duration;
 	
+	@ElementCollection
+	@CollectionTable(name = "instructions")
+	@Column(name = "instructions")
+	private Collection<String> instructions = new ArrayList<>(); //Instruction for the given test which students should adhere to
+	
 	@ManyToOne
 	@JoinColumn(name = "subject_id", nullable = false)
 	private Subject subject;
@@ -64,9 +73,11 @@ public class Test {
 		this.duration = duration;
 	}
 
-	public Test(String testName, long duration) {
+	public Test(String testName, long duration, Set<String> instructions) {
 		this.testName = testName;
 		this.duration = duration;
+		this.instructions = instructions;
+		
 	}
 
 	public String getTestName() {
@@ -75,6 +86,18 @@ public class Test {
 
 	public void setTestName(String testName) {
 		this.testName = testName;
+	}
+
+	
+	
+
+	public Collection<String> getInstructions() {
+		return instructions;
+	}
+
+	@SuppressWarnings("unchecked")
+	public void setInstructions(Object instructions) {
+		this.instructions =(List<String>) instructions;
 	}
 
 	public Set<Question> getQuestions() {
@@ -115,7 +138,7 @@ public class Test {
 			//if this question is not null and hasn't been associated to any test object,
 			//add it to the set of questions asked for this test, then do the bidirectional association
 			if(question != null && question.getTest() == null) {
-				System.out.println(this==null);
+				
 				this.questions.add(question);
 				question.setTest(this);
 			}

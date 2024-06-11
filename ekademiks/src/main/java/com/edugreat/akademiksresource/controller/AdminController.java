@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.validation.Valid;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -113,6 +115,16 @@ public class AdminController {
 		
 		return new ResponseEntity<>(service.addLevel(dto), HttpStatus.OK);
 		
+	}
+	
+	//Updates an object of Test
+	@PatchMapping("/test")
+	public ResponseEntity<Object> 
+	updateTest(@RequestBody Map<String, Object> updates, @RequestParam("id")Integer id){
+		
+		service.updateTest(id, updates);
+		
+		return ResponseEntity.ok().build();
 	}
 	
 

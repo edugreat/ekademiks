@@ -5,7 +5,7 @@ import java.util.List;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
-import com.edugreat.akademiksresource.records.TestRecord;
+
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
 //declare contracts that would be implemented

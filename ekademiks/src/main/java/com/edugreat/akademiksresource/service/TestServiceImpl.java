@@ -30,7 +30,7 @@ import com.edugreat.akademiksresource.model.StudentTest;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
-import com.edugreat.akademiksresource.records.TestRecord;
+
 import com.edugreat.akademiksresource.util.AttemptUtil;
 
 import lombok.RequiredArgsConstructor;
