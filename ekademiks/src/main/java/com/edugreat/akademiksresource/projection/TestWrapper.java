@@ -10,6 +10,9 @@ import com.edugreat.akademiksresource.model.Question;
 public class TestWrapper {
 	
 	List<QuestionDTO> questions = new ArrayList<>();
+	
+	//A collection of instructions for the question
+	private Collection<String> instructions = new ArrayList<>();
 
 	public TestWrapper(List<QuestionDTO> questions) {
 		this.questions = new ArrayList<>(questions);
@@ -29,6 +32,16 @@ public class TestWrapper {
 		long count = questions.stream().filter(x -> x == dto).count();
 		if(count < 1)
 			questions.add(dto);
+	}
+	
+	//Adds instructions to the collection of instructions object
+	public void addInstructions(Collection<String> instructions) {
+		
+		instructions.forEach(instruction -> this.instructions.add(instruction));
+	}
+
+	public Collection<String> getInstructions() {
+		return instructions;
 	}
 
 }

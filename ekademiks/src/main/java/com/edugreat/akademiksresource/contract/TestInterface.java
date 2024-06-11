@@ -26,9 +26,10 @@ public interface TestInterface {
 		public List<TopicAndDuration> testTopics(String subject, String category);
 	
 		/*
-		 * Returns an array of questions using the test topic and category
+		 * Returns  questions wrapper using the test topic and category
+		 *The implementation attaches the instructions for the test to the wrapper
 		 */
 		
-		public List<Question> takeTest(String topic, String category);
+		public TestWrapper takeTest(String topic, String category);
 
 }

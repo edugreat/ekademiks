@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -14,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.edugreat.akademiksresource.embeddable.Options;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -40,6 +43,10 @@ public class Question implements Comparable<Question>{
 	
 	@Column(nullable = false)
 	private String answer;
+	
+	//Transient instruction is not persistence but intends to provide instructions for the Test Questions
+	@Transient
+	private Collection<String> instructions = new ArrayList<>();
 	
 	@JsonIgnore
 	@ManyToOne

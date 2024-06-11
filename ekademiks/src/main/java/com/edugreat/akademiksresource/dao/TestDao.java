@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.dao;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,10 @@ public interface TestDao extends JpaRepository<Test, Integer>{
 	//fetches all the tests for the given subject and category
 	@Query("SELECT t FROM Test t JOIN t.subject s ON s.level.category =:category AND s.subjectName =:subjectName")
 	List<TopicAndDuration> findByTestNameAndCategory(String subjectName, Category category);
+
+	//return instructions for the test matching the given criteria
+	@Query("SELECT i FROM Test t JOIN t.instructions i JOIN t.subject s ON t.testName =:topic AND s.level.category =:category")
+	Collection<String> getInstructionsFor(String topic, Category category);
 
 
 	

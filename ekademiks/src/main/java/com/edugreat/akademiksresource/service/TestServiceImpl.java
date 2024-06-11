@@ -76,6 +76,7 @@ public class TestServiceImpl implements TestInterface {
 		// we may need some attributes of this test object in the future(eg test
 		// duration etc)
 		Test test = getTest(testId);
+		
 
 		// get all the questions associated with the test
 		Collection<Question> questions = test.getQuestions();
@@ -86,9 +87,15 @@ public class TestServiceImpl implements TestInterface {
 			QuestionDTO questionDTO = mapper.map(question, QuestionDTO.class);
 
 			wrapper.addQuestion(questionDTO);
+			
 
 		}
 
+		       //Get the instructions for this Test
+				Collection<String> instructions = test.getInstructions();
+				//add the instructions to the wrapper object
+				wrapper.addInstructions(instructions);
+				
 		return wrapper;
 	}
 
@@ -165,9 +172,24 @@ public class TestServiceImpl implements TestInterface {
 
 	//implements the interface method to return a list of questions for the given argument
 	@Override
-	public List<Question> takeTest(String topic, String category) {
+	public TestWrapper takeTest(String topic, String category) {
 		
-		return testDao.findTestQuestions(topic, Category.valueOf(category));
+		List<Question> questions =  testDao.findTestQuestions(topic, Category.valueOf(category));
+		
+		if(questions.size() > 0) {
+			
+			TestWrapper wrapper = new TestWrapper();
+			questions.forEach(question -> wrapper.addQuestion(mapper.map(question, QuestionDTO.class)));
+			//get the instructions for this particular test
+			Collection<String> instructions = testDao.getInstructionsFor(topic, Category.valueOf(category));
+			if(instructions.size() > 0) {
+				wrapper.addInstructions(instructions);
+			}
+			
+			return wrapper;
+		}
+		
+		return null;
 	}
 	
 	// scores a test the student submitted and return their score

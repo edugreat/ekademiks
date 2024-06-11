@@ -190,6 +190,7 @@ public class AdminService implements AdminInterface {
 	}
 	
 	@Override
+	@Transactional
 	public void updateTest(Integer testId, Map<String, Object> updates) {
 		
 		
@@ -210,7 +211,7 @@ public class AdminService implements AdminInterface {
 				case "testName":
 					existingTest.setTestName((String)v);
 					break;
-				case "instruction":
+				case "instructions":
 					existingTest.setInstructions(v);
 				}
 			});
