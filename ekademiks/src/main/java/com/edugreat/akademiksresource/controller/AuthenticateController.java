@@ -24,10 +24,10 @@ public class AuthenticateController {
 	
 	@PostMapping("/sign-up")
 	@JsonView(UserView.class)
-	public ResponseEntity<AppUserDTO> signUp(@RequestBody @Valid AppUserDTO userDTO) throws Exception{
+	public int signUp(@RequestBody @Valid AppUserDTO userDTO) throws Exception{
 	
 		
-		return ResponseEntity.ok(appInterface.signUp(userDTO));
+		return appInterface.signUp(userDTO);
 	
 		
 		

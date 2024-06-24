@@ -9,7 +9,7 @@ import com.edugreat.akademiksresource.dto.AppUserDTO;
 public interface AppAuthInterface {
 
 	//Contract that registers new user
-	public <T extends AppUserDTO> T signUp(T dto) ;
+	public int  signUp(AppUserDTO dto) ;
 	
 
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request);

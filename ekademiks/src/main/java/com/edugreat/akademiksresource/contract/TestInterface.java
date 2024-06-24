@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.contract;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.edugreat.akademiksresource.model.Question;
@@ -31,5 +32,9 @@ public interface TestInterface {
 		 */
 		
 		public TestWrapper takeTest(String topic, String category);
+		
+
+		public Collection<String> getWelcomeMessages();
+
 
 }

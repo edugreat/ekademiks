@@ -1,13 +1,12 @@
 package com.edugreat.akademiksresource.service;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -22,6 +21,7 @@ import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
+import com.edugreat.akademiksresource.dao.WelcomeMessageDao;
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
@@ -40,6 +40,7 @@ import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
+import com.edugreat.akademiksresource.model.WelcomeMessage;
 import com.edugreat.akademiksresource.util.OptionUtil;
 
 import lombok.AllArgsConstructor;
@@ -60,6 +61,8 @@ public class AdminService implements AdminInterface {
 	private final  LevelDao levelDao;
 	private final SubjectDao subjectDao;
 	private final TestDao testDao;
+	private final WelcomeMessageDao welcomeMsgDao;
+	
 
 	@Override
 	@Transactional
@@ -117,7 +120,7 @@ public class AdminService implements AdminInterface {
 			var student = studentDao.findByEmail(email).get();
 			
 			
-			studentDao.delete(student);;
+			studentDao.delete(student);
 			
 			return;
 		}else if(!isStudent) {
@@ -125,6 +128,7 @@ public class AdminService implements AdminInterface {
 			if(isAdmin) {
 				var admin = adminsDao.findByEmail(email).get();
 				admin.getRoles().removeAll(admin.getRoles());
+				adminsDao.delete(admin);
 			}
 				
 		}
@@ -269,8 +273,7 @@ public class AdminService implements AdminInterface {
 			try {
 
 				for (OptionUtil option : options) {
-					OptionLetter.valueOf(option.getLetter());// validate the options, can throw exception is validations
-																// fails
+					OptionLetter.valueOf(option.getLetter());// validate the options, can throw exception if validations fails
 					validOptions.add(mapper.map(option, Options.class));
 				}
 
@@ -358,6 +361,35 @@ public class AdminService implements AdminInterface {
 
 		return mapper.map(level, LevelDTO.class);
 	}
+
+	@Transactional
+	@Override
+	public void createWelcomeMessages(Map<String, Collection<String>> msgs) {
+		
+	 WelcomeMessage welcome = new WelcomeMessage();
+	 msgs.forEach((k, v) ->{
+		 
+		 switch (k) {
+		case "welcomeMsg": Set<String> filteredMsgs = v.stream()
+				 .filter(msg -> patternMatch(msg)).collect(Collectors.toSet());
+		 
+		 filteredMsgs.forEach(x -> welcome.addMessage(x));
+		 
+		 welcomeMsgDao.save(welcome);
+			
+			break;
+		}
+	 });
+	}
+	
+	
+	
+	private boolean patternMatch(String msg) {
+		
+		return Pattern.matches("^[A-Za-z0-9\s,;:!.'\"-]+[.!?]*$", msg);
+	}
+
+	
 
 
 	

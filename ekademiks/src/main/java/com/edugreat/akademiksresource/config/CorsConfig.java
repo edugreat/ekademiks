@@ -17,7 +17,7 @@ public class CorsConfig {
 		{"Origin","Access-Control-Allow-Origin","Content-Type","Accept","Authorization","Origin,Accept","X-Request-With","Access-Control-Request-Method","Access-Control-Request-Headers"};
 	private static final String[] EXPOSED_HEADERS = {"Origin","Content-Type","Accept","Authorization","Access-Control-Allow-Origin","Access-Control-Allow-Credentials"};
 	
-	private static final String[] ALLOWED_METHODS = {"GET","POST","PUT","DELETE"};
+	private static final String[] ALLOWED_METHODS = {"GET","POST","PUT","DELETE","PATCH"};
 	
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	@Bean

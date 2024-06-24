@@ -5,7 +5,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -37,19 +37,41 @@ public class AppAuthService implements AppAuthInterface{
 	@SuppressWarnings("unchecked")
 	@Transactional
 	@Override
-	public <T extends AppUserDTO> T signUp(T userDTO) {
+	public int  signUp(AppUserDTO userDTO) {
 		AppUserDTO user = null;
 		AppUser appUser = null;
 		//Check the type of user wanting to sign up.
 		//if the intending user is a student
+		
+		
+		//check if the user already exists in the student table
+		final boolean existsAsStudentByEmail = studentDao.existsByEmail((userDTO.getEmail()));
+		
+		if(existsAsStudentByEmail) {
+			throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
+		}
+		
+		//checks if the user already exists in the admin table
+	    final boolean existsAsAdminByEmail = adminsDao.existsByEmail((userDTO.getEmail()));
+	    if(existsAsAdminByEmail) {
+			throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
+		}	
+		
+		//check if mobile number exists
+		if(userDTO.getMobileNumber() != null) {
+			
+			final boolean existsAsAdminByMobile = adminsDao.existsByMobile(userDTO.getMobileNumber());
+			if(existsAsAdminByMobile == true) throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
+		
+			final boolean existsAsStudentByMobile = studentDao.existsByMobile(userDTO.getMobileNumber());
+			if(existsAsStudentByMobile == true) throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
+		}
+		
+		
+		
 		if(! userDTO.getRoles().contains(Roles.Admin.name())) {
 			
 			
-			//check if the user already exists
-			final boolean exists = studentDao.existsByEmail((userDTO.getEmail()));
-			if(exists) {
-				throw new AcademicException("Student already exists", Exceptions.BAD_REQUEST.name());
-			}
 			user = mapper.map(userDTO, StudentDTO.class);
 			appUser  = new Student();
 			
@@ -62,20 +84,14 @@ public class AppAuthService implements AppAuthInterface{
 				appUser.setMobileNumber(user.getMobileNumber());
 			}
 			
-			//save the new object to the database and return it
-			appUser = studentDao.save((Student)appUser);
+			//save the new object to the database 
+			studentDao.save((Student)appUser);
 			
-			//map to the dto object for display 
-			user = mapper.map(appUser, StudentDTO.class);
 			
 		}else {
 			
 			
-			final boolean alreadyExists = adminsDao.existsByEmail(userDTO.getEmail());
-			if(alreadyExists) {
-				System.out.println(userDTO.getEmail()+" exists");
-				throw new AcademicException("Admin already exists", Exceptions.BAD_REQUEST.name());
-			}
+			
 			user = mapper.map(userDTO, AdminsDTO.class);
 			
 			appUser  = new Admins();
@@ -89,21 +105,20 @@ public class AppAuthService implements AppAuthInterface{
 				appUser.setMobileNumber(user.getMobileNumber());
 			}
 			
-			//Save the new object to the database and return it
-			appUser = adminsDao.save((Admins)appUser);
+			//Save the new object to the database 
+			adminsDao.save((Admins)appUser);
 			
-			//map to it's dto for display
-			user = mapper.map(appUser, AdminsDTO.class);
+			
 			
 		}
 		
 		
 		
-		return (T) user;
+		return HttpStatus.CREATED.value();
 	}
 	
 	
-	//authentication method implemented manually due the the need to authenticate users mapped to different database table, who might either be
+	//authentication method implemented manually due to the need to authenticate users mapped to different database tables, who might either be
 	//Admin or student. Still wish I can delegate this to the AuthenticationMangager bean to authenticate automatically 
 	@SuppressWarnings("unchecked")
 	@Override

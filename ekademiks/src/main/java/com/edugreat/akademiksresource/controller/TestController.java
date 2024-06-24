@@ -88,5 +88,15 @@ public class TestController {
 			return ResponseEntity.ok(service.takeTest(topic, category));
 			
 		}
+		
+
+		@GetMapping("/welcome")
+		public ResponseEntity<Object> getWelcome(){
+			
+			return new ResponseEntity<>(service.getWelcomeMessages(), HttpStatus.OK);
+			
+			
+			
+		}
 	
 }

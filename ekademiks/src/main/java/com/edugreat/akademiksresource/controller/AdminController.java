@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.controller;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -40,6 +41,7 @@ import lombok.AllArgsConstructor;
 public class AdminController {
 
 	private final AdminInterface service;
+	
 
 	@GetMapping("/user")
 	@JsonView(UserView.class)
@@ -125,6 +127,16 @@ public class AdminController {
 		service.updateTest(id, updates);
 		
 		return ResponseEntity.ok().build();
+	}
+	
+	
+	
+	@PostMapping("/welcome")
+	public ResponseEntity<Object> postWelcome( @RequestBody Map<String, Collection<String>> welcomeMsg){
+		
+		service.createWelcomeMessages(welcomeMsg);
+		return ResponseEntity.ok().build();
+		
 	}
 	
 

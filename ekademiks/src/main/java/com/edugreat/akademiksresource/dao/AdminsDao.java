@@ -18,5 +18,8 @@ public interface AdminsDao extends JpaRepository<Admins, Integer> {
 
 	@Query("DELETE FROM Admins WHERE email =:email")
 	public void deleteByEmail(String email);
+	
+	@Query("SELECT CASE WHEN COUNT(a.mobileNumber) > 0 THEN true ELSE false END FROM Admins a WHERE a.mobileNumber =:mobile")
+	public boolean existsByMobile(String mobile);
 
 }

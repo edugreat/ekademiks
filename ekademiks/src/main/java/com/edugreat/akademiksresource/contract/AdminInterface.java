@@ -1,7 +1,9 @@
 package com.edugreat.akademiksresource.contract;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
@@ -42,4 +44,7 @@ public interface AdminInterface {
 	public Iterable<LevelDTO> findAllLevels();
 	
 	public void updateTest(Integer testId, Map<String, Object> updates);//method that updates existing Test object, intended to use the patch method
+    
+	public void createWelcomeMessages(Map<String, Collection<String>> msgs);
+	
 }

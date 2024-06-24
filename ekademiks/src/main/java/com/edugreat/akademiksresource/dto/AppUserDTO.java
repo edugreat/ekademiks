@@ -7,8 +7,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-import com.edugreat.akademiksresource.enums.Roles;
-import com.edugreat.akademiksresource.model.UserRoles;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -33,17 +31,15 @@ public  class AppUserDTO {
 	@JsonView(UserView.class)
 	private String lastName;
 
-	//@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*()-_+=<>?]).{8,}$")
+	@Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$")
 	@NotBlank(message = "Password required")
-	
 	private String password;
 
-	@Pattern(regexp = "^(?:\\+234|\\b0)([789]\\d{9})$", message = "Unsupported mobile number")
-	@NotBlank(message = "mobile number required")
+	@Pattern(regexp = "^\\s*(?:\\+?(\\d{1,3}))?([-. (]*(\\d{3})[-. )]*)?((\\d{3})[-. ]*(\\d{2,4})(?:[-.x ]*(\\d+))?)\\s*$", message = "Unsupported mobile number")
 	@JsonView(UserView.class)
 	private String mobileNumber;
 
-	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "invalid email type")
+	@Pattern(regexp = "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", message = "invalid email type")
 	@JsonView(UserView.class)
 	private String email;
 	
@@ -56,7 +52,7 @@ public  class AppUserDTO {
 	@JsonView(UserView.SigninView.class)
 	private String signInErrorMessage;
 	
-	
+
 	
 	@JsonView(UserView.class)
 	private Set<String> roles = new HashSet<>();

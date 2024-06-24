@@ -19,6 +19,7 @@ import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
+import com.edugreat.akademiksresource.dao.WelcomeMessageDao;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
@@ -48,6 +49,8 @@ public class TestServiceImpl implements TestInterface {
 
 	private final ModelMapper mapper;
 	
+	private final WelcomeMessageDao welcomeMsgDao;
+	
 	private List<OptionLetter> responses = new ArrayList<>();
 
 	private final StudentDao studentDao;
@@ -68,6 +71,12 @@ public class TestServiceImpl implements TestInterface {
 
 	}
 	
+	
+	@Override
+	public Collection<String> getWelcomeMessages() {
+		
+		return welcomeMsgDao.findAllMessages();
+	}
 
 	@Override
 	// returns a test wrapper containing all questions for the given test id
