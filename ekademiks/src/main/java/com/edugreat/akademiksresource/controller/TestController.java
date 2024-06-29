@@ -57,7 +57,7 @@ public class TestController {
 				throw new AcademicException("Invalid input detected", Exceptions.ILLEGAL_DATA_FIELD.name());
 			}
 			
-			return ResponseEntity.ok("Submitted");
+			return ResponseEntity.ok("Submitted!");
 		}
 	
 		//Retrieves from the database, all test names for the given academic level

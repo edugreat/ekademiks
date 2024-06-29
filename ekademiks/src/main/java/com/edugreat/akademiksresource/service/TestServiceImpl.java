@@ -183,16 +183,24 @@ public class TestServiceImpl implements TestInterface {
 	@Override
 	public TestWrapper takeTest(String topic, String category) {
 		
-		List<Question> questions =  testDao.findTestQuestions(topic, Category.valueOf(category));
+		Test test = testDao.findByTestName(topic, Category.valueOf(category));
 		
-		if(questions.size() > 0) {
+		
+		
+	     Collection<Question> questions =  null;
+		if(test != null) {
 			
 			TestWrapper wrapper = new TestWrapper();
+			
+			questions = test.getQuestions();
+			
 			questions.forEach(question -> wrapper.addQuestion(mapper.map(question, QuestionDTO.class)));
 			//get the instructions for this particular test
 			Collection<String> instructions = testDao.getInstructionsFor(topic, Category.valueOf(category));
 			if(instructions.size() > 0) {
 				wrapper.addInstructions(instructions);
+				
+				wrapper.setTestId(test.getId());
 			}
 			
 			return wrapper;

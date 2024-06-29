@@ -9,6 +9,8 @@ import com.edugreat.akademiksresource.model.Question;
 
 public class TestWrapper {
 	
+	private int testId;
+	
 	List<QuestionDTO> questions = new ArrayList<>();
 	
 	//A collection of instructions for the question
@@ -42,6 +44,14 @@ public class TestWrapper {
 
 	public Collection<String> getInstructions() {
 		return instructions;
+	}
+
+	public void setTestId(int testId) {
+		this.testId = testId;
+	}
+
+	public int getTestId() {
+		return testId;
 	}
 
 }

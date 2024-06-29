@@ -121,9 +121,7 @@ public class Test {
 		return this.id;
 	}
 	
-	public Integer getTestId() {
-		return id;
-	}
+	
 
 	public void addQuestions(Collection<Question> questions) {
 		
