@@ -18,7 +18,7 @@ public interface TestInterface {
 	
 	
 	//method that submits student's attempt in a test
-		public void submitTest(AttemptUtil attempt);
+		public String submitTest(AttemptUtil attempt);
 		
 		//method that retrieves all the test subject for the given academic level
 		public List<String> testSubjectFor(String level);

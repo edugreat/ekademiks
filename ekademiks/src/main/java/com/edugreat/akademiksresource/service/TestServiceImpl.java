@@ -33,7 +33,6 @@ import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
 
 import com.edugreat.akademiksresource.util.AttemptUtil;
-
 import lombok.RequiredArgsConstructor;
 
 //Test service implementation class that provides implementation for Test interface
@@ -51,7 +50,7 @@ public class TestServiceImpl implements TestInterface {
 	
 	private final WelcomeMessageDao welcomeMsgDao;
 	
-	private List<OptionLetter> responses = new ArrayList<>();
+	
 
 	private final StudentDao studentDao;
 
@@ -120,7 +119,7 @@ public class TestServiceImpl implements TestInterface {
 
 	@Transactional
 	@Override
-	public void submitTest(AttemptUtil attempt) {
+	public String submitTest(AttemptUtil attempt) {
 
 		// get the student's identifier
 		Integer studentId = attempt.getStudentId();
@@ -141,17 +140,20 @@ public class TestServiceImpl implements TestInterface {
 
 			// get the list of selected options
 			List<String> selectedOptions = attempt.getSelectedOptions();
+			
 			// get the time of submission
 			LocalDateTime now = LocalDateTime.now();// might review this code later to allow fetching from the front-end
 
+			List<OptionLetter> responses = new ArrayList<>();
 			// add the selected options
 			for (String opt : selectedOptions) {
-				checkResponse(opt);
+				checkResponse(opt, responses);
 			}
 
 			// get the question which the student attempted in the test
 			List<Question> questions = new ArrayList<>();
 			Set<Question> set = testDao.findById(testId).get().getQuestions();
+			
 			questions.addAll(set);
 
 			// Now score the student
@@ -162,6 +164,8 @@ public class TestServiceImpl implements TestInterface {
 			StudentTest studentTest = new StudentTest(score, now, student, test, responses);
 			studentTest.setGrade(String.valueOf(2 * score));
 			studentTestDao.save(studentTest);
+			
+			return "Submitted!";
 
 		} 
 			// TODO: Modify this declaration in the future to allow for non-registered
@@ -238,19 +242,21 @@ public class TestServiceImpl implements TestInterface {
 
 		// check options submitted by students if they match with the set of enumerated
 		// values, then updates the list of responses made by the student
-		private synchronized void checkResponse(String res) {
+		private synchronized void checkResponse(String res, List<OptionLetter>responses) {
 
+			final List<String> ALLOWABLE_OPTIONS = List.of("A", "B", "C", "D", "E");
+			
 			// response must be any of the alphabetic letter(A-E). So only one character is
 			// allowed
 			try {
 
-				if (res.trim().length() == 1) {
+				if (res!= null && ALLOWABLE_OPTIONS.stream().anyMatch(res::equals)) {
 
-					this.responses.add(OptionLetter.valueOf(res));
-				} else if (res.trim().length() < 1) {
+				  responses.add(OptionLetter.valueOf(res));
+				}  else {
 					// if the student did not provide answer to a question, add NILL to show no
 					// option selected
-					this.responses.add(OptionLetter.NILL);
+					responses.add(OptionLetter.NILL);
 				}
 
 			} catch (IllegalArgumentException e) {

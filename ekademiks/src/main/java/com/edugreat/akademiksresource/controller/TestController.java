@@ -45,19 +45,19 @@ public class TestController {
 	
 	//receives the test attempt for submission
 		@PostMapping("/submit")
-		public ResponseEntity<String> submitTest(@Valid @RequestBody AttemptUtil attempt) {
+		public ResponseEntity<Object> submitTest(@Valid @RequestBody AttemptUtil attempt) {
 			
 			
 			try {
 				
-				service.submitTest(attempt);
+				return new ResponseEntity<>(service.submitTest(attempt), HttpStatus.OK);
 				
 			} catch (ConstraintViolationException e) {
 				
 				throw new AcademicException("Invalid input detected", Exceptions.ILLEGAL_DATA_FIELD.name());
 			}
 			
-			return ResponseEntity.ok("Submitted!");
+			
 		}
 	
 		//Retrieves from the database, all test names for the given academic level
