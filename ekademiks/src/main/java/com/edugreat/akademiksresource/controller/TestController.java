@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.controller;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.validation.ConstraintViolationException;
@@ -45,12 +47,17 @@ public class TestController {
 	
 	//receives the test attempt for submission
 		@PostMapping("/submit")
-		public ResponseEntity<Object> submitTest(@Valid @RequestBody AttemptUtil attempt) {
+		public ResponseEntity<Map<String, String>> submitTest(@Valid @RequestBody AttemptUtil attempt) {
 			
 			
 			try {
 				
-				return new ResponseEntity<>(service.submitTest(attempt), HttpStatus.OK);
+				Map<String, String> response = new HashMap<>();
+				
+				String result = service.submitTest(attempt);
+				response.put("message", result);
+				
+				return new ResponseEntity<>(response, HttpStatus.OK);
 				
 			} catch (ConstraintViolationException e) {
 				

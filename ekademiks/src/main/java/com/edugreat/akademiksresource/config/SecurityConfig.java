@@ -29,7 +29,7 @@ import lombok.AllArgsConstructor;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 	
-	private static final String[] PUBLIC_API = {"/auth/**","/students/**","/test"};
+	private static final String[] PUBLIC_API = {"/auth/**","/students/**","/tests/**"};
 	
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
