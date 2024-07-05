@@ -233,6 +233,8 @@ public class TestServiceImpl implements TestInterface {
 			// increment by zero
 			for (int i = 0; i < selectedOptions.size(); i++) {
 
+				if(selectedOptions.get(i) == null) continue; //skips the option if the student did not choose anything
+				
 				score += (answers.get(i).compareTo(selectedOptions.get(i)) == 0 ? 1 : 0);
 
 			}
