@@ -11,7 +11,8 @@ public interface AppAuthInterface {
 	//Contract that registers new user
 	public int  signUp(AppUserDTO dto) ;
 	
-
-	public <T extends AppUserDTO> T signIn(AuthenticationRequest request);
+	
+    //Allows users to sign in using different role preferences
+	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role);
 	
 }

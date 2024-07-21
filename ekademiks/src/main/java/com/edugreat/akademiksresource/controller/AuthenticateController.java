@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
@@ -35,9 +36,10 @@ public class AuthenticateController {
 	
 	@PostMapping("/sign-in")
 	@JsonView(UserView.SigninView.class)
-	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request){
+	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
+			@RequestParam("role") String role){
 		
-		return ResponseEntity.ok(appInterface.signIn(request));
+		return ResponseEntity.ok(appInterface.signIn(request, role));
 	}
 	
 }

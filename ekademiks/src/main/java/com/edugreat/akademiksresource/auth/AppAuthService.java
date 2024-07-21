@@ -34,7 +34,6 @@ public class AppAuthService implements AppAuthInterface{
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper mapper;
 	
-	@SuppressWarnings("unchecked")
 	@Transactional
 	@Override
 	public int  signUp(AppUserDTO userDTO) {
@@ -122,35 +121,44 @@ public class AppAuthService implements AppAuthInterface{
 	//Admin or student. Still wish I can delegate this to the AuthenticationMangager bean to authenticate automatically 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends AppUserDTO> T signIn(AuthenticationRequest request) {
+	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 	
 		String username = request.getEmail();
 		String password = request.getPassword();
+		
+		
 		//check if the user is an Admin
-		Optional<Admins> optionalAdmin = adminsDao.findByEmail(username);
-		if(optionalAdmin.isPresent() && passwordEncoder.matches(password, optionalAdmin.get().getPassword())) {
+		if(role.equalsIgnoreCase("admin")) {
+			Optional<Admins> optionalAdmin = adminsDao.findByEmail(username);
+			if(optionalAdmin.isPresent() && passwordEncoder.matches(password, optionalAdmin.get().getPassword())) {
+				
+				Admins admin = optionalAdmin.get();
+				var jwt = jwtUtil.generateToken(admin);
+				var dto = mapper.map(admin, AdminsDTO.class);
+				dto.setToken(jwt);
+				
+				return (T)dto;
+			}
 			
-			Admins admin = optionalAdmin.get();
-			var jwt = jwtUtil.generateToken(admin);
-			var dto = mapper.map(admin, AdminsDTO.class);
-			dto.setToken(jwt);
+		} else {
 			
-			return (T)dto;
+			//Then the user might be a student
+			Optional<Student> optionalStudent = studentDao.findByEmail(username);
+			if(optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
+				
+				Student student = optionalStudent.get();
+				var jwt = jwtUtil.generateToken(student);
+				var dto = mapper.map(student, StudentDTO.class);
+				dto.setToken(jwt);
+				return (T)dto;
+			}
+			
+			
 		}
 		
-		//Then the user might be a student
-		Optional<Student> optionalStudent = studentDao.findByEmail(username);
-		if(optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
-			
-			Student student = optionalStudent.get();
-			var jwt = jwtUtil.generateToken(student);
-			var dto = mapper.map(student, StudentDTO.class);
-			dto.setToken(jwt);
-			return (T)dto;
-		}
 		
 		//the user does not exist in the database
-		throw new AcademicException("user not found!", Exceptions.RECORD_NOT_FOUND.name());
+		throw new AcademicException( role.equalsIgnoreCase("admin") ? "admin not found!" : "student not found!", Exceptions.RECORD_NOT_FOUND.name());
 		
 	}
 
