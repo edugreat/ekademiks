@@ -1,7 +1,7 @@
 package com.edugreat.akademiksresource.dto;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

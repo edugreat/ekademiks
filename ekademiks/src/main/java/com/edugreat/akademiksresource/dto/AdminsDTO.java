@@ -1,12 +1,5 @@
 package com.edugreat.akademiksresource.dto;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.enums.Roles;
-import com.edugreat.akademiksresource.exception.AcademicException;
-
 
 public class AdminsDTO extends AppUserDTO {
 	

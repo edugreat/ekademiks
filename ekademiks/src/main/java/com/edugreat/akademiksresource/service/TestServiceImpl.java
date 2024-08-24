@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -60,7 +60,7 @@ public class TestServiceImpl implements TestInterface {
 
 		Optional<Test> optional = testDao.findById(id);
 
-		if (!optional.isPresent()) {
+		if (optional.isEmpty()) {
 
 			throw new AcademicException("Record not found for test id: " + id, Exceptions.RECORD_NOT_FOUND.name());
 

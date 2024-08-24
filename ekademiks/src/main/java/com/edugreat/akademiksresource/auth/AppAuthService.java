@@ -2,7 +2,7 @@ package com.edugreat.akademiksresource.auth;
 
 import java.util.Optional;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;

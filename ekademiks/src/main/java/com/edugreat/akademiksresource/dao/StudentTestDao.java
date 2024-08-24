@@ -4,10 +4,12 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.edugreat.akademiksresource.model.StudentTest;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 
+@RepositoryRestResource(collectionResourceRel = "StudentTests")
 public interface StudentTestDao extends JpaRepository<StudentTest, Integer>{
 	
 	
@@ -17,8 +19,10 @@ public interface StudentTestDao extends JpaRepository<StudentTest, Integer>{
 	//test multiple times, hence we expect more than one score 
 	//for a particular test.
 	//using projection, we get both the score and date the test was taken
-	@Query("SELECT st.score as score, st.when as when FROM StudentTest st JOIN st.student as s JOIN st.test as t"
-			+ " WHERE s.id =:studentId AND t.id =:testId")
+	@Query("""
+            SELECT st.score as score, st.when as when FROM StudentTest st JOIN st.student as s JOIN st.test as t\
+             WHERE s.id =:studentId AND t.id =:testId\
+            """)
 	public List<ScoreAndDate> getScore(int studentId, int testId);
 
 	

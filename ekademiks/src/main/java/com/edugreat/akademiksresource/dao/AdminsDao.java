@@ -4,9 +4,11 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.edugreat.akademiksresource.model.Admins;
 
+@RepositoryRestResource(collectionResourceRel = "Admins")
 public interface AdminsDao extends JpaRepository<Admins, Integer> {
 	
 	//checks if an admin exists.Returns true if exists, otherwise, false

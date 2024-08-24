@@ -36,8 +36,8 @@ public interface AdminInterface {
 	
 	public SubjectDTO setSubject(SubjectDTO dto);
 	
-	//sets new test
-	public void setTest(TestDTO testDTO);
+	//sets new test and return its id
+	public Integer setTest(TestDTO testDTO);
 	
     public LevelDTO addLevel(LevelDTO dto);
 	

@@ -3,9 +3,9 @@ package com.edugreat.akademiksresource.dto;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;

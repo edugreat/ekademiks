@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,6 +39,7 @@ import lombok.AllArgsConstructor;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/admins")
+//@CrossOrigin("http://localhost:4200")
 public class AdminController {
 
 	private final AdminInterface service;
@@ -45,7 +47,7 @@ public class AdminController {
 
 	@GetMapping("/user")
 	@JsonView(UserView.class)
-	public ResponseEntity<AppUserDTO> searchByEmail(@RequestParam("email") String email) {
+	public ResponseEntity<AppUserDTO> searchByEmail(@RequestParam String email) {
 
 		final String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 		if (Pattern.matches(emailRegex, email))
@@ -78,7 +80,7 @@ public class AdminController {
 	}
 
 	@DeleteMapping
-	public ResponseEntity<String> deleteUser(@RequestParam("email") String email) {
+	public ResponseEntity<String> deleteUser(@RequestParam String email) {
 
 		final String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 		if (Pattern.matches(emailRegex, email)) {
@@ -100,9 +102,10 @@ public class AdminController {
 	@PostMapping("/test")
 	public ResponseEntity<Object> setTest(@RequestBody @Valid TestDTO testDTO) {
 
+		 
 		service.setTest(testDTO);
-
-		return new ResponseEntity<>(HttpStatus.OK);
+		
+		return new ResponseEntity<Object>( HttpStatus.OK);
 	}
 	
 	
@@ -122,7 +125,7 @@ public class AdminController {
 	//Updates an object of Test
 	@PatchMapping("/test")
 	public ResponseEntity<Object> 
-	updateTest(@RequestBody Map<String, Object> updates, @RequestParam("id")Integer id){
+	updateTest(@RequestBody Map<String, Object> updates, @RequestParam Integer id){
 		
 		service.updateTest(id, updates);
 		

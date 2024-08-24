@@ -1,9 +1,9 @@
 package com.edugreat.akademiksresource.auth;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -33,7 +33,14 @@ public class JwtUtil {
 	
 	public String generateToken(UserDetails userDetails) {
 		
+//		Include the user's roles to the generated token
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("roles", userDetails.getAuthorities().stream()
+				.map(authority -> authority.getAuthority())
+				.toList());
+		
 		return Jwts.builder()
+				.claims(claims)
 				.subject(userDetails.getUsername())
 				.issuedAt(new Date(System.currentTimeMillis()))
 				.expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
@@ -64,6 +71,12 @@ public class JwtUtil {
 		 return extractClaims(token, Claims::getExpiration).before(new Date());
 	 }
 	 
+//	 Extract user's roles from the jwt token
+	 @SuppressWarnings("unchecked")
+	public List<String> extractRoles(String token){
+		 
+		 return extractClaims(token, claims -> claims.get("roles", List.class));
+	 }
 	private SecretKey getSignedKey() {
 		 byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
 		 

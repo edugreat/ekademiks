@@ -2,7 +2,7 @@ package com.edugreat.akademiksresource.auth;
 
 import java.io.Serializable;
 
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.Pattern;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

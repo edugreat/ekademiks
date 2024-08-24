@@ -10,7 +10,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-@Configuration
+//@Configuration
 public class CorsConfig {
 	
 	private static final String[] ALLOWED_HEADERS = 
@@ -19,8 +19,8 @@ public class CorsConfig {
 	
 	private static final String[] ALLOWED_METHODS = {"GET","POST","PUT","DELETE","PATCH"};
 	
-	@Order(Ordered.HIGHEST_PRECEDENCE)
-	@Bean
+	//@Order(Ordered.HIGHEST_PRECEDENCE)
+	//@Bean
 	CorsFilter corsFilter() {
 		
 		CorsConfiguration corsConfiguration = 

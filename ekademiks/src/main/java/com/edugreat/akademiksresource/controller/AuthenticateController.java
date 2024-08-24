@@ -1,6 +1,6 @@
 package com.edugreat.akademiksresource.controller;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +37,7 @@ public class AuthenticateController {
 	@PostMapping("/sign-in")
 	@JsonView(UserView.SigninView.class)
 	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
-			@RequestParam("role") String role){
+			@RequestParam String role){
 		
 		return ResponseEntity.ok(appInterface.signIn(request, role));
 	}

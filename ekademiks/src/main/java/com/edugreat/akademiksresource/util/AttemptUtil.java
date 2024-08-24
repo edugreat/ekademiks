@@ -2,7 +2,7 @@ package com.edugreat.akademiksresource.util;
 
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /*
  * This class models attempts a student makes in an academic test exercise
