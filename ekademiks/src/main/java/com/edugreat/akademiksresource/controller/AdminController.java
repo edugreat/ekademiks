@@ -5,11 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import jakarta.validation.Valid;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -31,6 +28,7 @@ import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 /*
@@ -93,19 +91,20 @@ public class AdminController {
 	}
 
 	@PostMapping("/sub")
-	public ResponseEntity<Object> setSubject(@RequestBody @Valid SubjectDTO dto) {
+	public ResponseEntity<Object> setSubject(@RequestBody List<SubjectDTO> dtos) {
 
-		return new ResponseEntity<>(service.setSubject(dto), HttpStatus.CREATED);
+		service.setSubject(dtos);
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	// set a new academic test
 	@PostMapping("/test")
-	public ResponseEntity<Object> setTest(@RequestBody @Valid TestDTO testDTO) {
+	public ResponseEntity<Object> uploadAssessment(@RequestBody @Valid TestDTO testDTO) {
 
 		 
-		service.setTest(testDTO);
 		
-		return new ResponseEntity<Object>( HttpStatus.OK);
+		
+		return new ResponseEntity<Object>(service.uploadAssessment(testDTO), HttpStatus.OK);
 	}
 	
 	
@@ -116,20 +115,26 @@ public class AdminController {
 	}
 	
 	@PostMapping("/level")
-	public ResponseEntity<Object> addLevel(@RequestBody  @Valid LevelDTO dto) {
+	public ResponseEntity<Object> addLevel(@RequestBody  List<LevelDTO> dtos) {
 		
-		return new ResponseEntity<>(service.addLevel(dto), HttpStatus.OK);
+		service.addLevels(dtos);
+		
+		return new ResponseEntity<>( HttpStatus.OK);
 		
 	}
 	
-	//Updates an object of Test
+	//Updates an object of Test such as setting instructions for already persisted test assessments
 	@PatchMapping("/test")
 	public ResponseEntity<Object> 
 	updateTest(@RequestBody Map<String, Object> updates, @RequestParam Integer id){
 		
-		service.updateTest(id, updates);
+		try {
+			service.updateTest(id, updates);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Something went wrong");
+		}
 		
-		return ResponseEntity.ok().build();
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 	
 	

@@ -34,12 +34,12 @@ public interface AdminInterface {
 	
 	public void deleteUser(String email);
 	
-	public SubjectDTO setSubject(SubjectDTO dto);
+	public void setSubject(List<SubjectDTO> dtos);
 	
 	//sets new test and return its id
-	public Integer setTest(TestDTO testDTO);
+	public Integer uploadAssessment(TestDTO testDTO);
 	
-    public LevelDTO addLevel(LevelDTO dto);
+    public void addLevels(List<LevelDTO> dtos);
 	
 	public Iterable<LevelDTO> findAllLevels();
 	

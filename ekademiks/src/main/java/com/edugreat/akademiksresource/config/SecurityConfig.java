@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,10 +30,10 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 @Configuration
-@EnableMethodSecurity
+@EnableGlobalAuthentication
 public class SecurityConfig {
 	
-	private static final String[] PUBLIC_API = {"/auth/**","/students/**","/tests/**"};
+	private static final String[] PUBLIC_API = {"/auth/**","/students/**","/tests/**","/notice/**","/learning/**"};
 	
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
@@ -66,7 +67,10 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(request -> request
             .requestMatchers(PUBLIC_API).permitAll()
-            .requestMatchers("/admins/**","/learning/**").hasAnyAuthority("Admin"))
+            .requestMatchers("/admins/**").hasAnyAuthority("Admin")
+            
+            )
+        
         .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

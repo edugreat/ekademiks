@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -133,33 +134,52 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
-	public SubjectDTO setSubject(SubjectDTO subjectDTO) {
+	public void setSubject(List<SubjectDTO> subjectDTOs) {
 
-		// get the academic level for the subject
-		Category category = Category.valueOf(subjectDTO.getCategory());
-		Level level = levelDao.findByCategory(category);
+		
+		
+		List<Subject> subjects = new ArrayList<>();
+		// get the academic level for the subject, check if any of the subjects already exists for any of the specified levels.
+//		Throw exception if any requirement fails. This is to ensure all passes requirements or non gets persisted.
+		subjectDTOs.forEach(dto ->{
+			
+			Category category = Category.valueOf(dto.getCategory());
+			
+			final Level level = levelDao.findByCategory(category);
+			
+			if(level == null) {
+				
+				throw new AcademicException("category '"+category+"' not found ", Exceptions.RECORD_NOT_FOUND.name());
+			}
+//			Check if the subject already exists for that particular level
+			if(subjectDao.subjectExists(dto.getSubjectName(), level.getId())) {
+				throw new AcademicException("subject, "+dto.getSubjectName()+", exists for "+category.name(), Exceptions.BAD_REQUEST.name());
+			}
+			
+		});
+		
+		subjectDTOs.forEach(dto ->{
+			
+       Category category = Category.valueOf(dto.getCategory());
+			
+			final Level level = levelDao.findByCategory(category);
 
-		if (level == null)
-			throw new AcademicException("category, '" + category + "' not found", Exceptions.RECORD_NOT_FOUND.name());
-
-		if (subjectDao.subjectExists(subjectDTO.getSubjectName(), level.getId()))
-			throw new AcademicException(
-					"Subject, " + subjectDTO.getSubjectName() + ", exists for the category " + category.name(),
-					Exceptions.BAD_REQUEST.name());
-
-		Subject subject = new Subject(subjectDTO.getSubjectName(), level);
-
-		level.addSubject(subject);
-
-		subject = subjectDao.save(subject);
-
-		return convertToDTO(subject);
-
+			Subject subject = new Subject(dto.getSubjectName(), level);
+			
+			level.addSubject(subject);
+			subjects.add(subject);
+		
+		
+			subjectDao.save(subject);
+		
+		});
+		
+		
 	}
 
 	@Transactional
 	@Override
-	public Integer setTest(TestDTO testDTO) {
+	public Integer uploadAssessment(TestDTO testDTO) {
 		
 
 		// check if test name exists in the database
@@ -227,10 +247,7 @@ public class AdminService implements AdminInterface {
 
 			testDao.save(existingTest);
 			return;
-		} else {
-
-			throw new AcademicException("Record Not Found For ID = " + testId, Exceptions.RECORD_NOT_FOUND.toString());
-		}
+		} 
 	}
 
 	private Subject findSubjectOrThrow(String subjectName, String category) {
@@ -288,10 +305,10 @@ public class AdminService implements AdminInterface {
 		return validOptions;
 	}
 
-	private SubjectDTO convertToDTO(Subject subject) {
-
-		return new SubjectDTO(subject.getId(), subject.getSubjectName(), subject.getLevel().getCategory().name());
-	}
+//	private SubjectDTO convertToDTO(Subject subject) {
+//
+//		return new SubjectDTO(subject.getId(), subject.getSubjectName(), subject.getLevel().getCategory().name());
+//	}
 
 	private AppUserDTO searchUser(String username) {
 
@@ -318,32 +335,46 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
-	public LevelDTO addLevel(LevelDTO dto) {
-		Level level = null;
+	public void addLevels(List<LevelDTO> dtos) {
+		
 
 		try {
 
 			// verifies that the parameter is a valid allowable category. Can throw
 			// exception on attempt to provide invalid enum type
-			Category.valueOf(dto.getCategory());
+			dtos.forEach(dto -> Category.valueOf(dto.getCategory()));
+			
 			// check if Level object for that category already exists in the database
-			if (levelDao.existsByCategory(Category.valueOf(dto.getCategory()))) {
-				throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
-						Exceptions.BAD_REQUEST.name());
+			
+			dtos.forEach(dto ->{
+				if(levelDao.existsByCategory(Category.valueOf(dto.getCategory()))) {
+					throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
+							Exceptions.BAD_REQUEST.name());
+				}
+			});
+			
 
-			}
-
-			level = mapper.map(dto, Level.class);
+		
+			
+			List<Level> levels = new ArrayList<>();
+			dtos.forEach(dto ->{
+				
+				Level level = mapper.map(dto, Level.class);
+				levels.add(level);
+				
+			});
 
 			// batch persist the levels to the database and map the returned
 			// record to the data transfer object
-			level = levelDao.save(level);
+			if(levels.size() > 0) {
+				levelDao.saveAll(levels);
+			}
 
 		} catch (IllegalArgumentException e) {
 			throw new AcademicException("Illegal parameter for category", Exceptions.BAD_REQUEST.name());
 		}
 
-		return mapper.map(level, LevelDTO.class);
+		
 	}
 
 	@Override

@@ -19,8 +19,8 @@ public class StudentDTO extends AppUserDTO{
 	}
 	@Override
 	public Set<String> getRoles() {
-		// TODO Auto-generated method stub
-		return super.getRoles();
+		
+		return Set.of("Student");
 	}
 	
 

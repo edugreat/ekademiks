@@ -4,9 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Valid;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +19,9 @@ import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.AttemptUtil;
+
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/tests")
@@ -88,7 +88,7 @@ public class TestController {
 		}
 		
 		@GetMapping("/start")
-		public ResponseEntity<Object> commenceTest(@RequestParam("topic")String topic, @RequestParam("category")String category ){
+		public ResponseEntity<Object> commenceTest(@RequestParam String topic, @RequestParam String category ){
 			final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
 			if(! (Pattern.matches(regex, category) && Pattern.matches(regex, category))) throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
 			
@@ -100,6 +100,8 @@ public class TestController {
 		@GetMapping("/welcome")
 		public ResponseEntity<Object> getWelcome(){
 			
+			
+		    
 			return new ResponseEntity<>(service.getWelcomeMessages(), HttpStatus.OK);
 			
 			

@@ -1,15 +1,14 @@
 package com.edugreat.akademiksresource.model;
 
 import java.util.Collection;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
-
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,6 +47,8 @@ public class AppUser implements UserDetails{
 
 	@Column(name = "password", nullable = false)
 	private String password;
+	
+	
 	
 	@Column
 	private boolean accountEnabled = true;

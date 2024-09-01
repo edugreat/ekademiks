@@ -8,10 +8,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -50,6 +52,19 @@ public class Student extends AppUser {
 
 	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, mappedBy = "student", orphanRemoval = true)
 	private Set<StudentTest> studentTests = new HashSet<>();
+	
+//	A set of notifications a student receives
+	@ManyToMany
+			@JoinTable(name = "student_notifications", 
+			joinColumns = @JoinColumn(name = "student_id"),
+			inverseJoinColumns = @JoinColumn(name = "notification_id")
+					)
+			
+	private Set<Notification> notifications = new HashSet<>();
+	
+	
+	
+	
 
 	// convenience method
 	public void addStudentTest(StudentTest studentTest) {
@@ -59,6 +74,21 @@ public class Student extends AppUser {
 		}
 
 	}
+	
+
+
+	public Set<Notification> getNotifications() {
+		return notifications;
+	}
+//     Convenience method to add notification to student
+	public void AddNotification(Notification notication) {
+		
+		if(!notifications.contains(notication)) {
+			
+			notifications.add(notication);
+		}
+	}
+
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
