@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SubjectDTO {
-	
+
 	@Min(value = 0, message = "Invalid id")
 	private Integer id;
 	@NotEmpty(message = "subject name must not empty")

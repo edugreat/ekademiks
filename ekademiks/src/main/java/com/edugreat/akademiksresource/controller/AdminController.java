@@ -41,7 +41,6 @@ import lombok.AllArgsConstructor;
 public class AdminController {
 
 	private final AdminInterface service;
-	
 
 	@GetMapping("/user")
 	@JsonView(UserView.class)
@@ -101,51 +100,44 @@ public class AdminController {
 	@PostMapping("/test")
 	public ResponseEntity<Object> uploadAssessment(@RequestBody @Valid TestDTO testDTO) {
 
-		 
-		
-		
 		return new ResponseEntity<Object>(service.uploadAssessment(testDTO), HttpStatus.OK);
 	}
-	
-	
+
 	@GetMapping("levels")
-	public ResponseEntity<Object> findAll(){
-		
+	public ResponseEntity<Object> findAll() {
+
 		return new ResponseEntity<Object>(service.findAllLevels(), HttpStatus.OK);
 	}
-	
+
 	@PostMapping("/level")
-	public ResponseEntity<Object> addLevel(@RequestBody  List<LevelDTO> dtos) {
-		
+	public ResponseEntity<Object> addLevel(@RequestBody List<LevelDTO> dtos) {
+
 		service.addLevels(dtos);
-		
-		return new ResponseEntity<>( HttpStatus.OK);
-		
+
+		return new ResponseEntity<>(HttpStatus.OK);
+
 	}
-	
-	//Updates an object of Test such as setting instructions for already persisted test assessments
+
+	// Updates an object of Test such as setting instructions for already persisted
+	// test assessments
 	@PatchMapping("/test")
-	public ResponseEntity<Object> 
-	updateTest(@RequestBody Map<String, Object> updates, @RequestParam Integer id){
-		
+	public ResponseEntity<Object> updateTest(@RequestBody Map<String, Object> updates, @RequestParam Integer id) {
+
 		try {
 			service.updateTest(id, updates);
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Something went wrong");
 		}
-		
+
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
-	
-	
-	
+
 	@PostMapping("/welcome")
-	public ResponseEntity<Object> postWelcome( @RequestBody Map<String, Collection<String>> welcomeMsg){
-		
+	public ResponseEntity<Object> postWelcome(@RequestBody Map<String, Collection<String>> welcomeMsg) {
+
 		service.createWelcomeMessages(welcomeMsg);
 		return ResponseEntity.ok().build();
-		
+
 	}
-	
 
 }

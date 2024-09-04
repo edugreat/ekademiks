@@ -27,52 +27,46 @@ import lombok.AllArgsConstructor;
 public class JwtAuthtFilter extends OncePerRequestFilter {
 
 	private final AppUserDetailsService userDetailsService;
-	
+
 	private final JwtUtil jwtUtil;
+
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		final String authHeader = request.getHeader("Authorization");
 		final String jwtToken;
 		final String userEmail;
-		if(authHeader == null || authHeader.isBlank()) {
-			
+		if (authHeader == null || authHeader.isBlank()) {
+
 			filterChain.doFilter(request, response);
 			return;
 		}
-		
+
 		jwtToken = authHeader.substring(7);
 		userEmail = jwtUtil.extractUsername(jwtToken);
-		if(userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+		if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 			UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-			
-			if(jwtUtil.isTokenValid(jwtToken, userDetails)) {
-				
-				
+
+			if (jwtUtil.isTokenValid(jwtToken, userDetails)) {
+
 //				Extract user's roles from the token
 				List<String> roles = jwtUtil.extractRoles(jwtToken);
-				List<SimpleGrantedAuthority> authorities = roles.stream()
-						.map(SimpleGrantedAuthority::new).toList();
-								
-				
-				//SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-				UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails,
-						null,
-						authorities
-						);
-				
+				List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
+
+				// SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+				UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, null,
+						authorities);
+
 				token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 //				securityContext.setAuthentication(token);
 //					SecurityContextHolder.setContext(securityContext);
 				SecurityContextHolder.getContext().setAuthentication(token);
 //					
 			}
-			
-			
-			
+
 		}
-		
+
 		filterChain.doFilter(request, response);
-				
+
 	}
 }

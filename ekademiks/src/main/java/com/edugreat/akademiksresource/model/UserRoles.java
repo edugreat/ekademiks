@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Embeddable
 public class UserRoles {
-	
+
 	@Enumerated(EnumType.STRING)
 	private Roles role;
 

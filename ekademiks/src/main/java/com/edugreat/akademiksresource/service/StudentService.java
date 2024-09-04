@@ -22,11 +22,7 @@ public class StudentService implements StudentInterface {
 
 	private final TestDao testDao;
 	private final StudentTestDao studentTestDao;
-	
 
-	
-	
-	
 	// return the questions associated with the test if test exists, else return
 	// null
 	@Override
@@ -42,9 +38,6 @@ public class StudentService implements StudentInterface {
 		throw new AcademicException("Test not found", Exceptions.TEST_NOT_FOUND.name());
 	}
 
-	
-	
-	
 	@Override
 	public List<ScoreAndDate> getScore(int studentId, int testId) {
 
@@ -60,7 +53,5 @@ public class StudentService implements StudentInterface {
 
 		return null;
 	}
-
-	
 
 }

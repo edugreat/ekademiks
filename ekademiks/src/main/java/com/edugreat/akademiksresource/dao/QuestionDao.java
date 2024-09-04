@@ -8,10 +8,10 @@ import org.springframework.data.repository.query.Param;
 
 import com.edugreat.akademiksresource.model.Question;
 
-public interface QuestionDao extends JpaRepository<Question, Integer>{
-	
-	//gets all the questions for the given test identifier
+public interface QuestionDao extends JpaRepository<Question, Integer> {
+
+	// gets all the questions for the given test identifier
 	@Query("SELECT q FROM Question q join q.test t WHERE t.id =:testId")
-	public List<Question> findByTestId(@Param("testId")int id);
+	public List<Question> findByTestId(@Param("testId") int id);
 
 }

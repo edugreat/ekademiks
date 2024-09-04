@@ -12,37 +12,25 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edugreat.akademiksresource.dto.NotificationRequestDTO;
 import com.edugreat.akademiksresource.service.NotificationService;
 
-
-
 @RestController
 @RequestMapping("/admins/notify")
 public class NotificationController {
-	
+
 	@Autowired
 	private NotificationService notificationService;
-	
-	
+
 	@PostMapping
 	public ResponseEntity<Object> postMethodName(@RequestBody NotificationRequestDTO notificationDTO) {
-		
-		if(notificationDTO != null) {
-			
-			notificationService.postNotification(notificationDTO);
-			
+
+		if (notificationDTO != null) {
+
+			notificationService.postAssessmentNotification(notificationDTO);
+
 			return new ResponseEntity<>(HttpStatus.OK);
-			
-			
+
 		}
-		
-		
-		
-		
+
 		throw new IllegalArgumentException("Something went wrong!");
 	}
-	
-	
-	
 
-	
-	
 }

@@ -17,74 +17,63 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
-
 @Component
 public class JwtUtil {
-	
-	private final long EXPIRATION_TIME = 3600000; //1 hour converted to milliseconds
-	
+
+	private final long EXPIRATION_TIME = 7200000; // 2 hours converted to milliseconds
+
 	public JwtUtil() {
-		
-		
+
 	}
-	
+
 	@Value("${jwt.secret}")
-	private  String SECRET_KEY;
-	
+	private String SECRET_KEY;
+
 	public String generateToken(UserDetails userDetails) {
-		
+
 //		Include the user's roles to the generated token
 		Map<String, Object> claims = new HashMap<>();
-		claims.put("roles", userDetails.getAuthorities().stream()
-				.map(authority -> authority.getAuthority())
-				.toList());
-		
-		return Jwts.builder()
-				.claims(claims)
-				.subject(userDetails.getUsername())
+		claims.put("roles", userDetails.getAuthorities().stream().map(authority -> authority.getAuthority()).toList());
+
+		return Jwts.builder().claims(claims).subject(userDetails.getUsername())
 				.issuedAt(new Date(System.currentTimeMillis()))
-				.expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-				.signWith(getSignedKey())
-				.compact();
+				.expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)).signWith(getSignedKey()).compact();
 	}
-	
+
 	public String extractUsername(String token) {
-		
+
 		return extractClaims(token, Claims::getSubject);
 	}
-	
-	 
-	 private <T> T extractClaims(String token, Function<Claims, T> claimsFunction) {
-		
-		return claimsFunction.apply(Jwts.parser().verifyWith(getSignedKey()).build().parseSignedClaims(token).getPayload());
+
+	private <T> T extractClaims(String token, Function<Claims, T> claimsFunction) {
+
+		return claimsFunction
+				.apply(Jwts.parser().verifyWith(getSignedKey()).build().parseSignedClaims(token).getPayload());
 	}
 
-	 public boolean isTokenValid(String token, UserDetails userDetails) {
-		 
-		 final String username = extractUsername(token);
-		 
-		 return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-	 }
-	 
-	 private boolean isTokenExpired(String token) {
-		 
-		 return extractClaims(token, Claims::getExpiration).before(new Date());
-	 }
-	 
+	public boolean isTokenValid(String token, UserDetails userDetails) {
+
+		final String username = extractUsername(token);
+
+		return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+	}
+
+	private boolean isTokenExpired(String token) {
+
+		return extractClaims(token, Claims::getExpiration).before(new Date());
+	}
+
 //	 Extract user's roles from the jwt token
-	 @SuppressWarnings("unchecked")
-	public List<String> extractRoles(String token){
-		 
-		 return extractClaims(token, claims -> claims.get("roles", List.class));
-	 }
-	private SecretKey getSignedKey() {
-		 byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
-		 
-		 return Keys.hmacShaKeyFor(keyBytes);
-	 }
-	 
-	 
+	@SuppressWarnings("unchecked")
+	public List<String> extractRoles(String token) {
+
+		return extractClaims(token, claims -> claims.get("roles", List.class));
 	}
-	
 
+	private SecretKey getSignedKey() {
+		byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
 
+		return Keys.hmacShaKeyFor(keyBytes);
+	}
+
+}

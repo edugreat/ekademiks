@@ -31,7 +31,7 @@ public class Student extends AppUser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	@ElementCollection(fetch = FetchType.EAGER)
 	private Set<UserRoles> roles = new HashSet<>();
 
@@ -52,19 +52,12 @@ public class Student extends AppUser {
 
 	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, mappedBy = "student", orphanRemoval = true)
 	private Set<StudentTest> studentTests = new HashSet<>();
-	
-//	A set of notifications a student receives
+
+//	A set of assessmentUploadNotifications a student receives
 	@ManyToMany
-			@JoinTable(name = "student_notifications", 
-			joinColumns = @JoinColumn(name = "student_id"),
-			inverseJoinColumns = @JoinColumn(name = "notification_id")
-					)
-			
-	private Set<Notification> notifications = new HashSet<>();
-	
-	
-	
-	
+	@JoinTable(name = "student_notifications", joinColumns = @JoinColumn(name = "student_id"), inverseJoinColumns = @JoinColumn(name = "notification_id"))
+
+	private Set<AssessmentUploadNotification> assessmentNotifications = new HashSet<>();
 
 	// convenience method
 	public void addStudentTest(StudentTest studentTest) {
@@ -74,25 +67,23 @@ public class Student extends AppUser {
 		}
 
 	}
-	
 
-
-	public Set<Notification> getNotifications() {
-		return notifications;
+	public Set<AssessmentUploadNotification> getNotifications() {
+		return assessmentNotifications;
 	}
+
 //     Convenience method to add notification to student
-	public void AddNotification(Notification notication) {
-		
-		if(!notifications.contains(notication)) {
-			
-			notifications.add(notication);
+	public void AddNotification(AssessmentUploadNotification notication) {
+
+		if (!assessmentNotifications.contains(notication)) {
+
+			assessmentNotifications.add(notication);
 		}
 	}
 
-
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		
+
 		return List.of(new SimpleGrantedAuthority(Roles.Student.name()));
 	}
 
@@ -111,13 +102,11 @@ public class Student extends AppUser {
 	public void setRoles(Set<UserRoles> roles) {
 		this.roles = roles;
 	}
-	
+
 	public void addRoles(Set<String> roles) {
-		for(String role: roles) {
+		for (String role : roles) {
 			this.roles.add(new UserRoles(Roles.valueOf(role)));
 		}
 	}
-	
-	
 
 }

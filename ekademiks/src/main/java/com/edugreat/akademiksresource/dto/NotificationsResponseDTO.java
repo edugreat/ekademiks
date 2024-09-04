@@ -9,9 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificationsResponseDTO {
-	
-//	Notification id representing the identity of the notification object in the database from which this object get instantiated
+
+//	AssessmentUploadNotification id representing the identity of the notification object in the database from which this object get instantiated
 	private int id;
+
+//	metadata represents the id of the of what is being notified about(eg new assessment upload if the notification is about assessment upload)
+	private int metadata;
 //	The notification title
 	private String type;
 //	Brief information about the notification

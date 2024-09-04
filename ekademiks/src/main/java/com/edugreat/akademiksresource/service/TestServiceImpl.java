@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,18 +45,15 @@ public class TestServiceImpl implements TestInterface {
 	private final TestDao testDao;
 
 	private final StudentTestDao studentTestDao;
-	
+
 	private final SubjectDao subjectDao;
 
 	private final ModelMapper mapper;
-	
+
 	private final WelcomeMessageDao welcomeMsgDao;
-	
-	
 
 	private final StudentDao studentDao;
 
-	
 	// helper method that gets from the database test whose id is given
 	private Test getTest(Integer id) {
 
@@ -69,11 +68,10 @@ public class TestServiceImpl implements TestInterface {
 		return testDao.findById(id).get();
 
 	}
-	
-	
+
 	@Override
 	public Collection<String> getWelcomeMessages() {
-		
+
 		return welcomeMsgDao.findAllMessages();
 	}
 
@@ -84,7 +82,6 @@ public class TestServiceImpl implements TestInterface {
 		// we may need some attributes of this test object in the future(eg test
 		// duration etc)
 		Test test = getTest(testId);
-		
 
 		// get all the questions associated with the test
 		Collection<Question> questions = test.getQuestions();
@@ -95,32 +92,28 @@ public class TestServiceImpl implements TestInterface {
 			QuestionDTO questionDTO = mapper.map(question, QuestionDTO.class);
 
 			wrapper.addQuestion(questionDTO);
-			
 
 		}
 
-		       //Get the instructions for this Test
-				Collection<String> instructions = test.getInstructions();
-				//add the instructions to the wrapper object
-				wrapper.addInstructions(instructions);
-				
+		// Get the instructions for this Test
+		Collection<String> instructions = test.getInstructions();
+		// add the instructions to the wrapper object
+		wrapper.addInstructions(instructions);
+
 		return wrapper;
 	}
 
-	
-
-	//fetches all the subject names for the given academic level
+	// fetches all the subject names for the given academic level
 	@Override
 	public List<String> testSubjectFor(String level) {
-		//return all subjects for the given level,then map to their respective subject names
-		return subjectDao.findSubjetByLevelCategory(Category.valueOf(level));
+		// return all subjects for the given level,then map to their respective subject
+		// names
+		return subjectDao.findSubjectByLevelCategory(Category.valueOf(level));
 	}
-	
 
 	@Transactional
 	@Override
 	public String submitTest(AttemptUtil attempt) {
-		
 
 		// get the student's identifier
 		Integer studentId = attempt.getStudentId();
@@ -141,7 +134,7 @@ public class TestServiceImpl implements TestInterface {
 
 			// get the list of selected options
 			List<String> selectedOptions = attempt.getSelectedOptions();
-			
+
 			// get the time of submission
 			LocalDateTime now = LocalDateTime.now();// might review this code later to allow fetching from the front-end
 
@@ -154,7 +147,7 @@ public class TestServiceImpl implements TestInterface {
 			// get the question which the student attempted in the test
 			List<Question> questions = new ArrayList<>();
 			Set<Question> set = testDao.findById(testId).get().getQuestions();
-			
+
 			questions.addAll(set);
 
 			// Now score the student
@@ -165,124 +158,140 @@ public class TestServiceImpl implements TestInterface {
 			StudentTest studentTest = new StudentTest(score, now, student, test, responses);
 			studentTest.setGrade(String.valueOf(2 * score));
 			studentTestDao.save(studentTest);
-			
+
 			return "Submitted!";
 
-		} 
-			// TODO: Modify this declaration in the future to allow for non-registered
-			// students
+		}
+		// TODO: Modify this declaration in the future to allow for non-registered
+		// students
 		else
 			throw new AcademicException("student and or test information not found",
 					Exceptions.RECORD_NOT_FOUND.name());
 
 	}
-	
-	//implements the testTopics method of the interface
+
+	// implements the testTopics method of the interface
 	@Override
-	public List<TopicAndDuration> testTopics(String subject, String category) {
+	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category) {
 		return testDao.findByTestNameAndCategory(subject, Category.valueOf(category));
-		
+
 	}
 
-	//implements the interface method to return a list of questions for the given argument
+	@Override
+	public TopicAndDuration testTopicAndDuration(Integer testId) {
+
+		return testDao.findByTestNameAndCategory(testId);
+	}
+
+	// implements the interface method to return a list of questions for the given
+	// argument
 	@Override
 	public TestWrapper takeTest(String topic, String category) {
-		
+
 		Test test = testDao.findByTestName(topic, Category.valueOf(category));
-		
-		
-		
-	     Collection<Question> questions =  null;
-		if(test != null) {
-			
+
+		Collection<Question> questions = null;
+		if (test != null) {
+
 			TestWrapper wrapper = new TestWrapper();
-			
+
 			questions = test.getQuestions();
-			
+
 			questions.forEach(question -> wrapper.addQuestion(mapper.map(question, QuestionDTO.class)));
-			//get the instructions for this particular test
+			// get the instructions for this particular test
 			Collection<String> instructions = testDao.getInstructionsFor(topic, Category.valueOf(category));
-			if(instructions.size() > 0) {
+			if (instructions.size() > 0) {
 				wrapper.addInstructions(instructions);
-				
+
 				wrapper.setTestId(test.getId());
 			}
-			
+
 			return wrapper;
 		}
-		
+
 		return null;
 	}
-	
+
+//	Implementation that return a map object whose key is a subject name and value is a category name the subject belongs to, using a given test id
+	@Override
+	public Map<String, String> subjectAndCategory(int testId) {
+
+		String subjectName = testDao.findSubjectNameByTestId(testId);
+
+		if (subjectName == null)
+			throw new IllegalArgumentException("Record not found");
+
+		String categoryName = testDao.findCategoryNameByTestId(testId).name();
+		Map<String, String> map = new HashMap<>();
+		map.put(subjectName, categoryName);
+
+		return map;
+	}
+
 	// scores a test the student submitted and return their score
-		// it takes the Question and selected options just to compare the answer field
-		// in the question
-		// and the corresponding selected option
-		private double scoreTest(List<Question> questions, List<String> selectedOptions) {
+	// it takes the Question and selected options just to compare the answer field
+	// in the question
+	// and the corresponding selected option
+	private double scoreTest(List<Question> questions, List<String> selectedOptions) {
 
-			double score = 0.0;
+		double score = 0.0;
 
-			// sort the questions(implemented to sort by question number)
-			Collections.sort(questions);
+		// sort the questions(implemented to sort by question number)
+		Collections.sort(questions);
 
-			List<String> answers = null;
+		List<String> answers = null;
 
-			// map each question in the list to their corresponding answer
-			answers = questions.stream().map(Question::getAnswer).collect(Collectors.toList());
+		// map each question in the list to their corresponding answer
+		answers = questions.stream().map(Question::getAnswer).collect(Collectors.toList());
 
-			// iterate the two records and increment score if they're same, otherwise just
-			// increment by zero
-			for (int i = 0; i < selectedOptions.size(); i++) {
+		// iterate the two records and increment score if they're same, otherwise just
+		// increment by zero
+		for (int i = 0; i < selectedOptions.size(); i++) {
 
-				if(selectedOptions.get(i) == null) continue; //skips the option if the student did not choose anything
-				
-				score += (answers.get(i).compareTo(selectedOptions.get(i)) == 0 ? 1 : 0);
+			if (selectedOptions.get(i) == null)
+				continue; // skips the option if the student did not choose anything
 
+			score += (answers.get(i).compareTo(selectedOptions.get(i)) == 0 ? 1 : 0);
+
+		}
+
+		return score;
+	}
+
+	// check options submitted by students if they match with the set of enumerated
+	// values, then updates the list of responses made by the student
+	private synchronized void checkResponse(String res, List<OptionLetter> responses) {
+
+		final List<String> ALLOWABLE_OPTIONS = List.of("A", "B", "C", "D", "E");
+
+		// response must be any of the alphabetic letter(A-E). So only one character is
+		// allowed
+		try {
+
+			if (res != null && ALLOWABLE_OPTIONS.stream().anyMatch(res::equals)) {
+
+				responses.add(OptionLetter.valueOf(res));
+			} else {
+				// if the student did not provide answer to a question, add NILL to show no
+				// option selected
+				responses.add(OptionLetter.NILL);
 			}
 
-			return score;
+		} catch (IllegalArgumentException e) {
+			throw new AcademicException("illegal options '" + res + "'", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
-		// check options submitted by students if they match with the set of enumerated
-		// values, then updates the list of responses made by the student
-		private synchronized void checkResponse(String res, List<OptionLetter>responses) {
+	}
 
-			final List<String> ALLOWABLE_OPTIONS = List.of("A", "B", "C", "D", "E");
-			
-			// response must be any of the alphabetic letter(A-E). So only one character is
-			// allowed
-			try {
+	// checks if the student and test whose identifiers are provided exist
+	private boolean exist(int studentId, int testId) {
 
-				if (res!= null && ALLOWABLE_OPTIONS.stream().anyMatch(res::equals)) {
+		Optional<Student> op1 = studentDao.findById(studentId);
 
-				  responses.add(OptionLetter.valueOf(res));
-				}  else {
-					// if the student did not provide answer to a question, add NILL to show no
-					// option selected
-					responses.add(OptionLetter.NILL);
-				}
+		Optional<Test> op2 = testDao.findById(testId);
 
-			} catch (IllegalArgumentException e) {
-				throw new AcademicException("illegal options '"+res+"'", Exceptions.ILLEGAL_DATA_FIELD.name());
-			}
+		return (op1.isPresent() && op2.isPresent());
 
-		}
-		
-		// checks if the student and test whose identifiers are provided exist
-		private boolean exist(int studentId, int testId) {
-
-			Optional<Student> op1 = studentDao.findById(studentId);
-
-			Optional<Test> op2 = testDao.findById(testId);
-
-			return (op1.isPresent() && op2.isPresent());
-
-		}
-
-		
-		
-		
-	
-	
+	}
 
 }

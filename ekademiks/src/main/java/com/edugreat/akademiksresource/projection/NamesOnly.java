@@ -6,8 +6,7 @@ package com.edugreat.akademiksresource.projection;
  */
 
 public interface NamesOnly {
-	//abstract method
+	// abstract method
 	String getName();
-	
 
 }

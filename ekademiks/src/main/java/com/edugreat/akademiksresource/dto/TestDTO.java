@@ -23,30 +23,29 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TestDTO {
-		
+
 	@Min(value = 0, message = "id must not be negative or alphabetic")
 	private Integer id;
-	
+
 	@NotNull(message = "Property category, for test is missing")
-	@Transient//Variable is only needed at runtime to fetch a single where there is possibility of having multiple subjects with same name 
+	@Transient // Variable is only needed at runtime to fetch a single where there is
+				// possibility of having multiple subjects with same name
 	private String category;
-	
+
 	@NotNull(message = "property test name missing")
 	@Size(min = 4, message = "property test name must not be less than 4 characters")
-	//@Pattern(regexp = "\\b\\w+\\b\\s*", message = "test name not supported")
+	// @Pattern(regexp = "\\b\\w+\\b\\s*", message = "test name not supported")
 	private String testName;
-	
+
 	@Valid
 	@NotEmpty(message = "property questions, missing or empty")
 	private Set<QuestionDTO> questions = new HashSet<>();
-	
-	
+
 	@Min(value = 30, message = "duration must be greater than or equal to 30 mins")
 	private long duration;
-	
-	
+
 	@NotNull(message = "property subject name missing")
 	@Pattern(regexp = "^[a-zA-Z\\s]+$", message = "subject name no acceptable")
-	//subject that this test is to be associated to; retrievable from the database
+	// subject that this test is to be associated to; retrievable from the database
 	private String subjectName;
 }

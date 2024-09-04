@@ -24,34 +24,34 @@ public class Admins extends AppUser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
 	@ElementCollection(fetch = FetchType.EAGER)
 	private Set<UserRoles> roles = new HashSet<>();
 
 	public Admins() {
 		super();
-		
+
 	}
 
 	public Admins(String firstName, String lastName, String email, String mobileNumber, String password) {
 		super(firstName, lastName, email, mobileNumber, password);
-		
+
 	}
 
 	public Admins(String firstName, String lastName, String email, String password) {
 		super(firstName, lastName, email, password);
-		
+
 	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		
+
 		Set<GrantedAuthority> authorities = new HashSet<>();
-		for(String role: this.getRoles()) {
+		for (String role : this.getRoles()) {
 			authorities.add(new SimpleGrantedAuthority(role));
-			
+
 		}
-		
+
 		return authorities;
 	}
 
@@ -64,16 +64,11 @@ public class Admins extends AppUser {
 	}
 
 	public void addRoles(Set<String> userRoles) {
-		
-		for(String role:userRoles) {
+
+		for (String role : userRoles) {
 			this.roles.add(new UserRoles(Roles.valueOf(role)));
 		}
-		
+
 	}
-	
-	
-	
-	
-	
 
 }

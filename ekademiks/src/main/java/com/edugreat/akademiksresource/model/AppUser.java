@@ -21,7 +21,7 @@ import lombok.Setter;
 @MappedSuperclass
 @NoArgsConstructor
 @Data
-public class AppUser implements UserDetails{
+public class AppUser implements UserDetails {
 
 	/**
 	 * 
@@ -47,9 +47,7 @@ public class AppUser implements UserDetails{
 
 	@Column(name = "password", nullable = false)
 	private String password;
-	
-	
-	
+
 	@Column
 	private boolean accountEnabled = true;
 	@Column
@@ -58,7 +56,6 @@ public class AppUser implements UserDetails{
 	private boolean expiredAccount = true;
 	@Column
 	private boolean expiredCredentials = true;
-	
 
 	public AppUser(String firstName, String lastName, String email, String mobileNumber, String password) {
 		this.firstName = firstName;
@@ -76,23 +73,21 @@ public class AppUser implements UserDetails{
 		this.password = password;
 	}
 
-	
-
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		
+
 		return null;
 	}
 
 	@Override
 	public String getUsername() {
-		
+
 		return email;
 	}
 
 	@Override
 	public boolean isAccountNonExpired() {
-		
+
 		return isExpiredAccount();
 	}
 
@@ -104,16 +99,14 @@ public class AppUser implements UserDetails{
 
 	@Override
 	public boolean isCredentialsNonExpired() {
-		
+
 		return isExpiredAccount();
 	}
 
 	@Override
 	public boolean isEnabled() {
-		
+
 		return isAccountEnabled();
 	}
 
-	
-	
 }

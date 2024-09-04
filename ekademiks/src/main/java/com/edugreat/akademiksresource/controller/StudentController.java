@@ -24,56 +24,50 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 //@CrossOrigin("http://localhost:4200")
 public class StudentController {
-	
+
 	private final StudentService service;
-	
-	
 
 	@GetMapping("/score")
-	public ResponseEntity<Object> getScore(@RequestParam("stud") String stId, 
-			@RequestParam("test") String tId) {
-		
-		//check if the input path variables match the regular expression for only non white spaced digits
+	public ResponseEntity<Object> getScore(@RequestParam("stud") String stId, @RequestParam("test") String tId) {
+
+		// check if the input path variables match the regular expression for only non
+		// white spaced digits
 		Pattern pattern = Pattern.compile("^\\d+$");
-		
+
 		Matcher m1 = pattern.matcher(stId);
 		Matcher m2 = pattern.matcher(tId);
-		if(!(m1.matches() && m2.matches())) {
-			
-			throw new AcademicException("Invalid input '"+stId+"' or '"+tId+"'", Exceptions.ILLEGAL_DATA_FIELD.name());
+		if (!(m1.matches() && m2.matches())) {
+
+			throw new AcademicException("Invalid input '" + stId + "' or '" + tId + "'",
+					Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
-		
-		
+
 		Integer studentId = Integer.parseInt(stId);
 		Integer testId = Integer.parseInt(tId);
-		
+
 		List<ScoreAndDate> response = service.getScore(studentId, testId);
-		
+
 		return ResponseEntity.ok(response);
-		
+
 	}
-	
+
 	@GetMapping("/test")
-	public Collection<Question> takeTest(@RequestParam("test_id") String tId){
-		
-		//CHECK TO CONFIRM THE ARGUMENT IS A VALID INTEGER
+	public Collection<Question> takeTest(@RequestParam("test_id") String tId) {
+
+		// CHECK TO CONFIRM THE ARGUMENT IS A VALID INTEGER
 		Pattern p = Pattern.compile("^\\d+$");
-		if(!p.matcher(tId).matches()) {
-			throw new AcademicException("Invalid input "+tId, Exceptions.ILLEGAL_DATA_FIELD.name());
+		if (!p.matcher(tId).matches()) {
+			throw new AcademicException("Invalid input " + tId, Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
-		
+
 		Integer testId = Integer.parseInt(tId);
-		
+
 		Collection<Question> questions = null;
-		
+
 		questions = service.takeTest(testId);
-		
+
 		return questions;
-		
+
 	}
-	
-	
-	
-	
-	
+
 }

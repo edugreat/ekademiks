@@ -36,48 +36,43 @@ import com.edugreat.akademiksresource.enums.OptionLetter;
 @Entity
 @Table(name = "student_test")
 public class StudentTest {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	
-	//score made by the student in the test.
-	//the score for each test can not be updated or manipulated
+
+	// score made by the student in the test.
+	// the score for each test can not be updated or manipulated
 	@Column(nullable = false, updatable = false)
 	private double score;
-	
-	//student's grade after a test
+
+	// student's grade after a test
 	@Column(updatable = false)
 	@Pattern(regexp = "^\\d+(\\.\\d+)?%$")
 	private String grade;
-	
-	//time the test was started or taken as received from the ui framework.
-	//This time is read only(can not be updated once created)
-	@Column(name = "_when",nullable = false, updatable = false)
-	private  LocalDateTime when;
-	
+
+	// time the test was started or taken as received from the ui framework.
+	// This time is read only(can not be updated once created)
+	@Column(name = "_when", nullable = false, updatable = false)
+	private LocalDateTime when;
+
 	@ManyToOne
 	@JoinColumn(name = "student_id", nullable = false, updatable = false)
-	private  Student student;
-	
+	private Student student;
+
 	@ManyToOne
 	@JoinColumn(name = "test_id", nullable = false, updatable = false)
-	private  Test test;
-	
-	
-	//student's response to academic test questions
+	private Test test;
+
+	// student's response to academic test questions
 	@ElementCollection(targetClass = OptionLetter.class)
 	@Enumerated(EnumType.STRING)
-	@CollectionTable(name = "student_response", 
-	joinColumns = @JoinColumn(name = "student_test_id"))
+	@CollectionTable(name = "student_response", joinColumns = @JoinColumn(name = "student_test_id"))
 	@Column(name = "selected_option")
 	private List<OptionLetter> studentResponses = new ArrayList<>();
-	
-	public StudentTest() {}
-	
-	
-	
-	
+
+	public StudentTest() {
+	}
 
 	public StudentTest(double score, LocalDateTime when, Student student, Test test,
 			List<OptionLetter> studentResponses) {
@@ -92,27 +87,17 @@ public class StudentTest {
 		return score;
 	}
 
-	
-	
 	public String getGrade() {
 		return grade;
 	}
-
 
 	public void setGrade(String grade) {
 		this.grade = grade + "%";
 	}
 
-
-
-
-
 	public LocalDateTime getWhen() {
 		return when;
 	}
-
-	
-	
 
 	public Integer getId() {
 		return id;
@@ -133,51 +118,40 @@ public class StudentTest {
 	public void setTest(Test test) {
 		this.test = test;
 	}
-	
-	
-	
 
 	public List<OptionLetter> getStudentResponse() {
 		return studentResponses;
 	}
 
-	
-	
-	
 	@Override
 	public int hashCode() {
-		
-		 final int value = 35;
-	
+
+		final int value = 35;
+
 		int x = 31 * (value + (id == null ? 0 : id.hashCode()));
-		
-		
+
 		return x;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		
-		if(obj == null) return false;
-		
-		if(getClass() != obj.getClass()) return false;
-		
-		StudentTest that = (StudentTest)obj;
-		
-		if(id == null) {
-			
-			
-			if(that.getId() != null) return false;
-			
-		} return id == that.getId();
-		
-		
-		
+
+		if (obj == null)
+			return false;
+
+		if (getClass() != obj.getClass())
+			return false;
+
+		StudentTest that = (StudentTest) obj;
+
+		if (id == null) {
+
+			if (that.getId() != null)
+				return false;
+
+		}
+		return id == that.getId();
+
 	}
-	
-	
-	
-	
+
 }
-
-

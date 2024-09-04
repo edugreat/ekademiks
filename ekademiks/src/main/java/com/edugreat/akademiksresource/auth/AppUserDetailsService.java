@@ -18,24 +18,25 @@ import lombok.AllArgsConstructor;
 public class AppUserDetailsService implements UserDetailsService {
 
 	private final AdminsDao adminsDao;
-	
+
 	private final StudentDao studentDao;
+
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-		
+
 		return loadByUsername(email);
 	}
-	
+
 	private AppUser loadByUsername(String username) {
-		
+
 		final boolean isStudent = studentDao.existsByEmail(username);
-		if(isStudent)
-			return studentDao.findByEmail(username).orElseThrow(() -> new AcademicException("Error authenticating user", Exceptions.STUDENT_NOT_FOUND.name()));
-		
-		return adminsDao.findByEmail(username).orElseThrow(() -> new AcademicException("Error authenticating admin", Exceptions.BAD_REQUEST.name()));
-		
-		
+		if (isStudent)
+			return studentDao.findByEmail(username).orElseThrow(
+					() -> new AcademicException("Error authenticating user", Exceptions.STUDENT_NOT_FOUND.name()));
+
+		return adminsDao.findByEmail(username)
+				.orElseThrow(() -> new AcademicException("Error authenticating admin", Exceptions.BAD_REQUEST.name()));
+
 	}
-	
 
 }

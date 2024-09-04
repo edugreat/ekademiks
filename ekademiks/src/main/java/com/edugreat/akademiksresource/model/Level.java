@@ -21,20 +21,21 @@ import com.edugreat.akademiksresource.enums.Category;
 @Entity
 @Table
 public class Level {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	
-	@Column(nullable= false, unique = true)
+
+	@Column(nullable = false, unique = true)
 	@Enumerated(EnumType.STRING)
 	private Category category;
-	
+
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "level")
 	private Set<Subject> subjects = new HashSet<>();
-	
-	public Level() {}
-	
+
+	public Level() {
+	}
+
 	public Level(Category category) {
 		this.category = category;
 	}
@@ -58,9 +59,9 @@ public class Level {
 	public void setSubjects(Set<Subject> subjects) {
 		this.subjects = subjects;
 	}
-	
+
 	public void addSubject(Subject subject) {
-		
+
 		this.subjects.add(subject);
 	}
 
@@ -72,18 +73,19 @@ public class Level {
 
 	@Override
 	public boolean equals(Object obj) {
-		
-		if(obj == null) return false;
-		if(getClass() != obj.getClass()) return false;
-		Level that = (Level)obj;
-		
+
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Level that = (Level) obj;
+
 		return sameCategory(getCategory(), that.getCategory());
 	}
-	
+
 	private boolean sameCategory(Category cate1, Category cate2) {
-		
+
 		return cate1.name().equals(cate2.name());
 	}
-	
 
 }

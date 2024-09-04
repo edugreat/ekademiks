@@ -136,51 +136,49 @@ public class AdminService implements AdminInterface {
 	@Transactional
 	public void setSubject(List<SubjectDTO> subjectDTOs) {
 
-		
-		
 		List<Subject> subjects = new ArrayList<>();
-		// get the academic level for the subject, check if any of the subjects already exists for any of the specified levels.
+		// get the academic level for the subject, check if any of the subjects already
+		// exists for any of the specified levels.
 //		Throw exception if any requirement fails. This is to ensure all passes requirements or non gets persisted.
-		subjectDTOs.forEach(dto ->{
-			
+		subjectDTOs.forEach(dto -> {
+
 			Category category = Category.valueOf(dto.getCategory());
-			
+
 			final Level level = levelDao.findByCategory(category);
-			
-			if(level == null) {
-				
-				throw new AcademicException("category '"+category+"' not found ", Exceptions.RECORD_NOT_FOUND.name());
+
+			if (level == null) {
+
+				throw new AcademicException("category '" + category + "' not found ",
+						Exceptions.RECORD_NOT_FOUND.name());
 			}
 //			Check if the subject already exists for that particular level
-			if(subjectDao.subjectExists(dto.getSubjectName(), level.getId())) {
-				throw new AcademicException("subject, "+dto.getSubjectName()+", exists for "+category.name(), Exceptions.BAD_REQUEST.name());
+			if (subjectDao.subjectExists(dto.getSubjectName(), level.getId())) {
+				throw new AcademicException("subject, " + dto.getSubjectName() + ", exists for " + category.name(),
+						Exceptions.BAD_REQUEST.name());
 			}
-			
+
 		});
-		
-		subjectDTOs.forEach(dto ->{
-			
-       Category category = Category.valueOf(dto.getCategory());
-			
+
+		subjectDTOs.forEach(dto -> {
+
+			Category category = Category.valueOf(dto.getCategory());
+
 			final Level level = levelDao.findByCategory(category);
 
 			Subject subject = new Subject(dto.getSubjectName(), level);
-			
+
 			level.addSubject(subject);
 			subjects.add(subject);
-		
-		
+
 			subjectDao.save(subject);
-		
+
 		});
-		
-		
+
 	}
 
 	@Transactional
 	@Override
 	public Integer uploadAssessment(TestDTO testDTO) {
-		
 
 		// check if test name exists in the database
 		Test t = testDao.findByTestName(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
@@ -202,13 +200,13 @@ public class AdminService implements AdminInterface {
 		// performs the bidirectional association between test and question objects
 		validQuestions.stream().forEach(x -> x.setTest(validTest));
 
-		 loadedSubject.addTest(validTest);
+		loadedSubject.addTest(validTest);
 
-		
 //		return the id of the just uploaded test assessment
-		Integer id =  findId(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
-		if(id == null) throw new IllegalArgumentException("Invalid request");
-		
+		Integer id = findId(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
+		if (id == null)
+			throw new IllegalArgumentException("Invalid request");
+
 		return id;
 
 	}
@@ -247,7 +245,7 @@ public class AdminService implements AdminInterface {
 
 			testDao.save(existingTest);
 			return;
-		} 
+		}
 	}
 
 	private Subject findSubjectOrThrow(String subjectName, String category) {
@@ -336,37 +334,33 @@ public class AdminService implements AdminInterface {
 	@Override
 	@Transactional
 	public void addLevels(List<LevelDTO> dtos) {
-		
 
 		try {
 
 			// verifies that the parameter is a valid allowable category. Can throw
 			// exception on attempt to provide invalid enum type
 			dtos.forEach(dto -> Category.valueOf(dto.getCategory()));
-			
+
 			// check if Level object for that category already exists in the database
-			
-			dtos.forEach(dto ->{
-				if(levelDao.existsByCategory(Category.valueOf(dto.getCategory()))) {
+
+			dtos.forEach(dto -> {
+				if (levelDao.existsByCategory(Category.valueOf(dto.getCategory()))) {
 					throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
 							Exceptions.BAD_REQUEST.name());
 				}
 			});
-			
 
-		
-			
 			List<Level> levels = new ArrayList<>();
-			dtos.forEach(dto ->{
-				
+			dtos.forEach(dto -> {
+
 				Level level = mapper.map(dto, Level.class);
 				levels.add(level);
-				
+
 			});
 
 			// batch persist the levels to the database and map the returned
 			// record to the data transfer object
-			if(levels.size() > 0) {
+			if (levels.size() > 0) {
 				levelDao.saveAll(levels);
 			}
 
@@ -374,7 +368,6 @@ public class AdminService implements AdminInterface {
 			throw new AcademicException("Illegal parameter for category", Exceptions.BAD_REQUEST.name());
 		}
 
-		
 	}
 
 	@Override

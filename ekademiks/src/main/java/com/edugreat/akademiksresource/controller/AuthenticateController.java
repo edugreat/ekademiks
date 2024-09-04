@@ -21,25 +21,22 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @RequestMapping("/auth")
 public class AuthenticateController {
- private final AppAuthInterface appInterface;
-	
+	private final AppAuthInterface appInterface;
+
 	@PostMapping("/sign-up")
 	@JsonView(UserView.class)
-	public int signUp(@RequestBody @Valid AppUserDTO userDTO) throws Exception{
-	
-		
+	public int signUp(@RequestBody @Valid AppUserDTO userDTO) throws Exception {
+
 		return appInterface.signUp(userDTO);
-	
-		
-		
+
 	}
-	
+
 	@PostMapping("/sign-in")
 	@JsonView(UserView.SigninView.class)
 	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
-			@RequestParam String role){
-		
+			@RequestParam String role) {
+
 		return ResponseEntity.ok(appInterface.signIn(request, role));
 	}
-	
+
 }

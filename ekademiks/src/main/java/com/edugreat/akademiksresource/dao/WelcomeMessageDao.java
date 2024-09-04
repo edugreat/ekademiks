@@ -10,5 +10,5 @@ import com.edugreat.akademiksresource.model.WelcomeMessage;
 public interface WelcomeMessageDao extends JpaRepository<WelcomeMessage, Integer> {
 
 	@Query("SELECT m FROM WelcomeMessage w JOIN w.messages m")
-    Collection<String> findAllMessages();
+	Collection<String> findAllMessages();
 }

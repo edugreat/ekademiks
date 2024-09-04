@@ -15,19 +15,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Embeddable
 public class Options {
-	
+
 	@Column(nullable = false)
 	private String text;
-	
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "letter", nullable = false)
 	private OptionLetter letter;
-	
+
 	@Parent
 	@JsonIgnore
 	private Question question;
-	
-	public Options() {}
+
+	public Options() {
+	}
 
 	public Options(String text, OptionLetter letter) {
 		this.text = text;
@@ -50,8 +51,6 @@ public class Options {
 		this.letter = letter;
 	}
 
-	
-
 	public Question getQuestion() {
 		return question;
 	}
@@ -62,33 +61,24 @@ public class Options {
 
 	@Override
 	public boolean equals(Object o) {
-		
-		if(this == o) return true;
-		if(o == null || getClass()!= o.getClass()) return false;
-		
-		Options that = (Options)o;
-		
-		//When options objects are added to a set, we consider two options having same 
-		//texts or letters. This helps ensure non repetitive options 
-		return (text.equals(that.getText()) || letter.equals(that.getLetter())); 
-				
-	
-	}
-	
-	@Override
-	public int hashCode() {
-		
-		return Objects.hash(letter, text);
+
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+
+		Options that = (Options) o;
+
+		// When options objects are added to a set, we consider two options having same
+		// texts or letters. This helps ensure non repetitive options
+		return (text.equals(that.getText()) || letter.equals(that.getLetter()));
+
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	@Override
+	public int hashCode() {
+
+		return Objects.hash(letter, text);
+	}
 
 }

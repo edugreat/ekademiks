@@ -8,11 +8,10 @@ import com.edugreat.akademiksresource.dto.AppUserDTO;
  */
 public interface AppAuthInterface {
 
-	//Contract that registers new user
-	public int  signUp(AppUserDTO dto) ;
-	
-	
-    //Allows users to sign in using different role preferences
+	// Contract that registers new user
+	public int signUp(AppUserDTO dto);
+
+	// Allows users to sign in using different role preferences
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role);
-	
+
 }

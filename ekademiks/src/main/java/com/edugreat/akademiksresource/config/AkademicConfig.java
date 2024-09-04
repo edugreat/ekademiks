@@ -8,12 +8,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AkademicConfig {
 
-    @Bean
-    ModelMapper modelMapper() {
-    	ModelMapper mapper = new ModelMapper();
-    	//mapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
+	@Bean
+	ModelMapper modelMapper() {
+		ModelMapper mapper = new ModelMapper();
+		// mapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
-		
 		return mapper;
 	}
 
