@@ -1,8 +1,8 @@
 # ekademiks
 ## Introduction
-### This is a basic online academic test platform
+### This is an online academic assessment platform
 ### Description
-Welcome to our GitHub repository! Here, we house the code for our online test assessment platform tailored for high school students. With easy login access, students can engage in multi-choice assessments spanning various academic levels and subjects. Instant feedback ensures timely evaluation of their performance, fostering continuous learning and growth. Join us in shaping the future of education!
+Welcome to my GitHub repository! Here, I house the code for my online academic assessment platform tailored for high school students. With easy login access, students can engage in multi-choice assessments spanning various academic levels and subjects. Instant feedback ensures timely evaluation of their performance, fostering continuous learning and growth. Join and let us shape the future of education!
 ## Technologies used
 This project's evolution heavily relies on three main separate concerns - **database management**, **Server side implementation** and **front-end service**. 
 Technologies used are shown below
@@ -11,7 +11,7 @@ Technology | Implements
 SQL|Database management
 Java's spring boot framework|Backend/server side implementation
 angular framework|frontend/client side implementation
-Bootstrap & Angular material design | css design management
+Angular material design | css design management
 Typescript | frontend model classes and component
 
 The choice of [spring boot framework](https://spring.io/projects/spring-boot) is based upon its saving time in project developement, easy configurations and its great abstraction implemetations with _minimal code_.
