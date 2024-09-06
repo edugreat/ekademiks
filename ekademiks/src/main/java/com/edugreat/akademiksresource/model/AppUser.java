@@ -1,14 +1,18 @@
 package com.edugreat.akademiksresource.model;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -44,7 +48,12 @@ public class AppUser implements UserDetails {
 
 	@Column(name = "mobile", unique = true, nullable = true)
 	private String mobileNumber;
+	
+	@Column
+	private String accountCreationDate;
 
+//	excludes the password from the list of returned fields of the rest api
+	@JsonIgnore
 	@Column(name = "password", nullable = false)
 	private String password;
 
@@ -107,6 +116,13 @@ public class AppUser implements UserDetails {
 	public boolean isEnabled() {
 
 		return isAccountEnabled();
+	}
+	
+	@PrePersist
+	protected void setAccountCreationDate() {
+		
+		accountCreationDate = LocalDateTime.now().toString();
+		
 	}
 
 }

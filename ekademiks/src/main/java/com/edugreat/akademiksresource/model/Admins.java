@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,7 +19,7 @@ import com.edugreat.akademiksresource.enums.Roles;
 @Table
 public class Admins extends AppUser {
 
-	/**
+	/*
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
