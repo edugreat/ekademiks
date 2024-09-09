@@ -26,7 +26,7 @@ public interface TestDao extends JpaRepository<Test, Integer> {
 
 	// fetches all the tests for the given subject and category
 	@Query("SELECT t FROM Test t JOIN t.subject s ON s.level.category =:category AND s.subjectName =:subjectName")
-	List<TopicAndDuration> findByTestNameAndCategory(String subjectName, Category category);
+	List<TopicAndDuration> findAllTopicsAndDurations(String subjectName, Category category);
 
 	// return instructions for the test matching the given criteria
 	@Query("SELECT i FROM Test t JOIN t.instructions i JOIN t.subject s ON t.testName =:topic AND s.level.category =:category")
@@ -46,6 +46,6 @@ public interface TestDao extends JpaRepository<Test, Integer> {
 
 //	Retrieves the topic and duration for a given test id
 	@Query("SELECT t FROM Test t WHERE t.id =:testId")
-	TopicAndDuration findByTestNameAndCategory(Integer testId);
+	TopicAndDuration retrieveTopicAndurationById(Integer testId);
 
 }
