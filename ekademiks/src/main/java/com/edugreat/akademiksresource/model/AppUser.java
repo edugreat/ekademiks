@@ -124,5 +124,10 @@ public class AppUser implements UserDetails {
 		accountCreationDate = LocalDateTime.now().toString();
 		
 	}
+	
+	public Integer getId() {
+		
+		return id;
+	}
 
 }

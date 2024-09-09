@@ -146,17 +146,24 @@ public class TestServiceImpl implements TestInterface {
 
 			// get the question which the student attempted in the test
 			List<Question> questions = new ArrayList<>();
-			Set<Question> set = testDao.findById(testId).get().getQuestions();
-
-			questions.addAll(set);
+			Set<Question> questionSet = testDao.findById(testId).get().getQuestions();
+			
+//			get the total number of questions asked
+			final int totalQuestionsAsked = questionSet.size();
+			
+			
+			questions.addAll(questionSet);
 
 			// Now score the student
 			double score = scoreTest(questions, selectedOptions);
+			
+//			Compute the student's average score
+		final double averageScore = 	computeAverageScore(totalQuestionsAsked, score);
 
 			// create new StudentTest object to associate the records with and return the
 			// object
 			StudentTest studentTest = new StudentTest(score, now, student, test, responses);
-			studentTest.setGrade(String.valueOf(2 * score));
+			studentTest.setGrade(String.valueOf(averageScore));
 			studentTestDao.save(studentTest);
 
 			return "Submitted!";
@@ -169,18 +176,26 @@ public class TestServiceImpl implements TestInterface {
 					Exceptions.RECORD_NOT_FOUND.name());
 
 	}
+	
+//	Computes student's average assessment score
+	private double computeAverageScore(int totalQuestionsAsked, double score) {
+		
+		
+		return Math.ceil(score * 100) / totalQuestionsAsked;
+		
+	}
 
 	// implements the testTopics method of the interface
 	@Override
 	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category) {
-		return testDao.findByTestNameAndCategory(subject, Category.valueOf(category));
+		return testDao.findAllTopicsAndDurations(subject, Category.valueOf(category));
 
 	}
 
 	@Override
 	public TopicAndDuration testTopicAndDuration(Integer testId) {
 
-		return testDao.findByTestNameAndCategory(testId);
+		return testDao.retrieveTopicAndurationById(testId);
 	}
 
 	// implements the interface method to return a list of questions for the given
