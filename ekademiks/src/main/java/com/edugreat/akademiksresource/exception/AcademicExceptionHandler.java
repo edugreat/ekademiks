@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -81,5 +82,16 @@ public class AcademicExceptionHandler {
 
 		return new ResponseEntity<>("Unable to authenticate, please log in again", HttpStatus.UNAUTHORIZED);
 	}
+	
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<String> handleAuthenticationException(AuthenticationException exc){
+		
+		return  handleExpiredJWT( new ExpiredJwtException(null, null ,""));
+		
+		
+	}
+	
+	
+	
 
 }

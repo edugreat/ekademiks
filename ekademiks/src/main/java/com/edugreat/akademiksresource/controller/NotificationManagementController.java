@@ -115,7 +115,7 @@ public class NotificationManagementController {
 			Student student = optionalStudent.get();
 
 //			Remove the current notification from the student list of notifications
-			student.getNotifications().remove(assessmentUploadNotification);
+			student.getAssessmentNotifications().remove(assessmentUploadNotification);
 
 			studentDao.saveAndFlush(student);
 

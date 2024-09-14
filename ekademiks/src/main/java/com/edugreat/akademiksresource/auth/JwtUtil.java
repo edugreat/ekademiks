@@ -20,7 +20,7 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 
-	private final long EXPIRATION_TIME = 7200000; // 2 hours converted to milliseconds
+	private final long EXPIRATION_TIME = 43200000; // 12 hours converted to milliseconds
 
 	public JwtUtil() {
 
@@ -44,7 +44,8 @@ public class JwtUtil {
 
 		return extractClaims(token, Claims::getSubject);
 	}
-
+	
+	
 	private <T> T extractClaims(String token, Function<Claims, T> claimsFunction) {
 
 		return claimsFunction
@@ -74,6 +75,23 @@ public class JwtUtil {
 		byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
 
 		return Keys.hmacShaKeyFor(keyBytes);
+	}
+	
+//	Methods handles creation of refresh token
+	public String createRefreshToken(UserDetails userDetails) {
+		
+		Date now = new Date();
+		Date expiry = new Date(now.getTime() + 86400000);//24 hours as refresh token should live longer than access tokens
+		
+
+//		Include the user's roles to the generated token
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("roles", userDetails.getAuthorities().stream().map(authority -> authority.getAuthority()).toList());
+		
+		return Jwts.builder().claims(claims).subject(userDetails.getUsername())
+				.issuedAt(now)
+				.expiration(expiry).signWith(getSignedKey()).compact();
+
 	}
 
 }

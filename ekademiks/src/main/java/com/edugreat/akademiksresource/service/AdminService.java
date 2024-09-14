@@ -176,6 +176,22 @@ public class AdminService implements AdminInterface {
 
 	}
 
+
+	@Transactional
+	@Override
+	public void deleteStudentAccount(Integer studentId) {
+		
+		final Optional<Student> optional = studentDao.findById(studentId);
+		if(!optional.isEmpty()) {
+			
+			Student student = optional.get();
+			studentDao.delete(student);
+		}
+		
+		
+	}
+	
+	
 	@Transactional
 	@Override
 	public Integer uploadAssessment(TestDTO testDTO) {
@@ -405,5 +421,6 @@ public class AdminService implements AdminInterface {
 
 		return Pattern.matches("^[A-Za-z0-9\s,;:!.'\"-]+[.!?]*$", msg);
 	}
+
 
 }

@@ -51,7 +51,10 @@ public class AppUserDTO {
 	private int statusCode;
 
 	@JsonView(UserView.SigninView.class)
-	private String token;
+	private String accessToken;
+	
+	@JsonView(UserView.SigninView.class)
+	private String refreshToken;
 
 	@JsonView(UserView.SigninView.class)
 	private String signInErrorMessage;

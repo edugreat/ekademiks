@@ -44,4 +44,5 @@ public interface AdminInterface {
 
 	public void createWelcomeMessages(Map<String, Collection<String>> msgs);
 
+	public void deleteStudentAccount(Integer studentId);
 }

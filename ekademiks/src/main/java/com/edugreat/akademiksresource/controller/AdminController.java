@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.hibernate.TypeMismatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -138,6 +140,26 @@ public class AdminController {
 		service.createWelcomeMessages(welcomeMsg);
 		return ResponseEntity.ok().build();
 
+	}
+	
+	@DeleteMapping("/delete")
+	public ResponseEntity<Object> deleteStudentAccount(@RequestParam String studentId){
+		
+	
+		
+		try {
+			
+		
+			Integer id = Integer.parseInt(studentId);
+			
+           service.deleteStudentAccount(id);
+           
+           return ResponseEntity.ok().build();
+		} catch (Exception e) {
+			
+			return new ResponseEntity<Object>("Invalid id",HttpStatus.BAD_REQUEST);
+		}
+		
 	}
 
 }

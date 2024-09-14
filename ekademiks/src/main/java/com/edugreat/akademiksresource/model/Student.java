@@ -50,13 +50,12 @@ public class Student extends AppUser {
 
 	}
 
-	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, mappedBy = "student", orphanRemoval = true)
+	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE }, mappedBy = "student", orphanRemoval = true)
 	private Set<StudentTest> studentTests = new HashSet<>();
 
-//	A set of assessmentUploadNotifications a student receives
-	@ManyToMany
+	//	A set of assessmentUploadNotifications a student receives
+	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE })
 	@JoinTable(name = "student_notifications", joinColumns = @JoinColumn(name = "student_id"), inverseJoinColumns = @JoinColumn(name = "notification_id"))
-
 	private Set<AssessmentUploadNotification> assessmentNotifications = new HashSet<>();
 
 	// convenience method
@@ -67,12 +66,25 @@ public class Student extends AppUser {
 		}
 
 	}
+	//	
+	////	Removes the association that exists between student and assessment notification.
+	////	This is important for the process of account deletion
+	//	public void removeAssessmentNotifications(List<AssessmentUploadNotification> assessmentNotifications) {
+	//		
+	//		getAssessmentNotifications().removeAll(assessmentNotifications);
+	//		
+	//		
+	//		
+	//		
+	//		
+	//
+	//	}
 
-	public Set<AssessmentUploadNotification> getNotifications() {
+	public Set<AssessmentUploadNotification> getAssessmentNotifications() {
 		return assessmentNotifications;
 	}
 
-//     Convenience method to add notification to student
+	//     Convenience method to add notification to student
 	public void AddNotification(AssessmentUploadNotification notication) {
 
 		if (!assessmentNotifications.contains(notication)) {
@@ -108,5 +120,17 @@ public class Student extends AppUser {
 			this.roles.add(new UserRoles(Roles.valueOf(role)));
 		}
 	}
+
+	//	Removes student roles
+	public void removeRole(String role) {
+
+		getRoles().remove(role);
+	}
+	//	
+	////	breaks the relationship between student and student_test table
+	//	public void removeStudentTestsRecords(List<StudentTest> studentTests) {
+	//		
+	//		getStudentTests().removeAll(studentTests);
+	//	}
 
 }
