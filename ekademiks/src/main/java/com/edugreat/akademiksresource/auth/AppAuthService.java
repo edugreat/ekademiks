@@ -1,7 +1,9 @@
 package com.edugreat.akademiksresource.auth;
 
+import java.io.IOException;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
@@ -124,9 +126,11 @@ public class AppAuthService implements AppAuthInterface {
 			if (optionalAdmin.isPresent() && passwordEncoder.matches(password, optionalAdmin.get().getPassword())) {
 
 				Admins admin = optionalAdmin.get();
-				var jwt = jwtUtil.generateToken(admin);
+				var accessToken = jwtUtil.generateToken(admin);
+				var refreshToken = jwtUtil.createRefreshToken(admin);
 				var dto = mapper.map(admin, AdminsDTO.class);
-				dto.setToken(jwt);
+				dto.setAccessToken(accessToken);
+				dto.setRefreshToken(refreshToken);
 
 				return (T) dto;
 			}
@@ -138,9 +142,9 @@ public class AppAuthService implements AppAuthInterface {
 			if (optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
 
 				Student student = optionalStudent.get();
-				var jwt = jwtUtil.generateToken(student);
+				var accessToken = jwtUtil.generateToken(student);
 				var dto = mapper.map(student, StudentDTO.class);
-				dto.setToken(jwt);
+				dto.setAccessToken(accessToken);
 				return (T) dto;
 			}
 
@@ -150,6 +154,67 @@ public class AppAuthService implements AppAuthInterface {
 		throw new AcademicException(role.equalsIgnoreCase("admin") ? "admin not found!" : "student not found!",
 				Exceptions.RECORD_NOT_FOUND.name());
 
+	}
+
+	
+	
+//	Implementation that generates new token using the refresh token (for user validation) after the expiration of the existing token
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends AppUserDTO> T generateNewToken(String refreshToken, HttpServletResponse response) throws IOException {
+		
+		
+//		extract username from the token
+		var email = jwtUtil.extractUsername(refreshToken);
+		var roles = jwtUtil.extractRoles(refreshToken);
+		
+		String role = roles.get(0);
+		switch (role.toLowerCase()) {
+		case "admin": {
+			
+			Optional<Admins> optional = adminsDao.findByEmail(email);
+			if(optional.isEmpty()) {
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
+				return null;
+			}
+			
+			Admins admin = optional.get();
+			String token = jwtUtil.generateToken(admin);
+			;			
+			var dto = mapper.map(admin, AdminsDTO.class);
+			
+			dto.setAccessToken(token);
+			
+			return (T)dto;
+			
+		}
+		
+		case "student":{
+			
+			Optional<Student> optional = studentDao.findByEmail(email);
+			
+			if(optional.isEmpty()) {
+				
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
+			return null;
+			}
+			
+			Student student = optional.get();
+			String token = jwtUtil.generateToken(student);
+			var dto = mapper.map(student, StudentDTO.class);
+			
+			dto.setAccessToken(token);
+			
+			return (T)dto;
+			
+		}
+		}
+		
+
+		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
+		
+		return null;
+		
 	}
 
 }

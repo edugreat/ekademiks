@@ -1,6 +1,10 @@
 package com.edugreat.akademiksresource.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
+import java.io.IOException;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +41,20 @@ public class AuthenticateController {
 			@RequestParam String role) {
 
 		return ResponseEntity.ok(appInterface.signIn(request, role));
+	}
+
+	//	Controller endpoint for requesting new access token upon token expiration
+	@PostMapping("/refresh-token")
+	@JsonView(UserView.SigninView.class)
+	public ResponseEntity<AppUserDTO> refreshToken(@RequestBody Map<String, String> request, HttpServletResponse respone) throws IOException {
+		
+		;
+		
+		final String token = request.get("refreshToken");
+		;
+
+		return ResponseEntity.ok(appInterface.generateNewToken(token, respone));
+
 	}
 
 }

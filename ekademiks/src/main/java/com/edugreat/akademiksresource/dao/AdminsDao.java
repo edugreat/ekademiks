@@ -24,4 +24,6 @@ public interface AdminsDao extends JpaRepository<Admins, Integer> {
 	@Query("SELECT CASE WHEN COUNT(a.mobileNumber) > 0 THEN true ELSE false END FROM Admins a WHERE a.mobileNumber =:mobile")
 	public boolean existsByMobile(String mobile);
 
+	
+
 }
