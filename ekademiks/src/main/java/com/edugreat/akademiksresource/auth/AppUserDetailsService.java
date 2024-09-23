@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.auth;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,12 +15,14 @@ import com.edugreat.akademiksresource.model.AppUser;
 import lombok.AllArgsConstructor;
 
 @Service
-@AllArgsConstructor
+
 public class AppUserDetailsService implements UserDetailsService {
 
-	private final AdminsDao adminsDao;
+	@Autowired
+	private AdminsDao adminsDao;
 
-	private final StudentDao studentDao;
+	@Autowired
+	private StudentDao studentDao;
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

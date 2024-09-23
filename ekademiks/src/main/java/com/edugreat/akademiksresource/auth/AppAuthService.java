@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -142,6 +143,13 @@ public class AppAuthService implements AppAuthInterface {
 			if (optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
 
 				Student student = optionalStudent.get();
+				
+//				check if the user's account has yet to be enabled
+				if( ! student.isAccountEnabled()) {
+					
+					throw new DisabledException("Account is disabled !");
+				}
+//				proceed from here since account is enabled
 				var accessToken = jwtUtil.generateToken(student);
 				var dto = mapper.map(student, StudentDTO.class);
 				dto.setAccessToken(accessToken);

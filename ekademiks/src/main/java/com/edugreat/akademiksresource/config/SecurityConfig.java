@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 
 import com.edugreat.akademiksresource.auth.AppUserDetailsService;
+import com.edugreat.akademiksresource.filter.AccountStatusFilter;
 import com.edugreat.akademiksresource.filter.JwtAuthtFilter;
 
 import lombok.AllArgsConstructor;
@@ -33,6 +34,7 @@ public class SecurityConfig {
 
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
+	private final AccountStatusFilter accountStatusFilter;
 
 	private static final String[] ALLOWED_HEADERS = { "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",
 			"Authorization", "X-Request-With", "Access-Control-Request-Method", "Access-Control-Request-Headers" };
@@ -41,15 +43,6 @@ public class SecurityConfig {
 
 	private static final String[] ALLOWED_METHODS = { "GET", "POST", "PUT", "DELETE", "PATCH" };
 
-//	@Bean
-//	AccessDeniedHandler accessDeniedHandler() {
-//		return new CustomAccessDenied();
-//	}
-//
-//	@Bean
-//	AuthenticationEntryPoint authenticationEntryPoint() {
-//		return new CustomAuthenticationEntryPoint();
-//	}
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -67,7 +60,8 @@ public class SecurityConfig {
 
 				.sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider())
-				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class).build();
+				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+				.addFilterAfter(accountStatusFilter, JwtAuthtFilter.class).build();
 	}
 
 	@Bean

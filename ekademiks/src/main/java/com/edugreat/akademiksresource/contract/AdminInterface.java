@@ -3,8 +3,6 @@ package com.edugreat.akademiksresource.contract;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
@@ -45,4 +43,8 @@ public interface AdminInterface {
 	public void createWelcomeMessages(Map<String, Collection<String>> msgs);
 
 	public void deleteStudentAccount(Integer studentId);
+	
+	public void disableStudentAccount(Integer studentId);
+	
+	public void enableStudentAccount(Integer studentId);
 }

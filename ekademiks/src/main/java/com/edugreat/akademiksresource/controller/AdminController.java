@@ -32,6 +32,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 /*
  * Only users with the Admin role can call end-points declared in this class
@@ -158,6 +160,46 @@ public class AdminController {
 		} catch (Exception e) {
 			
 			return new ResponseEntity<Object>("Invalid id",HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+	
+	@PatchMapping("/disable")
+	public ResponseEntity<Object> disableStudentAccount(@RequestBody Map<String, Integer> map) {
+		
+		
+		try {
+			
+			final Integer studentId = map.get("studentId");
+			
+			service.disableStudentAccount(studentId);
+			
+			return new ResponseEntity<Object>(HttpStatus.OK);
+		} catch (Exception e) {
+			
+			
+			return new ResponseEntity<Object>("Invalid id", HttpStatus.BAD_REQUEST);
+			
+		}
+		
+		
+	}
+	
+	@PatchMapping("/enable")
+	public ResponseEntity<Object> enableStudentAccount(@RequestBody Map<String, Integer> map){
+		
+		try {
+			
+			final Integer studentId = map.get("studentId");
+			
+			service.enableStudentAccount(studentId);
+			
+			return new ResponseEntity<Object>(HttpStatus.OK);
+			
+			
+		} catch (Exception e) {
+		
+			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
 		}
 		
 	}

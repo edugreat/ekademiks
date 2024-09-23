@@ -191,6 +191,39 @@ public class AdminService implements AdminInterface {
 		
 	}
 	
+	@Override
+	@Transactional
+	public void disableStudentAccount(Integer studentId) {
+		
+//		Disables a student's account 
+
+		Optional<Student> optional = studentDao.findById(studentId);
+		if(optional.isPresent()) {
+			
+			Student student = optional.get();
+			
+			student.setAccountEnabled(false);
+			studentDao.save(student);
+			
+		}
+	}
+	
+	
+	@Override
+	@Transactional
+	public void enableStudentAccount(Integer studentId) {
+		
+		
+		Optional<Student> optional = studentDao.findById(studentId);
+		
+		if(optional.isPresent()) {
+			
+			Student student = optional.get();
+		
+			student.setAccountEnabled(true);
+			studentDao.save(student);
+		}
+	}
 	
 	@Transactional
 	@Override

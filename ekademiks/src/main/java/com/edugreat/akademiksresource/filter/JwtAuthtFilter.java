@@ -35,7 +35,7 @@ public class JwtAuthtFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		;
+		
 		final String authHeader = request.getHeader("Authorization");
 		final String jwtToken;
 		final String userEmail;
@@ -49,7 +49,7 @@ public class JwtAuthtFilter extends OncePerRequestFilter {
 		String path = request.getRequestURI();
 		if(path.contains("/auth/refresh-token")) {
 			
-			;
+			
 			
 			filterChain.doFilter(request, response);
 			
@@ -69,13 +69,12 @@ public class JwtAuthtFilter extends OncePerRequestFilter {
 					List<String> roles = jwtUtil.extractRoles(jwtToken);
 					List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
 
-					// SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+				
 					UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, null,
 							authorities);
 
 					token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-//					securityContext.setAuthentication(token);
-//						SecurityContextHolder.setContext(securityContext);
+
 					SecurityContextHolder.getContext().setAuthentication(token);
 //						
 				}

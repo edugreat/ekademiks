@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -92,6 +93,15 @@ public class AcademicExceptionHandler {
 	}
 	
 	
+	@ExceptionHandler(DisabledException.class)
+	public ResponseEntity<String> handleAccountDisabledException(){
+		
+		
+		
+		return new ResponseEntity<>("Account is Disabled", HttpStatus.NOT_ACCEPTABLE);
+		
+		
+	}
 	
 
 }
