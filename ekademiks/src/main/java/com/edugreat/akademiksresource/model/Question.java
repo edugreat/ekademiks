@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -21,7 +23,9 @@ import jakarta.persistence.Transient;
 import com.edugreat.akademiksresource.embeddable.Options;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -38,7 +42,7 @@ public class Question implements Comparable<Question> {
 	private int questionNumber;
 
 	@Column(nullable = false)
-	private String text;
+	private String question;
 
 	@Column(nullable = false)
 	private String answer;
@@ -53,13 +57,15 @@ public class Question implements Comparable<Question> {
 	@JoinColumn(name = "test_id", nullable = false)
 	private Test test;
 
+//	the choice of TreeSet implementation is for sorting purpose
 	@ElementCollection
 	@CollectionTable(name = "options", joinColumns = @JoinColumn(name = "question_id"))
-	private Set<Options> options = new HashSet<>();
+	@Getter(AccessLevel.NONE)
+	private Set<Options> options = new TreeSet<>();
 
 	public Question(int questionNumber, String text, String answer) {
 		this.questionNumber = questionNumber;
-		this.text = text;
+		this.question = text;
 		this.answer = answer;
 	}
 
@@ -98,5 +104,12 @@ public class Question implements Comparable<Question> {
 
 		return 1;
 	}
-
+	
+	public Set<Options> getOptions(){
+		
+		
+		return new TreeSet<>(options);
+		
+	}
+	
 }

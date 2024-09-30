@@ -6,6 +6,7 @@ import java.util.Map;
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
+import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
@@ -47,4 +48,7 @@ public interface AdminInterface {
 	public void disableStudentAccount(Integer studentId);
 	
 	public void enableStudentAccount(Integer studentId);
+	
+//	Provides capability for modifying questions referenced by the given testId
+	public void modifyQuestion(List<QuestionDTO> questions, Integer testId);
 }

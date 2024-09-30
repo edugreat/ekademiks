@@ -14,7 +14,7 @@ import com.edugreat.akademiksresource.model.Question;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Embeddable
-public class Options {
+public class Options implements Comparable<Options> {
 
 	@Column(nullable = false)
 	private String text;
@@ -79,6 +79,13 @@ public class Options {
 	public int hashCode() {
 
 		return Objects.hash(letter, text);
+	}
+
+//	implements the comparable interface for sorting purpose
+	@Override
+	public int compareTo(Options that) {
+		
+		return this.letter.compareTo(that.letter);
 	}
 
 }

@@ -16,19 +16,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-//Utility class for the Question object
+//Data transfer object for the Question object
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class QuestionDTO {
 
+	
+	
 	@Digits(integer = 2, fraction = 0, message = "Question number not supported!")
 	@Min(value = 1, message = "Question number must be greater than 0")
 	@Max(value = 50, message = "Question number must not be greater than 50")
 	private int questionNumber;
 
-	@NotEmpty(message = "expected question text not found")
-	private String text;
+	@NotEmpty(message = "expected question not found")
+	private String question;
 
 	@NotEmpty(message = "Expected property answer not found")
 	private String answer;

@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import jakarta.transaction.Transactional;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +42,7 @@ import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.model.WelcomeMessage;
 import com.edugreat.akademiksresource.util.OptionUtil;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 /*
@@ -139,7 +138,8 @@ public class AdminService implements AdminInterface {
 		List<Subject> subjects = new ArrayList<>();
 		// get the academic level for the subject, check if any of the subjects already
 		// exists for any of the specified levels.
-//		Throw exception if any requirement fails. This is to ensure all passes requirements or non gets persisted.
+		// Throw exception if any requirement fails. This is to ensure all passes
+		// requirements or non gets persisted.
 		subjectDTOs.forEach(dto -> {
 
 			Category category = Category.valueOf(dto.getCategory());
@@ -151,7 +151,7 @@ public class AdminService implements AdminInterface {
 				throw new AcademicException("category '" + category + "' not found ",
 						Exceptions.RECORD_NOT_FOUND.name());
 			}
-//			Check if the subject already exists for that particular level
+			// Check if the subject already exists for that particular level
 			if (subjectDao.subjectExists(dto.getSubjectName(), level.getId())) {
 				throw new AcademicException("subject, " + dto.getSubjectName() + ", exists for " + category.name(),
 						Exceptions.BAD_REQUEST.name());
@@ -176,55 +176,95 @@ public class AdminService implements AdminInterface {
 
 	}
 
-
 	@Transactional
 	@Override
 	public void deleteStudentAccount(Integer studentId) {
-		
+
 		final Optional<Student> optional = studentDao.findById(studentId);
-		if(!optional.isEmpty()) {
-			
+		if (!optional.isEmpty()) {
+
 			Student student = optional.get();
 			studentDao.delete(student);
 		}
-		
-		
+
 	}
-	
+
+	// provides implementation for modifying the content of the questions referenced by the given
+	// testId
+	@Override
+	@Transactional
+	public void modifyQuestion(List<QuestionDTO> dtos, Integer testId) {
+		// Get the test referenced by testId
+		Optional<Test> optional = testDao.findById(testId);
+		if (optional.isPresent()) {
+			Test test = optional.get();
+
+			// Get the questions contained in the test
+			Set<Question> questions = test.getQuestions();
+
+			dtos.forEach(dto -> {
+				// Filter the questions that need update
+				Question updatableQuestion = questions.stream()
+						.filter(q -> q.getQuestionNumber() == dto.getQuestionNumber()).findFirst()
+						.orElseThrow(() -> new IllegalArgumentException("Question not found"));
+
+				// Update the question's fields
+				updatableQuestion.setAnswer(dto.getAnswer());
+				updatableQuestion.setQuestion(dto.getQuestion());
+
+				// Update the options in the updatableQuestion with the options provided by
+				// 'dto'
+				Set<Options> updatableOptions = new TreeSet<>();
+				for (OptionUtil currentOption : dto.getOptions()) {
+					Options option = new Options();
+					option.setLetter(OptionLetter.valueOf(currentOption.getLetter()));
+					option.setText(currentOption.getText());
+
+					// for bi-directional reference
+					option.setQuestion(updatableQuestion); // Assuming you have a setQuestion method
+					updatableOptions.add(option);
+				}
+
+				// Update the options directly in the existing question
+				updatableQuestion.setOptions(updatableOptions);
+			});
+
+			testDao.saveAndFlush(test);
+		}
+	}
+
 	@Override
 	@Transactional
 	public void disableStudentAccount(Integer studentId) {
-		
-//		Disables a student's account 
+
+		// Disables a student's account
 
 		Optional<Student> optional = studentDao.findById(studentId);
-		if(optional.isPresent()) {
-			
+		if (optional.isPresent()) {
+
 			Student student = optional.get();
-			
+
 			student.setAccountEnabled(false);
 			studentDao.save(student);
-			
+
 		}
 	}
-	
-	
+
 	@Override
 	@Transactional
 	public void enableStudentAccount(Integer studentId) {
-		
-		
+
 		Optional<Student> optional = studentDao.findById(studentId);
-		
-		if(optional.isPresent()) {
-			
+
+		if (optional.isPresent()) {
+
 			Student student = optional.get();
-		
+
 			student.setAccountEnabled(true);
 			studentDao.save(student);
 		}
 	}
-	
+
 	@Transactional
 	@Override
 	public Integer uploadAssessment(TestDTO testDTO) {
@@ -251,7 +291,7 @@ public class AdminService implements AdminInterface {
 
 		loadedSubject.addTest(validTest);
 
-//		return the id of the just uploaded test assessment
+		// return the id of the just uploaded test assessment
 		Integer id = findId(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
 		if (id == null)
 			throw new IllegalArgumentException("Invalid request");
@@ -260,7 +300,7 @@ public class AdminService implements AdminInterface {
 
 	}
 
-//	returns the id of a test assessment using its information
+	// returns the id of a test assessment using its information
 	private Integer findId(String testName, Category category) {
 
 		return testDao.findId(testName, category);
@@ -316,7 +356,7 @@ public class AdminService implements AdminInterface {
 		// valid
 		for (QuestionDTO dto : dtos) {
 			Set<Options> options = validateOptions(dto.getOptions());// validate and return validated options for each
-																		// of the questions
+			// of the questions
 
 			// map each question dto to question object and associate options to it
 			Question mappedQuestion = mapper.map(dto, Question.class);
@@ -340,7 +380,7 @@ public class AdminService implements AdminInterface {
 
 			for (OptionUtil option : options) {
 				OptionLetter.valueOf(option.getLetter());// validate the options, can throw exception if validations
-															// fails
+				// fails
 				validOptions.add(mapper.map(option, Options.class));
 			}
 
@@ -352,10 +392,11 @@ public class AdminService implements AdminInterface {
 		return validOptions;
 	}
 
-//	private SubjectDTO convertToDTO(Subject subject) {
-//
-//		return new SubjectDTO(subject.getId(), subject.getSubjectName(), subject.getLevel().getCategory().name());
-//	}
+	// private SubjectDTO convertToDTO(Subject subject) {
+	//
+	// return new SubjectDTO(subject.getId(), subject.getSubjectName(),
+	// subject.getLevel().getCategory().name());
+	// }
 
 	private AppUserDTO searchUser(String username) {
 
@@ -454,6 +495,5 @@ public class AdminService implements AdminInterface {
 
 		return Pattern.matches("^[A-Za-z0-9\s,;:!.'\"-]+[.!?]*$", msg);
 	}
-
 
 }

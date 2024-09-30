@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.hibernate.TypeMismatchException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
+import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
@@ -32,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
 
 
 /*
@@ -99,6 +97,26 @@ public class AdminController {
 		service.setSubject(dtos);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
+	
+	@PutMapping("/update/questions")
+	public ResponseEntity<Object> updateQuestion(@RequestBody List<QuestionDTO> questionDTOs, @RequestParam Integer testId) {
+		
+		System.out.println("About the update: "+testId);
+		try {
+			
+			service.modifyQuestion(questionDTOs, testId);
+			
+			
+			
+		} catch (Exception e) {
+			
+			System.out.println(e);
+			return new ResponseEntity<Object>("Something went wrong !", HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+	}
+	
 
 	// set a new academic test
 	@PostMapping("/test")
