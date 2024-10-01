@@ -7,11 +7,7 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
-import org.hibernate.annotations.Parent;
-
 import com.edugreat.akademiksresource.enums.OptionLetter;
-import com.edugreat.akademiksresource.model.Question;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Embeddable
 public class Options implements Comparable<Options> {
@@ -22,10 +18,6 @@ public class Options implements Comparable<Options> {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "letter", nullable = false)
 	private OptionLetter letter;
-
-	@Parent
-	@JsonIgnore
-	private Question question;
 
 	public Options() {
 	}
@@ -51,13 +43,6 @@ public class Options implements Comparable<Options> {
 		this.letter = letter;
 	}
 
-	public Question getQuestion() {
-		return question;
-	}
-
-	public void setQuestion(Question question) {
-		this.question = question;
-	}
 
 	@Override
 	public boolean equals(Object o) {

@@ -2,11 +2,9 @@ package com.edugreat.akademiksresource.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -19,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+
 
 import com.edugreat.akademiksresource.embeddable.Options;
 import com.fasterxml.jackson.annotation.JsonIgnore;

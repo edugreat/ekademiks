@@ -51,4 +51,15 @@ public interface AdminInterface {
 	
 //	Provides capability for modifying questions referenced by the given testId
 	public void modifyQuestion(List<QuestionDTO> questions, Integer testId);
+	
+//	provides capability for deleting a particular question from the assessment using the provided fields
+	public void deleteQuestion(Integer testId, Integer questionId);
+	
+//	provides functionality for modifying the 'assessment topic and assessment duration' for the given assessment id
+//	The key of the map is the new assessment topic and value 
+	public void modifyAssessment(Map<String, Object> modifiedAssessment, Integer assessmentId);
+	
+//	provides functionality for deleting a particular assessment from the database
+	public void deleteAssessment(Integer testId);
+	
 }

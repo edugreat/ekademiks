@@ -2,7 +2,6 @@ package com.edugreat.akademiksresource.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +35,7 @@ public class Test {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "test", orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Question> questions = new HashSet<>();
 
-	@OneToMany(mappedBy = "test", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+	@OneToMany(mappedBy = "test", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
 	private Set<StudentTest> studentTests = new HashSet<>();
 
 	@Column
@@ -94,7 +93,7 @@ public class Test {
 	}
 
 	public Set<Question> getQuestions() {
-		return Collections.unmodifiableSet(questions);
+		return questions;
 	}
 
 	public void setQuestions(Set<Question> questions) {

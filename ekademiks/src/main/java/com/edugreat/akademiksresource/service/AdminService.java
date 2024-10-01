@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.LevelDao;
+import com.edugreat.akademiksresource.dao.QuestionDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
@@ -62,6 +63,7 @@ public class AdminService implements AdminInterface {
 	private final SubjectDao subjectDao;
 	private final TestDao testDao;
 	private final WelcomeMessageDao welcomeMsgDao;
+	private final QuestionDao questionDao;
 
 	@Override
 	@Transactional
@@ -189,7 +191,8 @@ public class AdminService implements AdminInterface {
 
 	}
 
-	// provides implementation for modifying the content of the questions referenced by the given
+	// provides implementation for modifying the content of the questions referenced
+	// by the given
 	// testId
 	@Override
 	@Transactional
@@ -220,8 +223,6 @@ public class AdminService implements AdminInterface {
 					option.setLetter(OptionLetter.valueOf(currentOption.getLetter()));
 					option.setText(currentOption.getText());
 
-					// for bi-directional reference
-					option.setQuestion(updatableQuestion); // Assuming you have a setQuestion method
 					updatableOptions.add(option);
 				}
 
@@ -231,6 +232,76 @@ public class AdminService implements AdminInterface {
 
 			testDao.saveAndFlush(test);
 		}
+	}
+
+	@Transactional
+	@Override
+	public void modifyAssessment(Map<String, Object> modifiedAssessment, Integer assessmentId) {
+
+		// get the assessment to be modified
+		Test test = testDao.findById(assessmentId)
+				.orElseThrow(() -> new IllegalArgumentException("Assessment not found!"));
+
+		// not minding the use of forEach, the map contains just one object of whose
+		// key, value pair represent the 'topic' and 'duration'
+		modifiedAssessment.forEach((topic, duration) -> {
+
+			test.setTestName(String.valueOf(modifiedAssessment.get("topic")));
+			test.setDuration(Long.valueOf(modifiedAssessment.get("duration").toString()));
+		});
+
+		testDao.saveAndFlush(test);
+
+	}
+
+	@Transactional
+	@Override
+	public void deleteQuestion(Integer testId, Integer questionId) {
+
+		// fetch from the database, the Test object referred to by testId
+		Optional<Test> optional = testDao.findById(testId);
+
+		if (optional.isPresent()) {
+
+			System.out.println("found");
+
+			// Get the Test object
+			Test test = optional.get();
+
+			// get the question to be deleted
+
+			Question staleQuestion = test.getQuestions().stream().filter(q -> q.getId() == questionId).findFirst()
+					.orElseThrow(() -> new IllegalArgumentException("Question not found!"));
+
+			// delete the question from the set of questions in the Test
+			test.getQuestions().remove(staleQuestion);
+
+			questionDao.delete(staleQuestion);
+
+			testDao.saveAndFlush(test);
+
+		}
+
+	}
+	
+	@Transactional
+	@Override
+	public void deleteAssessment(Integer testId) {
+		
+//		get the assessment to delete
+		Test test = testDao.findById(testId).orElseThrow(() -> new IllegalArgumentException("Record not found!"));
+		
+//		get the subject associated to this assessment
+		Subject associatedSubject = test.getSubject();
+		
+//		break the relationship
+		associatedSubject.getTest().remove(test);
+		
+//		delete the test finally
+		testDao.delete(test);
+		
+		subjectDao.saveAndFlush(associatedSubject);
+		
 	}
 
 	@Override

@@ -101,7 +101,7 @@ public class AdminController {
 	@PutMapping("/update/questions")
 	public ResponseEntity<Object> updateQuestion(@RequestBody List<QuestionDTO> questionDTOs, @RequestParam Integer testId) {
 		
-		System.out.println("About the update: "+testId);
+		
 		try {
 			
 			service.modifyQuestion(questionDTOs, testId);
@@ -110,7 +110,7 @@ public class AdminController {
 			
 		} catch (Exception e) {
 			
-			System.out.println(e);
+			
 			return new ResponseEntity<Object>("Something went wrong !", HttpStatus.BAD_REQUEST);
 		}
 		
@@ -220,6 +220,58 @@ public class AdminController {
 			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
 		}
 		
+	}
+	
+	@DeleteMapping("/del/question")
+	public ResponseEntity<Object> deleteQuestion(@RequestParam Integer testId, @RequestParam Integer questionId){
+		
+		
+		try {
+			
+		service.deleteQuestion(testId, questionId);
+			
+			return new ResponseEntity<Object>(HttpStatus.OK);
+		} catch (Exception e) {
+			
+			System.out.println(e);
+			
+			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+			
+		}
+		
+		
+	}
+	
+	@PatchMapping("/modify/test")
+	public ResponseEntity<Object> modifyAssessment(@RequestBody Map<String, Object> modifying, @RequestParam Integer assessmentId){
+		
+		
+		try {
+			
+			service.modifyAssessment(modifying, assessmentId);
+		} catch (Exception e) {
+			
+			
+			
+			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+	}
+	
+	@DeleteMapping("/assessment")
+	public ResponseEntity<Object> deleteAssessment(@RequestParam Integer testId){
+		
+		try {
+			
+			service.deleteAssessment(testId);
+		} catch (Exception e) {
+			
+			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
 	}
 
 }
