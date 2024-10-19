@@ -2,6 +2,6 @@ package com.edugreat.akademiksresource.enums;
 
 public enum Category {
 
-	SENIOR, JUNIOR
+	SENIOR, JUNIOR,TESTING
 
 }

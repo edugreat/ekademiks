@@ -18,48 +18,77 @@ import com.edugreat.akademiksresource.dto.TestDTO;
 public interface AdminInterface {
 
 	// provides contract that updates student's password
-	public void updatePassword(AppUserDTO dto);
+	 void updatePassword(AppUserDTO dto);
 
 	// Searches a user by their email
 	public AppUserDTO searchByEmail(String email);
 
-	public List<StudentDTO> allStudents();
+	 List<StudentDTO> allStudents();
 
-	public List<AdminsDTO> allAdmins();
+	 List<AdminsDTO> allAdmins();
 
 	public void deleteUser(String email);
 
-	public void setSubject(List<SubjectDTO> dtos);
+	 void setSubject(List<SubjectDTO> dtos);
 
 	// sets new test and return its id
-	public Integer uploadAssessment(TestDTO testDTO);
+	 Integer uploadAssessment(TestDTO testDTO);
 
-	public void addLevels(List<LevelDTO> dtos);
+	 void addLevels(List<LevelDTO> dtos);
 
-	public Iterable<LevelDTO> findAllLevels();
+	 Iterable<LevelDTO> findAllLevels();
 
-	public void updateTest(Integer testId, Map<String, Object> updates);// method that updates existing Test object,
+	 void updateTest(Integer testId, Map<String, Object> updates);// method that updates existing Test object,
 																		// intended to use the patch method
 
-	public void createWelcomeMessages(Map<String, Collection<String>> msgs);
+	 void createWelcomeMessages(Map<String, Collection<String>> msgs);
 
-	public void deleteStudentAccount(Integer studentId);
+	 void deleteStudentAccount(Integer studentId);
 	
-	public void disableStudentAccount(Integer studentId);
+	 void disableStudentAccount(Integer studentId);
 	
-	public void enableStudentAccount(Integer studentId);
+	 void enableStudentAccount(Integer studentId);
 	
 //	Provides capability for modifying questions referenced by the given testId
 	public void modifyQuestion(List<QuestionDTO> questions, Integer testId);
 	
 //	provides capability for deleting a particular question from the assessment using the provided fields
-	public void deleteQuestion(Integer testId, Integer questionId);
+	 void deleteQuestion(Integer testId, Integer questionId);
 	
 //	provides functionality for modifying the 'assessment topic and assessment duration' for the given assessment id
 //	The key of the map is the new assessment topic and value 
-	public void modifyAssessment(Map<String, Object> modifiedAssessment, Integer assessmentId);
+	 void modifyAssessment(Map<String, Object> modifiedAssessment, Integer assessmentId);
 	
 //	provides functionality for deleting a particular assessment from the database
-	public void deleteAssessment(Integer testId);
+	 void deleteAssessment(Integer testId);
+	
+//	provides functionality to retrieve all the assessment topics for editing or deletion purpose
+	 Map<String, List<String>> getAssessmentTopics();
+
+//	provides functionality for updating assessment topic. The key being the old value while the value is the current value.
+//	Category represents the assessment category under which the assessment falls
+	 void updateAssessmentTopic(Map<String, String>record, String category);
+
+//	deleted the given assessment from the database
+	void deleteAssessment(String category, String topic);
+
+//	provides functionality for retrieving all assessment subject names as a map whose keys are the assessment categories and values are the subject names
+	 Map<String, List<String>> assessmentSubjects();
+
+//	 provides functionality for updating an assessment subject's name, where map's key is the category the subject belongs to,
+//	 and key is the new name for subject
+	void updateSubjectName(Map<String, String> editedObject, String oldName);
+
+//	provides functionality for deleting an assessment subject
+	void deleteSubject(String category, String subjectName);
+
+//	provides functionality for updating assessment category name(referenced by 'previousName') with the current name
+	void updateCategoryName(String currentName, String previousName);
+
+//	provides functionality that deletes an assessment category by the category's name
+	void deleteCategory(String category);
+	
+	
+	
 	
 }

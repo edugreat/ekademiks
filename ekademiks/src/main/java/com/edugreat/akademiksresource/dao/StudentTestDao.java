@@ -23,6 +23,10 @@ public interface StudentTestDao extends JpaRepository<StudentTest, Integer> {
 			""")
 	public List<ScoreAndDate> getScore(int studentId, int testId);
 
+//	retrieves student-test record by student and test id criteria
+	@Query("SELECT st FROM StudentTest st JOIN st.student s JOIN st.test t WHERE s.id =:studentId AND t.id =:testId")
+	public StudentTest findByStudentAndTest(Integer studentId, Integer testId);
+
 //	@Query("SELECT st FROM StudentTest st JOIN st.student s WHERE s.id =:studentId AND st.when =:now")
 //	public StudentTest findByStudentIdAndWhen(int studentId, LocalDateTime now);
 

@@ -2,11 +2,13 @@ package com.edugreat.akademiksresource.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -64,6 +66,7 @@ public class AdminService implements AdminInterface {
 	private final TestDao testDao;
 	private final WelcomeMessageDao welcomeMsgDao;
 	private final QuestionDao questionDao;
+	
 
 	@Override
 	@Transactional
@@ -263,7 +266,7 @@ public class AdminService implements AdminInterface {
 
 		if (optional.isPresent()) {
 
-			System.out.println("found");
+			
 
 			// Get the Test object
 			Test test = optional.get();
@@ -339,9 +342,10 @@ public class AdminService implements AdminInterface {
 	@Transactional
 	@Override
 	public Integer uploadAssessment(TestDTO testDTO) {
-
+		
+		
 		// check if test name exists in the database
-		Test t = testDao.findByTestName(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
+		Test t = testDao.findByTestNameAndCategory(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
 		if (t != null) {
 
 			throw new AcademicException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
@@ -410,7 +414,7 @@ public class AdminService implements AdminInterface {
 
 	private Subject findSubjectOrThrow(String subjectName, String category) {
 
-		Subject subj = subjectDao.findBySubjectName(subjectName, Category.valueOf(category));
+		Subject subj = subjectDao.findBySubjectNameAndCategory(subjectName, Category.valueOf(category));
 
 		if (subj != null)
 			return subj;
@@ -565,6 +569,198 @@ public class AdminService implements AdminInterface {
 	private boolean patternMatch(String msg) {
 
 		return Pattern.matches("^[A-Za-z0-9\s,;:!.'\"-]+[.!?]*$", msg);
+	}
+
+	@Override
+	public Map<String, List<String>> getAssessmentTopics() {
+		
+		
+		
+		Map<String, List<String>> map = new TreeMap<>();
+//		get all assessment topics for junior assessments
+		List<String> juniorCategory = testDao.getTopicsFor(Category.JUNIOR);
+		
+		List<String> seniorCategory = testDao.getTopicsFor(Category.SENIOR);
+		
+		
+		if(juniorCategory.size() > 0) {
+			
+			Collections.sort(juniorCategory);
+			map.put("JUNIOR", juniorCategory);
+			
+		}
+		
+		if(seniorCategory.size() > 0) {
+			
+			Collections.sort(seniorCategory);
+			map.put("SENIOR", seniorCategory);
+		}
+		
+		
+		if(! map.isEmpty()) {
+			
+			return map;
+		};
+		
+		
+		return null;
+	}
+
+	@Override
+	@Transactional
+	public void updateAssessmentTopic(Map<String, String> record,  String category) {
+		
+		record.forEach((oldName, newName) -> {
+			
+			Test updatableTest = testDao.findByTestNameAndCategory(oldName, Category.valueOf(category));
+			if(updatableTest == null) {
+				
+				throw new IllegalArgumentException("Record not found!");
+			}
+			
+			updatableTest.setTestName(newName);
+			testDao.saveAndFlush(updatableTest);	
+			
+			
+		});
+		
+		
+		
+	}
+	
+	@Override
+	@Transactional
+	public void deleteAssessment(String category, String topic) {
+		
+		Test deletable = testDao.findByTestNameAndCategory(topic, Category.valueOf(category));
+		
+		if(deletable  == null) throw new IllegalArgumentException("Record does not exist!");
+		
+		testDao.delete(deletable);
+		
+		
+		
+		
+	}
+	
+	@Override
+	public Map<String, List<String>> assessmentSubjects() {
+		
+		Map<String, List<String>> subjectNames = new TreeMap<>();
+		
+		List<String> subjectNamesForJuniorCategory = subjectDao.findSubjectNamesByCategory(Category.valueOf("JUNIOR"));
+		
+		
+		
+		if(subjectNamesForJuniorCategory.size() > 0) {
+			
+			Collections.sort(subjectNamesForJuniorCategory);
+			
+			subjectNames.put("JUNIOR", subjectNamesForJuniorCategory);
+		}
+		
+		List<String> subjectNamesForSeniorCategory = subjectDao.findSubjectNamesByCategory(Category.valueOf("SENIOR"));
+		
+		if(subjectNamesForSeniorCategory.size() > 0) {
+			
+			Collections.sort(subjectNamesForSeniorCategory);
+			subjectNames.put("SENIOR", subjectNamesForSeniorCategory);
+		}
+		
+		
+		
+		
+		return subjectNames;
+
+	}
+	
+	@Override
+	@Transactional
+	public void updateSubjectName(Map<String, String> editedObject, String oldName) {
+	editedObject.forEach((category, subjectName) -> {
+		
+		Subject updatableSubject = subjectDao.findBySubjectNameAndCategory(oldName, Category.valueOf(category));
+		
+		if(updatableSubject != null) {
+			
+			updatableSubject.setSubjectName(subjectName);
+			
+		}else throw new IllegalArgumentException("No record found for update");
+		
+	});
+		
+		
+		
+		
+		
+		
+	}
+	
+	@Override
+	@Transactional
+	public void deleteSubject(String category, String subjectName) {
+		
+		
+//			check if the record exists in the database
+			final boolean recordExists = subjectDao.subjectExists(subjectName, Category.valueOf(category));
+			
+			if(! recordExists) throw new IllegalArgumentException("No such record !");
+			
+			var subject = subjectDao.findBySubjectNameAndCategory(subjectName, Category.valueOf(category));
+			
+			subjectDao.delete(subject);
+		
+	}
+	
+	@Override
+	@Transactional
+	public void updateCategoryName(String currentName, String previousName) {
+		
+//		verify the supplied category is allowed
+		try {
+			
+			Category.valueOf(currentName);
+			
+			final boolean exists = levelDao.existsByCategory(Category.valueOf(previousName));
+			
+			if(! exists) throw new IllegalArgumentException("No record for "+previousName);
+			
+			var updatableCategory = levelDao.findByCategory(Category.valueOf(previousName));
+			
+			
+			updatableCategory.setCategory(Category.valueOf(currentName));
+			
+			levelDao.saveAndFlush(updatableCategory);
+			
+		} catch (Exception e) {
+			
+			throw new IllegalArgumentException(e);
+			
+		}
+		
+		
+	}
+	
+	@Override
+	@Transactional
+	public void deleteCategory(String category) {
+		
+try {
+	
+//	check the existence of the record
+if(! levelDao.existsByCategory(Category.valueOf(category))) throw new IllegalArgumentException("Record not found");
+
+
+levelDao.deleteByCategory(Category.valueOf(category));
+
+	
+} catch (Exception e) {
+	
+	throw new IllegalArgumentException(e);
+	
+}
+		
+		
 	}
 
 }

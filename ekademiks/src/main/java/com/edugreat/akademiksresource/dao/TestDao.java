@@ -21,8 +21,8 @@ public interface TestDao extends JpaRepository<Test, Integer> {
 
 	// Fetches from the database, Test object using the test name and the test
 	// category
-	@Query("SELECT t FROM Test t JOIN t.subject s ON t.testName =:testName AND s.level.category =:category")
-	public Test findByTestName(String testName, Category category);
+	@Query("SELECT t From Test t JOIN t.subject s WHERE t.testName =:testName AND s.level.category =:category")
+	public Test findByTestNameAndCategory(String testName, Category category);
 
 	// fetches all the tests for the given subject and category
 	@Query("SELECT t FROM Test t JOIN t.subject s ON s.level.category =:category AND s.subjectName =:subjectName")
@@ -47,5 +47,9 @@ public interface TestDao extends JpaRepository<Test, Integer> {
 //	Retrieves the topic and duration for a given test id
 	@Query("SELECT t FROM Test t WHERE t.id =:testId")
 	TopicAndDuration retrieveTopicAndurationById(Integer testId);
+
+//	Retrieves all assessment topics for the given assessment category
+	@Query("SELECT CONCAT(t.testName) FROM Test t JOIN t.subject s WHERE s.level.category = :category")  
+	List<String> getTopicsFor(Category category);
 
 }

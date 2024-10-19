@@ -122,7 +122,15 @@ public class AdminController {
 	@PostMapping("/test")
 	public ResponseEntity<Object> uploadAssessment(@RequestBody @Valid TestDTO testDTO) {
 
-		return new ResponseEntity<Object>(service.uploadAssessment(testDTO), HttpStatus.OK);
+		try {
+			
+			return new ResponseEntity<Object>(service.uploadAssessment(testDTO), HttpStatus.OK);
+			
+		} catch (Exception e) {
+			
+			
+			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	@GetMapping("levels")
@@ -233,7 +241,7 @@ public class AdminController {
 			return new ResponseEntity<Object>(HttpStatus.OK);
 		} catch (Exception e) {
 			
-			System.out.println(e);
+			
 			
 			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
 			
@@ -269,6 +277,131 @@ public class AdminController {
 		} catch (Exception e) {
 			
 			return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+	}
+	
+	
+//	end-point that returns all the assessment topics in a key-value pair data type
+	@GetMapping("/topics")
+	public ResponseEntity<Map<String, List<String>>> assessmentTopics() {
+		
+		try {
+			return new ResponseEntity<Map<String,List<String>>>(service.getAssessmentTopics(), HttpStatus.OK);
+		} catch (Exception e) {
+			
+			
+			throw new IllegalArgumentException("Something went wrong");
+		}
+		
+		
+		
+	}
+	
+	@PatchMapping("/edit/topic")
+	public ResponseEntity<Object> updateAssessmentTopic(@RequestBody Map<String, String> record, @RequestParam String category){
+		
+		try {
+			
+			service.updateAssessmentTopic(record, category);
+		} catch (Exception e) {
+			
+			
+			 throw new IllegalArgumentException("Sorry, something went wrong");
+		}
+		
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+		
+		
+	}
+	
+	@DeleteMapping("/del/topic")
+	public ResponseEntity<Object> deleteAssessment(@RequestParam String category, @RequestParam String topic){
+		
+		
+		try {
+			
+			service.deleteAssessment(category, topic);
+		} catch (Exception e) {
+			
+			return new ResponseEntity<Object>("Something went wrong!", HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+	}
+	
+	@GetMapping("/subjects")
+	public ResponseEntity<Object> assessmentSubjectNames(){
+		
+		
+		
+		try {
+			return new ResponseEntity<Object>(service.assessmentSubjects(), HttpStatus.OK);
+		} catch (Exception e) {
+			
+			return new ResponseEntity<>("Something went wrong!", HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+	
+	@PatchMapping("/update/subject_name")
+	public ResponseEntity<Object> updateSubjectName(@RequestBody Map<String, String> editingObject, @RequestParam String oldName){
+		
+		try {
+			
+			service.updateSubjectName(editingObject, oldName);
+		} catch (Exception e) {
+			
+				
+			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+		
+		
+	}
+	
+	
+	@DeleteMapping("/delete/subject")
+	public ResponseEntity<Object> deleteSubject(@RequestParam String category, @RequestParam String subjectName){
+		
+		
+		try {
+			
+			service.deleteSubject(category, subjectName);
+			
+		} catch (Exception e) {
+			
+			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+	}
+	
+	@PatchMapping("/update/category")
+	public ResponseEntity<Object> updateCategoryName(@RequestBody String currentName, @RequestParam String previousName) {
+		
+		try {
+			service.updateCategoryName(currentName, previousName);
+		} catch (Exception e) {
+			
+			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<Object>(HttpStatus.OK);
+		
+		
+	}
+	
+	@DeleteMapping("/delete/category")
+	public ResponseEntity<Object> deleteCategory(@RequestParam String category){
+		System.out.println("controller");
+		try {
+			service.deleteCategory(category);
+		} catch (Exception e) {
+			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		
 		return new ResponseEntity<Object>(HttpStatus.OK);

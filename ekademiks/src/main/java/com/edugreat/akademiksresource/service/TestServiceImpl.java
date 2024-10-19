@@ -108,7 +108,7 @@ public class TestServiceImpl implements TestInterface {
 	public List<String> testSubjectFor(String level) {
 		// return all subjects for the given level,then map to their respective subject
 		// names
-		return subjectDao.findSubjectByLevelCategory(Category.valueOf(level));
+		return subjectDao.findSubjectNamesByCategory(Category.valueOf(level));
 	}
 
 	@Transactional
@@ -125,7 +125,8 @@ public class TestServiceImpl implements TestInterface {
 		// as well as information for the test they are taking.
 		// TODO: Modify this method in the future to allow for non-registered students
 		if (exist(studentId, testId)) {
-
+			
+			
 			// get the student who took the test
 			Student student = studentDao.findById(studentId).get();
 
@@ -134,6 +135,16 @@ public class TestServiceImpl implements TestInterface {
 
 			// get the list of selected options
 			List<String> selectedOptions = attempt.getSelectedOptions();
+			
+//			check if the student has taken this particular assessment before, if yes, delete the old
+			StudentTest previousTest = studentTestDao.findByStudentAndTest(student.getId(), test.getId());
+			if(previousTest != null) {
+				
+				student.getStudentTests().remove(previousTest);
+				
+//				
+			}
+			
 
 			// get the time of submission
 			LocalDateTime now = LocalDateTime.now();// might review this code later to allow fetching from the front-end
@@ -203,7 +214,7 @@ public class TestServiceImpl implements TestInterface {
 	@Override
 	public TestWrapper takeTest(String topic, String category) {
 
-		Test test = testDao.findByTestName(topic, Category.valueOf(category));
+		Test test = testDao.findByTestNameAndCategory(topic, Category.valueOf(category));
 
 		Collection<Question> questions = null;
 		if (test != null) {

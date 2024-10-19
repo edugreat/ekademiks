@@ -17,7 +17,6 @@ public class LevelDTO {
 	@Min(value = 0, message = "invalid id")
 	private Integer id;
 
-	@Pattern(regexp = "^(?:SENIOR|JUNIOR)$", message = "Invalid category")
 	private String category;
 
 }
