@@ -1,0 +1,20 @@
+package com.edugreat.akademiksresource.chat.dao;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.stereotype.Repository;
+
+import com.edugreat.akademiksresource.chat.model.Chat;
+
+@RestResource(exported = false)
+@Repository
+public interface ChatDao extends JpaRepository<Chat, Integer> {
+
+//	get all the chats in the group, ordering them by the dates they were sent
+	@Query("SELECT c FROM Chat c WHERE c.groupChat.id =:groupId ORDER BY c.sentAt asc")
+	List<Chat> findByGroupIdOrderBySentAt(Integer groupId);
+
+}

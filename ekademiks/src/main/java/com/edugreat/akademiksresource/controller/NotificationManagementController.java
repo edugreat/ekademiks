@@ -1,3 +1,6 @@
+
+
+
 package com.edugreat.akademiksresource.controller;
 
 import java.io.IOException;
@@ -6,11 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.edugreat.akademiksresource.dao.AssessmentNotificationDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.NotificationsResponseDTO;
+import com.edugreat.akademiksresource.events.NewAssessmentEvent;
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 import com.edugreat.akademiksresource.model.Notification;
 import com.edugreat.akademiksresource.model.Student;
@@ -61,7 +63,7 @@ public class NotificationManagementController {
 			emitters.put(studentId, emitter);
 
 //			Periodic heartbeats sent to  client to keep connection alive
-			conectionHeartBeat(studentId, emitter);
+			//conectionHeartBeat(studentId, emitter);
 
 //			Send all unread assessment notifications to the student upon login
 			List<AssessmentUploadNotification> unreadAssessmentNotifications = assessmentNotificationsDao
@@ -124,7 +126,7 @@ public class NotificationManagementController {
 	}
 
 //	Method to sent instant(eg, notification sent while the student is yet logged in notification to the student
-	public void sendNotification(AssessmentUploadNotification assessmentUploadNotification, Integer studentId) {
+	private void sendNotification(AssessmentUploadNotification assessmentUploadNotification, Integer studentId) {
 //		Get the student's communication channel
 		SseEmitter emitter = emitters.get(studentId);
 //		Send notification if communication channel is still active
@@ -137,11 +139,25 @@ public class NotificationManagementController {
 //				Removes notification emitter for the student if there is error
 				emitters.remove(studentId);
 
-//				Completes current emitter upon error. Let the client re-establish connection
-				emitter.complete();
+//				
 			}
 		}
 
+	}
+	
+//	declare an event listener that listens for new assessment uploads to notify students who are currently online
+	@EventListener
+	public void handleNewAssessmentUploadEvent(NewAssessmentEvent event) {
+		
+		Map<Integer, AssessmentUploadNotification> data = event.getData();
+		
+//		calls the private method that sends notifications to the students online
+		data.forEach((studentId, notification) -> {
+			
+			sendNotification(notification, studentId);
+		});
+		
+		
 	}
 
 //	Removes all read notifications
@@ -186,20 +202,20 @@ public class NotificationManagementController {
 
 //	Sends periodic heartbeat to the client to keep connection alive
 
-	private void conectionHeartBeat(Integer studentId, SseEmitter emitter) {
-
-		Runnable heartbeat = () -> {
-
-			try {
-				emitter.send(SseEmitter.event().comment("heartbeat"));
-			} catch (Exception e) {
-
-				emitters.remove(studentId);
-			}
-		};
-
-		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-
-		executor.scheduleAtFixedRate(heartbeat, 0, 1, TimeUnit.MINUTES);
-	}
+//	private void conectionHeartBeat(Integer studentId, SseEmitter emitter) {
+//
+//		Runnable heartbeat = () -> {
+//
+//			try {
+//				emitter.send(SseEmitter.event().comment("heartbeat"));
+//			} catch (Exception e) {
+//
+//				emitters.remove(studentId);
+//			}
+//		};
+//
+//		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+//
+//		executor.scheduleAtFixedRate(heartbeat, 0, 1, TimeUnit.MINUTES);
+//	}
 }

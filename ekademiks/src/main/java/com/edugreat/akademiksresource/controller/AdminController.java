@@ -397,7 +397,7 @@ public class AdminController {
 	
 	@DeleteMapping("/delete/category")
 	public ResponseEntity<Object> deleteCategory(@RequestParam String category){
-		System.out.println("controller");
+		
 		try {
 			service.deleteCategory(category);
 		} catch (Exception e) {

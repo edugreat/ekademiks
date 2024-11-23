@@ -28,7 +28,7 @@ public class TestDTO {
 	private Integer id;
 
 	@NotNull(message = "Property category, for test is missing")
-	@Transient // Variable is only needed at runtime to fetch a single where there is
+	@Transient // Variable is only needed at runtime to fetch a single category where there is
 				// possibility of having multiple subjects with same name
 	private String category;
 

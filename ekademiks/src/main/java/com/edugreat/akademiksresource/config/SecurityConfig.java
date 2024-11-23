@@ -30,7 +30,7 @@ import lombok.AllArgsConstructor;
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**", "/notice/**",
-			"/learning/**" };
+			"/learning/**","/chats/**" };
 
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;

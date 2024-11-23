@@ -39,6 +39,8 @@ public class AuthenticateController {
 	@JsonView(UserView.SigninView.class)
 	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
 			@RequestParam String role) {
+		
+		
 
 		return ResponseEntity.ok(appInterface.signIn(request, role));
 	}

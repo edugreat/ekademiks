@@ -32,8 +32,9 @@ public class Notification {
 	// property that gives access to the information we are notifying about
 	// For instance, in the context of test upload, this metadata holds the id to
 	// the particular test being
-	// uploaded.Hence it is the access to retrieve that particular.
-	@Column(name = " metadata", nullable = false, unique = true)
+	// uploaded.Hence it is the access to retrieve that particular test that was uploaded.
+    // if notification is about a request to join a group chat, metadata would represent an ID of the user requesting to join the group chat
+	@Column(name = " metadata", nullable = false)
 	private Integer metadata;
 
 	// When notification was created

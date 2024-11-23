@@ -2,22 +2,26 @@ package com.edugreat.akademiksresource.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import com.edugreat.akademiksresource.controller.NotificationManagementController;
+import com.edugreat.akademiksresource.contract.NotificationInterface;
 import com.edugreat.akademiksresource.dao.AssessmentNotificationDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.NotificationRequestDTO;
+import com.edugreat.akademiksresource.events.NewAssessmentEvent;
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 import com.edugreat.akademiksresource.model.Student;
 
 import jakarta.transaction.Transactional;
 
 @Service
-public class NotificationService {
+public class NotificationService implements NotificationInterface {
 
 	@Autowired
 	private AssessmentNotificationDao assessmentNotificationDao;
@@ -25,8 +29,9 @@ public class NotificationService {
 	@Autowired
 	private StudentDao studentDao;
 
+	
 	@Autowired
-	private NotificationManagementController notificationManager;
+	private ApplicationEventPublisher assessmentEventPublisher;
 
 	@Transactional
 	public void postAssessmentNotification(NotificationRequestDTO dto) {
@@ -76,7 +81,15 @@ public class NotificationService {
 
 //			Send instant notification to all logged in students
 
-			students.forEach(student -> notificationManager.sendNotification(currentNotification, student.getId()));
+			students.forEach(student -> {
+				
+				Map<Integer, AssessmentUploadNotification> notification = new HashMap<>();
+				
+				notification.put(student.getId(), currentNotification);
+				
+//				this code publishes an event to listener which extract the notification and emits them to online students
+				assessmentEventPublisher.publishEvent(new NewAssessmentEvent(this, notification));
+			});
 
 		} else {
 
@@ -114,7 +127,14 @@ public class NotificationService {
 			AssessmentUploadNotification currentNotification = assessmentNotificationDao.findByCreatedAt(createdAt);
 //			Instantly notify the intended students who are currently logged in
 			targetedStudents
-					.forEach(student -> notificationManager.sendNotification(currentNotification, student.getId()));
+					.forEach(student -> {
+						
+						Map<Integer, AssessmentUploadNotification> notification = new HashMap<>();
+						
+						notification.put(student.getId(), currentNotification);
+						
+						assessmentEventPublisher.publishEvent(new NewAssessmentEvent(this, notification));
+					});
 
 		}
 

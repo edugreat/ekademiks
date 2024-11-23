@@ -1,26 +1,35 @@
 
 package com.edugreat.akademiksresource.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import com.edugreat.akademiksresource.chat.model.GroupMember;
+import com.edugreat.akademiksresource.enums.Roles;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-import com.edugreat.akademiksresource.enums.Roles;
 
 @Entity
 @Table
@@ -34,6 +43,11 @@ public class Student extends AppUser {
 
 	@ElementCollection(fetch = FetchType.EAGER)
 	private Set<UserRoles> roles = new HashSet<>();
+	
+//	keeps a collection of the groups the student has requested to join which are yet to get approved
+	@JsonIgnore
+	@ElementCollection(fetch = FetchType.EAGER)
+	private Set<Integer> pendingGroupChatRequests = new HashSet<>();
 
 	public Student() {
 		super();
@@ -54,9 +68,42 @@ public class Student extends AppUser {
 	private Set<StudentTest> studentTests = new HashSet<>();
 
 	//	A set of assessmentUploadNotifications a student receives
+	@JsonIgnore
 	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE })
-	@JoinTable(name = "student_notifications", joinColumns = @JoinColumn(name = "student_id"), inverseJoinColumns = @JoinColumn(name = "notification_id"))
+	@JoinTable(name = "student_notifications", joinColumns = @JoinColumn(name = "student_id"),  inverseJoinColumns = @JoinColumn(name = "notification_id"))
 	private Set<AssessmentUploadNotification> assessmentNotifications = new HashSet<>();
+	
+	@JsonIgnore
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE})
+	@JoinTable(name = "miscellaneous_notice", joinColumns = @JoinColumn(name = "_student_id"), inverseJoinColumns= @JoinColumn(name = "_notice_id"))
+	private Set<MiscellaneousNotifications> miscellaneousNotices = new HashSet<>();
+	
+	
+	public Set<MiscellaneousNotifications> getMiscellaneousNotices() {
+		return miscellaneousNotices;
+	}
+
+	public void setMiscellaneousNotices(Set<MiscellaneousNotifications> miscellaneousNotices) {
+		this.miscellaneousNotices = miscellaneousNotices;
+	}
+
+	@OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
+	private List<GroupMember> groupMembers = new ArrayList<>();
+	
+//	a collection representing the details about unread chat messages, where key is the group id and value is the number of unread messages
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable
+	@MapKeyColumn(name = "group_id")
+	@Column(name = "unreadChats", nullable = true)
+	@JsonIgnore
+	private SortedMap<Integer, Integer> unreadChats = new TreeMap<>();
+	
+     	               
+	
+	public SortedMap<Integer, Integer> getUnreadChats() {
+		return unreadChats;
+	}
 
 	// convenience method
 	public void addStudentTest(StudentTest studentTest) {
@@ -64,21 +111,7 @@ public class Student extends AppUser {
 		if (studentTest != null) {
 			this.studentTests.add(studentTest);
 		}
-
 	}
-	//	
-	////	Removes the association that exists between student and assessment notification.
-	////	This is important for the process of account deletion
-	//	public void removeAssessmentNotifications(List<AssessmentUploadNotification> assessmentNotifications) {
-	//		
-	//		getAssessmentNotifications().removeAll(assessmentNotifications);
-	//		
-	//		
-	//		
-	//		
-	//		
-	//
-	//	}
 
 	public Set<AssessmentUploadNotification> getAssessmentNotifications() {
 		return assessmentNotifications;
@@ -92,7 +125,21 @@ public class Student extends AppUser {
 			assessmentNotifications.add(notication);
 		}
 	}
+	
+	public void addMiscellaneousNotices(MiscellaneousNotifications notices) {
+		
+		if(! this.miscellaneousNotices.contains(notices)) {
+			
+			this.miscellaneousNotices.add(notices);
+		}
+	}
 
+
+	public Set<Integer> getPendingGroupChatRequests() {
+		return pendingGroupChatRequests;
+	}
+	
+	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 
@@ -126,11 +173,43 @@ public class Student extends AppUser {
 
 		getRoles().remove(role);
 	}
-	//	
-	////	breaks the relationship between student and student_test table
-	//	public void removeStudentTestsRecords(List<StudentTest> studentTests) {
-	//		
-	//		getStudentTests().removeAll(studentTests);
-	//	}
+
+	public List<GroupMember> getGroupMembers(){
+		
+		return this.groupMembers;
+	}
+	
+//	adds to the collection of unread chats, new chats.
+	public void addUnreadChat(Map<Integer, Integer> unreadChat) {
+		
+		
+		unreadChat.forEach((groupId, _unreadChats) -> {
+			
+//			if the user already has some unread chats for the given group id, simply increase the number of unread chats
+			if(unreadChats.containsKey(groupId)) {
+				
+//				
+				unreadChats.put(groupId, unreadChats.get(groupId) + _unreadChats);
+				
+			}else {
+//				add a new key-value record of unread chats to the user's unreadChats collection if they do not have previous unread chats records for the given group chat
+				
+				unreadChats.put(groupId, _unreadChats);
+			}
+		}) ;
+	}
+	
+//	add the group chat id to the collection of group chat ids the student has requested to join, but have yet to be approved
+	public void addToPendingGroupChatRequests(Integer groupChatId) {
+		
+		if(! pendingGroupChatRequests.contains(groupChatId)) {
+			
+			pendingGroupChatRequests.add(groupChatId);
+		}
+		
+		
+		
+	}
+
 
 }

@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 import jakarta.persistence.EntityManager;
@@ -35,5 +36,15 @@ public class AkademicConfig implements RepositoryRestConfigurer {
 		config.exposeIdsFor(classes);
 
 	}
+
+    @Bean
+    RestTemplate restTemplate() {
+		
+		return new RestTemplate();
+		
+		
+	}
+	
+
 
 }
