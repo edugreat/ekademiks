@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.edugreat.akademiksresource.model.Student;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -42,7 +43,7 @@ public class GroupMember {
 	@Column(name = "roles")
 	private Set<String> roles = new HashSet<>();
 	
-	@ManyToOne
+	@ManyToOne()
 	@JoinColumn(name = "group_id", nullable = false)
 	private GroupChat groupChat;
 	

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +18,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -48,6 +52,10 @@ public class ChatController {
 	
 	// List of connected clients awaiting notifications
 		private Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
+		
+		private final ExecutorService nonBlockingService = Executors.newCachedThreadPool();
+		
+		
 		
 		@Autowired
 		private ChatDao chatDao;
@@ -86,11 +94,10 @@ public class ChatController {
 		
 	}
 	
-	@GetMapping("/unread")
-	public ResponseEntity<Object> unreadChats(@RequestParam Integer studentId) {
+	@GetMapping("/group_info")
+	public ResponseEntity<Object> groupInfo(@RequestParam Integer studentId) {
 		
-		System.out.println("unread called");
-		
+	
 		
 		
 		try {
@@ -108,7 +115,7 @@ public class ChatController {
 	@GetMapping("/inGroup")
 	public ResponseEntity<Object> isGroupMember(@RequestParam ("id")String studentId) {
 		
-		System.out.println("in group called");	
+		
 		try {
 			return new ResponseEntity<Object>(chatInterface.isGroupMember(Integer.parseInt(studentId)), HttpStatus.OK);
 		} catch (Exception e) {
@@ -120,15 +127,16 @@ public class ChatController {
 	
 	
 	@PostMapping("/new_chat")
-	public ResponseEntity<Object> postChat(@RequestBody @Valid ChatDTO dto) {
-		
-		
+	public  ResponseEntity<Object> postChat(@RequestBody @Valid ChatDTO dto) {
+		  
 	
+		
 		try {
 			chatInterface.sendChat(dto, emitters);
 			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 		
+			System.out.println("could not send due to: "+e);
 			return new ResponseEntity<Object>(e, HttpStatus.BAD_REQUEST);
 		}
 		
@@ -143,6 +151,8 @@ public class ChatController {
 		try {
 			return new ResponseEntity<>(chatInterface.allGroupChats(), HttpStatus.OK);
 		} catch (Exception e) {
+			
+			System.out.println(e);
 			
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
@@ -163,34 +173,21 @@ public class ChatController {
 	// send previous chat messages to group members each time they enter the chat
 	// forum
 	@GetMapping("/messages")
-	public SseEmitter broadcastChatMessages(@RequestParam("group") String groupId,
+	public synchronized SseEmitter broadcastChatMessages(@RequestParam("group") String groupId,
 			@RequestParam("student") String studentId) {
 		
+		final Integer receipientId = Integer.parseInt(studentId);
+		final Integer _groupId = Integer.parseInt(groupId);
 
-		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		SseEmitter emitter = establishConnection(receipientId);
+		
+		// begin to emit previous chat messages
+		emitChats(_groupId, receipientId, emitter);
+		
+		streamChatNotifications(receipientId);
 
-		// ensure the user is authenticated
-		if (authentication != null) {
-
-			final Integer receipientId = Integer.parseInt(studentId);
-			final Integer _groupId = Integer.parseInt(groupId);
-
-			SseEmitter emitter = establishConnection(receipientId);
-			
-
-			
-
-			// begin to emit previous chat messages
-			emitChats(_groupId, receipientId, emitter);
-			
-			streamJoinRequestNotifications(receipientId);
-
-			return emitter;
-
-		}
-
-		return null;
-
+		return emitter;
+		
 	}
 
 //	end point for sending request to join group chat
@@ -245,7 +242,7 @@ public class ChatController {
 	}
 	
 	
-//	return all the groupChat the user has impending join requests
+//	return all the groupChat the user has pending join requests
 	@GetMapping("/pending")
 	public ResponseEntity<Object> getPendingJoinRequests(@RequestParam String studentId) {
 		
@@ -265,6 +262,96 @@ public class ChatController {
 	}
 	
 	
+	@PatchMapping("/editGroup")
+	public ResponseEntity<Object> editGroupName(@RequestBody Map<Integer, Integer> data, @RequestParam("_new") String currentGroupName){
+		
+		
+		try {
+			final boolean renamed = chatInterface.editGroupName(data, currentGroupName);
+			
+			if(renamed) new ResponseEntity<>(HttpStatus.OK);
+		} catch (Exception e) {
+			System.out.println(e);
+			
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<>(null);
+		
+	}
+	
+	@DeleteMapping("/deleteGroup")
+	public ResponseEntity<Object> deleteGroupChat(@RequestBody Map<Integer, Integer> data){
+		
+		
+		try {
+			final boolean deleted = chatInterface.deleteGroupChat(data);
+			
+			if(deleted) {
+				
+				return new ResponseEntity<>(HttpStatus.OK);
+			}
+		} catch (Exception e) {
+			
+            System.out.println(e);
+			
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<>(null);
+		
+	}
+	
+	@DeleteMapping("/exit")
+	public ResponseEntity<Object> leaveGroup(@RequestBody Map<Integer, Integer> map){
+		
+		
+		try {
+			chatInterface.leaveGroup(map);
+		} catch (Exception e) {
+			System.out.println(e);
+			
+			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
+	
+	@GetMapping("/grp_joined_at")
+	public ResponseEntity<Object> groupAndJoinedAt( @RequestParam("id") Integer studentId){
+		
+		try {
+			return new ResponseEntity<Object>(chatInterface.groupAndJoinedAt(studentId), HttpStatus.OK);
+		} catch (Exception e) {
+			
+			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+		}
+		
+		
+	}
+	
+	@PostMapping("/recent/post")
+	public ResponseEntity<Object> anyPostsSinceJoined(@RequestBody Map<Integer, Integer> map){
+		
+		if(! map.isEmpty()) {
+			
+			try {
+				return new ResponseEntity<Object>(chatInterface.hadPreviousPosts(map), HttpStatus.OK);
+			} catch (Exception e) {
+				
+				System.out.println(e);
+				
+				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+		}
+		
+		return null;
+	}
+	
 	private void emitChats(Integer groupId, Integer receipientId, SseEmitter emitter) {
 		
 //		get the date the user joined the group chat, so as to not allow them view chats histories prior to when they joined
@@ -276,11 +363,22 @@ public class ChatController {
 		if (chats != null && chats.size() > 0) {
 			List<ChatDTO> dtos = chats.stream().map(this::mapToChatDTO).collect(Collectors.toList());
 			dtos.forEach(dto -> {
+
+				Set<Integer> currentlyOnline = emitters.keySet();
 				
-//				get the number of members who are currently online
-				final int onlineMembers = emitters.size();
+				int onlineGroupMembers = 0;
 				
-				dto.setOnlineMembers(onlineMembers);
+				for(int id:currentlyOnline) {
+					
+					if(groupMembersDao.isGroupMember(groupId, id))
+						onlineGroupMembers++;
+				}
+				
+				
+				
+				
+				
+				dto.setOnlineMembers(onlineGroupMembers);
 				try {
 					emitter.send(SseEmitter.event().data(dto).name("chats"));
 				} catch (IOException e) {
@@ -295,16 +393,11 @@ public class ChatController {
 
 	
 //	check if the group admin has some unattended requests to join the group chat
-	private void streamJoinRequestNotifications(Integer loggedInStudentId) {
-		
-		
-
-			
+	private void streamChatNotifications(Integer loggedInStudentId) {
 			
 //			fetch miscellaneous notification for the logged in student for notification whose type is either 'join request' or 'new member'
          Set<MiscellaneousNotifications> joinRequests = studentDao.findById(loggedInStudentId).get()
-        		                                        .getMiscellaneousNotices().stream().filter(n -> n.getType().equals("join type") || n.getType().equals("new member")).collect(Collectors.toSet());  
-       
+        		                                        .getMiscellaneousNotices().stream().filter(n -> n.getType().equals("join group") || n.getType().equals("new member")).collect(Collectors.toSet());  
          
         for(MiscellaneousNotifications  requestNotification: joinRequests) {
         
@@ -357,34 +450,34 @@ public class ChatController {
 		
 		
 	}
-	// send new chat messages in real-time to group members each time members of the
-	// group post new chats
-	public void sendInstantChatMessage(ChatDTO newChat, Integer receipientId) {
-
-		// checks if the student is still available to receive the chat message
-		SseEmitter emitter = emitters.get(receipientId);
-		
-//		reconnect if connection was lost
-		if(emitter == null) emitter = establishConnection(receipientId);
-
-//		get the number of group members currently online
-		newChat.setOnlineMembers(emitters.size());
-		
-			emitInstantChat(newChat, receipientId, emitter);
-		
-
-	}
-
-	private void emitInstantChat(ChatDTO newChat, Integer receipientId, SseEmitter emitter) {
-		try {
-
-			emitter.send(SseEmitter.event().data(newChat).name("chats"));
-		} catch (IOException e) {
-			emitters.remove(receipientId);
-
-		}
-
-	}
+//	// send new chat messages in real-time to group members each time members of the
+//	// group post new chats
+//	public void sendInstantChatMessage(ChatDTO newChat, Integer receipientId) {
+//
+//		// checks if the student is still available to receive the chat message
+//		SseEmitter emitter = emitters.get(receipientId);
+//		
+////		reconnect if connection was lost
+//		if(emitter == null) emitter = establishConnection(receipientId);
+//
+////		get the number of group members currently online
+//		newChat.setOnlineMembers(emitters.size());
+//		
+//			emitInstantChat(newChat, receipientId, emitter);
+//		
+//
+//	}
+//
+//	private void emitInstantChat(ChatDTO newChat, Integer receipientId, SseEmitter emitter) {
+//		try {
+//
+//			emitter.send(SseEmitter.event().data(newChat).name("chats"));
+//		} catch (IOException e) {
+//			emitters.remove(receipientId);
+//
+//		}
+//
+//	}
 
 	private ChatDTO mapToChatDTO(Chat chat) {
 
@@ -400,19 +493,19 @@ public class ChatController {
 	}
 
 	private SseEmitter establishConnection(Integer receipientId) {
-		
-		SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-		emitters.put(receipientId, emitter);
+		//2 seconds connection timeout
+		SseEmitter emitter = new SseEmitter(1000l * 2 * 60);
+		emitters.putIfAbsent(receipientId, emitter);
 		
 		
 		emitter.onTimeout(() -> {
-			
-			emitters.remove(receipientId);
+			System.out.println("timed out from chat");
+			emitter.complete();
 		});
 		
 		emitter.onCompletion(() -> {
-			
-			 emitters.remove(receipientId);
+			System.out.println("completed chat");
+			emitters.clear();
 		});;
 		
 		return emitter;

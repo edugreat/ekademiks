@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.chat.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.Data;
 
 @Data
@@ -19,14 +21,22 @@ public class MyGroupChatDTO{
 	
 //	the group description
 	private String groupDescription;
-	public MyGroupChatDTO(int unreadChats, Integer groupAdminId, String groupName, String groupIconUrl, String groupDescription) {
+	
+	private LocalDateTime createdAt;
+	
+//	shows if the group chat has had previous posts or not. This is used to control the display of spinner at the backend while waiting for network response.
+	private boolean hasPreviousPosts;
+	public MyGroupChatDTO(int unreadChats, Integer groupAdminId, String groupName, LocalDateTime createdAt, String groupIconUrl, String groupDescription, boolean posted) {
 		
 		
 		this.unreadChats = unreadChats;
 		this.groupAdminId = groupAdminId;
 		this.groupName = groupName;
+		this.createdAt = createdAt;
 		this.groupIconUrl = groupIconUrl;
 		this.groupDescription = groupDescription;
+		this.hasPreviousPosts = posted;
+		
 	}
 	
 }

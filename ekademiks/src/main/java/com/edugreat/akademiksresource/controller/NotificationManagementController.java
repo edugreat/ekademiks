@@ -1,6 +1,4 @@
 
-
-
 package com.edugreat.akademiksresource.controller;
 
 import java.io.IOException;
@@ -35,20 +33,21 @@ import jakarta.transaction.Transactional;
 @RestController
 public class NotificationManagementController {
 
-
 //	Inject the AssessmentUploadNotification repository
 	@Autowired
 	private AssessmentNotificationDao assessmentNotificationsDao;
 
 //	List of connected clients awaiting notifications
 	private Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
+	
+	
 
 	@Autowired
 	private StudentDao studentDao;
 
 //	Server notification endpoint
 	@GetMapping("/notice/notify_me")
-	public SseEmitter streamNotificaions(@RequestParam Integer studentId) throws IOException {
+	public  SseEmitter streamNotificaions(@RequestParam Integer studentId) throws IOException {
 
 		// Get the authentication object, just to ensure only authenticated students get
 		// the notifications
@@ -56,14 +55,16 @@ public class NotificationManagementController {
 
 //		AssessmentUploadNotification service is designed for authenticated users only
 		if (authentication != null) {
+			
+			
 
-//			Creates new emitter with a longer timeout(30 minutes) that emits to the students upon login
-			SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+//			
+			final SseEmitter emitter = establishConnection(studentId);
 
-			emitters.put(studentId, emitter);
+		
 
 //			Periodic heartbeats sent to  client to keep connection alive
-			//conectionHeartBeat(studentId, emitter);
+			// conectionHeartBeat(studentId, emitter);
 
 //			Send all unread assessment notifications to the student upon login
 			List<AssessmentUploadNotification> unreadAssessmentNotifications = assessmentNotificationsDao
@@ -76,6 +77,8 @@ public class NotificationManagementController {
 				try {
 					emitter.send(SseEmitter.event().data(theNotification).name("notifications"));
 				} catch (IOException e) {
+					
+					System.out.println("emitter error: "+e);
 					emitters.remove(studentId);
 				}
 			});
@@ -85,8 +88,9 @@ public class NotificationManagementController {
 			removeAllReadNotifications(notifications);
 
 //			Once events is completed or is timed out, remove the emitter
+			emitter.onTimeout(() -> emitter.complete());
 			emitter.onCompletion(() -> emitters.remove(studentId));
-			emitter.onTimeout(() -> emitters.remove(studentId));
+			
 
 //			Returns the emitter to the client just to establish open communication channel
 			return emitter;
@@ -94,6 +98,30 @@ public class NotificationManagementController {
 
 		return null;
 
+	}
+	
+	private SseEmitter establishConnection(Integer studentId) {
+		
+		//Creates new emitter with a longer timeout (1 minutes)
+		
+		final SseEmitter emitter = new SseEmitter(1000L * 1 * 60);
+		
+		emitters.putIfAbsent(studentId, emitter);
+
+		emitter.onTimeout(() -> {
+			System.out.println("timed out from notification");
+			emitter.complete();
+		});
+		
+		emitter.onCompletion(() -> {
+			System.out.println("completed from notification");
+			 emitters.clear();
+		});;
+		
+		
+		return emitter;
+		
+		
 	}
 
 //	endpoint that removes notifications for the given student once they've read them
@@ -144,20 +172,19 @@ public class NotificationManagementController {
 		}
 
 	}
-	
+
 //	declare an event listener that listens for new assessment uploads to notify students who are currently online
 	@EventListener
-	public void handleNewAssessmentUploadEvent(NewAssessmentEvent event) {
-		
+	public synchronized void handleNewAssessmentUploadEvent(NewAssessmentEvent event) {
+
 		Map<Integer, AssessmentUploadNotification> data = event.getData();
-		
+
 //		calls the private method that sends notifications to the students online
 		data.forEach((studentId, notification) -> {
-			
+
 			sendNotification(notification, studentId);
 		});
-		
-		
+
 	}
 
 //	Removes all read notifications

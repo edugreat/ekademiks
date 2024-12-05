@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.chat._interface;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,4 +51,24 @@ public interface ChatInterface {
   
 //  declines the student's request to join the group chat
   void declineJoinRequest(Integer groupId, Integer studentId, Integer notificationId);
+
+
+//  provides functionality for editing group chat's name. The key of data map is the student's ID(who wants to rename group chat name, and should be the group admin).
+//  The value of the data map is the group chat ID 
+boolean editGroupName(Map<Integer, Integer> data, String currentGroupName);
+
+// the key data map is the ID of the student who wants to delete the group chat. It is used to verify that it's actually being deleted by
+// the group admin
+boolean deleteGroupChat(Map<Integer, Integer> data);
+
+//  provides functionality that allows a group member to exit or leave the group. The map's key is the group ID while the value is the ID of the member intending to leave
+void leaveGroup(Map<Integer, Integer> map);
+
+
+// provides functionality to retrieve all group IDs and the joined date for the student referenced by studentId
+
+ Map<Integer, LocalDateTime> groupAndJoinedAt(Integer studentId);
+ 
+// provides functionality that checks if the currently logged in user has received chat messages from the given group chat (map's value).
+ boolean hadPreviousPosts(Map<Integer, Integer> map);
 }

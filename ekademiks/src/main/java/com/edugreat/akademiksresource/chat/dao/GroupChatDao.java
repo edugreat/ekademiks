@@ -12,12 +12,9 @@ import com.edugreat.akademiksresource.chat.projection.GroupChatInfo;
 @RestResource(exported = false)
 public interface GroupChatDao extends JpaRepository<GroupChat, Integer> {
 
-	@Query("SELECT g FROM GroupChat g")
+	@Query("SELECT gc FROM GroupChat gc JOIN gc.groupMembers gm WHERE gm.member.id =:studentId")
 	List<GroupChatInfo> getGroupInfo(Integer studentId);
-	
-//	get the admin ID for the group chat referenced by the groupChatId
-	@Query("SELECT g.groupAdminId FROM GroupChat g WHERE g.id =:groupChatId")
-	Integer findAdminId(Integer groupChatId);
+
 
 	@Query("SELECT g.groupAdminId FROM GroupChat g WHERE g.id =:groupId")
 	Integer getAdminId(Integer groupId);

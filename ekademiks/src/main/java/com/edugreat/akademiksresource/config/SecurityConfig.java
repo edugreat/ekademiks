@@ -30,7 +30,7 @@ import lombok.AllArgsConstructor;
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**", "/notice/**",
-			"/learning/**","/chats/**" };
+			"/learning/**","/chats/messages" };
 
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
@@ -54,7 +54,7 @@ public class SecurityConfig {
 			configuration.setExposedHeaders(List.of(EXPOSED_HEADERS));
 			return configuration;
 		})).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_API)
-				.permitAll().requestMatchers("/admins/**").hasAnyAuthority("Admin")
+				.permitAll().requestMatchers("/admins/**").hasAnyAuthority("Admin").requestMatchers("/chats/**").hasAnyAuthority("Student")
 
 		)
 

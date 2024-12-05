@@ -129,6 +129,8 @@ public class AppAuthService implements AppAuthInterface {
 				Admins admin = optionalAdmin.get();
 				var accessToken = jwtUtil.generateToken(admin);
 				var refreshToken = jwtUtil.createRefreshToken(admin);
+				
+				
 				var dto = mapper.map(admin, AdminsDTO.class);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
@@ -151,8 +153,11 @@ public class AppAuthService implements AppAuthInterface {
 				}
 //				proceed from here since account is enabled
 				var accessToken = jwtUtil.generateToken(student);
+				
+				var refreshToken = jwtUtil.createRefreshToken(student);
 				var dto = mapper.map(student, StudentDTO.class);
 				dto.setAccessToken(accessToken);
+				dto.setRefreshToken(refreshToken);
 				return (T) dto;
 			}
 

@@ -33,13 +33,17 @@ public class GroupChatDTO {
 			@NotNull(message = "No group description") @NotEmpty(message = "No group description") String description,
 			@NotNull(message = "No group icon url") @NotEmpty(message = "No group icon url") String groupIconUrl,
 			@NotEmpty(message = "No group name found") String groupName,
-			@Min(value = 0, message = "invalid admin id") Integer groupAdmin) {
+			@Min(value = 0, message = "invalid admin id") Integer groupAdmin,
+			Integer id,
+			LocalDateTime createdAt) {
 		
 		
 		this.description = description;
 		this.groupIconUrl = groupIconUrl;
 		this.groupName = groupName;
 		this.groupAdminId = groupAdmin;
+		this.id = id;
+		this.createdAt = createdAt;
 	}
 	
 	
