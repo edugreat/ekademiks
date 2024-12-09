@@ -3,7 +3,6 @@
  */
 package com.edugreat.akademiksresource.chat.service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.dao.ChatDao;
@@ -96,123 +94,76 @@ public class ChatService implements ChatInterface {
 		// Fetch group names and icons for the student
 		List<GroupChatInfo> groupChatInfos = groupChatDao.getGroupInfo(studentId);
 
-	
-		
 		// Fetch unread chats for the student
 		SortedMap<Integer, Integer> unreadChats = studentDao.unreadChats(studentId);
-		
-		
-		
-		
-		
+
 		// Check if unreadMessages is null or empty
 		if (unreadChats == null || unreadChats.isEmpty()) {
-			
+
 			// There are no unread chats; populate unreadChatsDTO with zero unread chats for
 			// each group
 			for (GroupChatInfo group : groupChatInfos) {
-				
-				
-				myGroupChatDTO.put(group.getId(), new MyGroupChatDTO(0, group.getGroupAdminId(), group.getGroupName(), group.getCreatedAt(),
-						group.getGroupIconUrl(), group.getDescription(), chatDao.hasPreviousPosts(group.getId())));
-				
-				
-				
-				
-				
+
+				myGroupChatDTO.put(group.getId(),
+						new MyGroupChatDTO(0, group.getGroupAdminId(), group.getGroupName(), group.getCreatedAt(),
+								group.getGroupIconUrl(), group.getDescription(),
+								chatDao.hasPreviousPosts(group.getId())));
+
 			}
 		} else {
-			
-			
+
 			// Handle the case where unreadChats is not null and has entries
 			for (GroupChatInfo group : groupChatInfos) {
-				
-				
+
 				// get the number of unread chats
 				Integer unreadCount = unreadChats.get(group.getId());
 				myGroupChatDTO.put(group.getId(),
 						new MyGroupChatDTO(unreadCount != null ? unreadCount : 0, group.getGroupAdminId(),
-								group.getGroupName(),group.getCreatedAt(), group.getGroupIconUrl(), group.getDescription(), chatDao.hasPreviousPosts(group.getId())));
+								group.getGroupName(), group.getCreatedAt(), group.getGroupIconUrl(),
+								group.getDescription(), chatDao.hasPreviousPosts(group.getId())));
 			}
-			
-			
+
 		}
-		
-		
+
 		return myGroupChatDTO;
 	}
 
 	@Override
 	public boolean isGroupMember(Integer studentId) {
 
-				
 		return groupMembersDao.isGroupMember(studentId);
 	}
 
 	@Override
 	@Transactional
-	public void sendChat(ChatDTO dto, Map<Integer, SseEmitter> emitters) {
+	public ChatDTO instantChat(ChatDTO dto) {
 
 		// confirm the user is authenticated
 		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-		if (authentication != null) {
+		// confirm that the group chat for which the chat is intended actually exists
+		if (authentication != null && groupChatDao.findById(dto.getGroupId()).isPresent()) {
 
-			// confirm that the group chat for which the chat is intended actually exists
-			if (groupChatDao.findById(dto.getGroupId()).isPresent()) {
+			// get the group for which the chat is intended
+			GroupChat groupChat = groupChatDao.findById(dto.getGroupId()).get();
 
-				// get the group for which the chat is intended
-				GroupChat groupChat = groupChatDao.findById(dto.getGroupId()).get();
+			// map to Chat object
+			Chat currentChat = mapToChat(dto);
 
-				// map to Chat object
-				Chat currentChat = mapToChat(dto);
+			// associate group chat to chat for bidirectional relationship
+			groupChat.AddMessage(currentChat);
 
-				// associate group chat to chat for bidirectional relationship
-				groupChat.AddMessage(currentChat);
+			// persist the chat to the database and return it
+			Chat currentlySavedChat = chatDao.save(currentChat);
 
-				// persist the chat to the database and return it
-				Chat currentlySavedChat = chatDao.save(currentChat);
+			// map the currently saved chat object to chat dto
+			ChatDTO chatDTO = mapToChatDTO(currentlySavedChat);
+			chatDTO.setSenderName(currentChat.getSender().getFirstName());
 
-				// map the currently saved chat object to chat dto
-				ChatDTO chatDTO = mapToChatDTO(currentlySavedChat);
-				chatDTO.setSenderName(currentChat.getSender().getFirstName());
-
-				// get the number of members who are currently online
-				chatDTO.setOnlineMembers(emitters.size());
-
-				// get all the group member's id so they can receive new chat update
-				List<Integer> groupMemberId = groupMembersDao.getMemberIds(chatDTO.getGroupId());
-
-				groupMemberId.forEach(memberId -> {
-
-					// send to members who are currently online.
-					// online members have their notification emitter saved in the emitters map
-					final SseEmitter chatEmitter = emitters.get(memberId);
-
-					if (chatEmitter != null) {
-
-						try {
-							chatEmitter.send(SseEmitter.event().data(chatDTO).name("chats"));
-						} catch (IOException e) {
-							
-							System.out.println("error sending message: "+chatDTO);
-							emitters.remove(memberId);
-							
-							try {
-								chatEmitter.complete();
-							} catch (Exception e2) {
-								System.out.println("error completing emitter: "+e2.getMessage());
-							}
-							e.printStackTrace();
-						}
-
-					}
-				});
-
-			}
-
+			return chatDTO;
 		}
 
+		return null;
 	}
 
 	private Chat mapToChat(ChatDTO chatDTO) {
@@ -234,6 +185,19 @@ public class ChatService implements ChatInterface {
 		return dto;
 	}
 
+	private ChatDTO _mapToChatDTO(Chat chat) {
+
+		Student sender = chat.getSender();
+
+		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
+				chat.getContent(), chat.getSentAt());
+
+		
+		dto.setSenderName(sender.getFirstName());
+
+		return dto;
+	}
+	
 	@Override
 	public Map<Integer, GroupChatDTO> allGroupChats() {
 
@@ -268,13 +232,14 @@ public class ChatService implements ChatInterface {
 
 	@Override
 	@Transactional
-	public void newGroupChatJoinRequest(GroupJoinRequest request, SseEmitter notificationEmitter) {
+	public MiscellaneousNotifications newGroupChatJoinRequest(GroupJoinRequest request) {
 
 		// check if the group the user wants to join actually exists.
 		final boolean exists = groupChatDao.existsById(request.getGroupId());
-		
-        // ensure the user requesting to join the group chat actually exists
-		Student requester = studentDao.findById(request.getRequesterId()).orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+
+		// ensure the user requesting to join the group chat actually exists
+		Student requester = studentDao.findById(request.getRequesterId())
+				.orElseThrow(() -> new IllegalArgumentException("User does not exist"));
 
 		if (exists) {
 
@@ -282,7 +247,7 @@ public class ChatService implements ChatInterface {
 			final StringBuilder notificationMsg = new StringBuilder();
 			notificationMsg.append("Request to join ").append(groupToJoin).append(" group");
 
-			MiscellaneousNotifications joinRequestNotice = new MiscellaneousNotifications("join group",
+			MiscellaneousNotifications joinRequestNotification = new MiscellaneousNotifications("join group",
 					request.getRequesterId(), notificationMsg.toString());
 
 			// fetch the admin of the group
@@ -290,39 +255,30 @@ public class ChatService implements ChatInterface {
 					.orElseThrow(() -> new IllegalArgumentException("Something went wrong!"));
 
 			// save the notification
-			joinRequestNotice = miscellaneousNoticeDao.save(joinRequestNotice);
+			joinRequestNotification = miscellaneousNoticeDao.save(joinRequestNotification);
+			
+//			set the group chat this request notification targets at
+			joinRequestNotification.setTargetGroup(request.getGroupId());
 
 			// add new notification for the student(group admin)
-			groupAdmin.addMiscellaneousNotices(joinRequestNotice);
+			groupAdmin.addMiscellaneousNotices(joinRequestNotification);
 
 			studentDao.saveAndFlush(groupAdmin);
-			
+
 //			add a pending request to the student to indicate the have pending request to join a group chat
 			requester.getPendingGroupChatRequests().add(request.getGroupId());
-			
+
 			studentDao.saveAndFlush(requester);
 
-			// send instant join request notification to the group admin if they're online
-			if (notificationEmitter != null) {
-
-				// set the requester's name
-				joinRequestNotice.setNotifier(request.getRequester());
-
-				try {
-					notificationEmitter.send(SseEmitter.event().data(joinRequestNotice).name("chats"));
-				} catch (IOException e) {
-
-					e.printStackTrace();
-				}
-			}
-
+			return joinRequestNotification;
 		}
 
+		return null;
 	}
 
 	@Transactional
 	@Override
-	public void approveJoinRequest(Integer groupId, Integer requesterId,Integer requestId, Map<Integer, SseEmitter> emitters) {
+	public MiscellaneousNotifications approveJoinRequest(Integer groupId, Integer requesterId, Integer requestId) {
 
 		// check if the user is already a member of the group they want to join
 		final boolean isMember = groupMembersDao.isGroupMember(groupId, requesterId);
@@ -348,49 +304,38 @@ public class ChatService implements ChatInterface {
 					student.getFirstName() + " has joined the group");
 
 			// save the notification
-			final MiscellaneousNotifications _notification = miscellaneousNoticeDao.save(notification);
+			MiscellaneousNotifications _notification = miscellaneousNoticeDao.save(notification);
+
+//			 sets the group the notification targets at
+			_notification.setTargetGroup(groupId);
 
 			// remove this group id from the collection of group chats the user has
-			//pending join requests
+			// pending join requests
 			student.getPendingGroupChatRequests().remove(groupChat.getId());
 
-			
-			
 //			get the group's admin
-			Student groupAdmin = studentDao.findById(groupChat.getGroupAdminId()).orElseThrow(() -> new IllegalArgumentException("Admin's records not found"));
-			
+			Student groupAdmin = studentDao.findById(groupChat.getGroupAdminId())
+					.orElseThrow(() -> new IllegalArgumentException("Admin's records not found"));
+
 //			get the request information from the database
-			 MiscellaneousNotifications staleNotification = miscellaneousNoticeDao.findById(requestId).orElseThrow(() -> new IllegalArgumentException("error processing request"));
-			
+			MiscellaneousNotifications staleNotification = miscellaneousNoticeDao.findById(requestId)
+					.orElseThrow(() -> new IllegalArgumentException("error processing request"));
+
 //			 remove the request from the admin's collection of join group requests yet to attend to
-			 groupAdmin.getMiscellaneousNotices().remove(staleNotification);
-			 
-			 studentDao.saveAllAndFlush(List.of(groupAdmin, student));
-			 
-			// get all group members except the  currently added member
-			List<Student> members = groupMembersDao.findAll().stream().map(x -> x.getMember()).filter(m -> m.getId() != newlyAddedMember.getId())
-					.collect(Collectors.toList());
-			
-			// save notification to each of the group members 	
-			members.forEach(m -> {
+			groupAdmin.getMiscellaneousNotices().remove(staleNotification);
 
-				m.addMiscellaneousNotices(_notification);
-				studentDao.saveAndFlush(m);
+			studentDao.saveAllAndFlush(List.of(groupAdmin, student));
 
-				// notify members who are currently online about a new member that just joined the group chat
-				if (emitters.containsKey(m.getId())) {
+			// save notification to each of the group members except the newly added member
+			groupMembersDao.getMemberIds(groupId).stream().filter(id -> id != newlyAddedMember.getId()).forEach(id -> {
 
-					final SseEmitter notificationEmitter = emitters.get(m.getId());
-					try {
-						notificationEmitter.send(SseEmitter.event().data(_notification).name("chats"));
-					} catch (IOException e) {
-						emitters.remove(m.getId());
-					}
-				}
+				studentDao.findById(id).get().addMiscellaneousNotices(_notification);
 			});
 
+			return _notification;
 		}
 
+		return null;
 	}
 
 	@Override
@@ -404,26 +349,23 @@ public class ChatService implements ChatInterface {
 
 			List<MiscellaneousNotifications> staleNotifications = new ArrayList<>();
 
-			// get all the chat notifications for the student and extract into an array list,
-			//  the ones to delete.
+			// get all the chat notifications for the student and extract into an array
+			// list,
+			// the ones to delete.
 			student.getMiscellaneousNotices().forEach(n -> {
 
 				if (notificationIds.contains(n.getId())) {
-					
 
 					staleNotifications.add(n);
 				}
 			});
 
-		
 			if (!staleNotifications.isEmpty()) {
 
-			
 				// removes all stale notifications at once
 				student.getMiscellaneousNotices().removeAll(staleNotifications);
 
 				studentDao.saveAndFlush(student);
-
 
 			}
 		}
@@ -490,109 +432,166 @@ public class ChatService implements ChatInterface {
 	@Transactional
 	@Override
 	public boolean editGroupName(Map<Integer, Integer> data, String currentGroupName) {
-	
+
 		final Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
-		
+
 		final Integer groupId = data.get(studentId);
-		
+
 //		confirm the group chat actually exists
 		final boolean groupExists = groupChatDao.existsById(groupId);
-		
-		
+
 //		confirm the member trying to rename the group is the group admin
-		if(groupExists && groupChatDao.getAdminId(groupId) == studentId ) {
-			
+		if (groupExists && groupChatDao.getAdminId(groupId) == studentId) {
+
 //			get the group chat
-			GroupChat groupChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("could not rename group"));
-			
+			GroupChat groupChat = groupChatDao.findById(groupId)
+					.orElseThrow(() -> new IllegalArgumentException("could not rename group"));
+
 			groupChat.setGroupName(currentGroupName);
-			
+
 			groupChatDao.saveAndFlush(groupChat);
-			
+
 			return true;
-			
-			
-			
-			
+
 		}
-		
+
 		return false;
 	}
 
 	@Transactional
 	@Override
 	public boolean deleteGroupChat(Map<Integer, Integer> data) {
-		
-		System.out.println("data: "+data.toString());
-		
-		
-		Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
-		
-//		confirm group admin is the on trying to delete the group chat
-		if(studentId != null &&  studentId.equals(groupChatDao.getAdminId(data.get(studentId)))) {
-			
-			
-			
-			groupChatDao.deleteById(data.get(studentId));
-			
-		}else return false;
-		
 
-		
-		
-		
+		System.out.println("data: " + data.toString());
+
+		Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
+
+//		confirm group admin is the on trying to delete the group chat
+		if (studentId != null && studentId.equals(groupChatDao.getAdminId(data.get(studentId)))) {
+
+			groupChatDao.deleteById(data.get(studentId));
+
+		} else
+			return false;
+
 		return true;
 	}
 
 	@Transactional
 	@Override
 	public void leaveGroup(Map<Integer, Integer> map) {
-		
+
 		System.out.println("inside service");
-		
+
 		System.out.println(map.toString());
-		
+
 		Integer groupId = map.keySet().stream().collect(Collectors.toList()).get(0);
-		
+
 //		get the group chat from which they intend to leave
-		GroupChat groupChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Group chat could not be fetched"));
-		
+		GroupChat groupChat = groupChatDao.findById(groupId)
+				.orElseThrow(() -> new IllegalArgumentException("Group chat could not be fetched"));
+
 		Integer memberId = map.get(groupId);
-		
+
 //		get the group member object
 		final GroupMember groupMember = groupMembersDao.findByGroupChatAndMember(groupId, memberId);
-		
-		if(groupMember != null) {
-			
-			System.out.println("not null: "+groupMember.toString());
-			
+
+		if (groupMember != null) {
+
+			System.out.println("not null: " + groupMember.toString());
+
 //			disconnect the groupMember object from the group chat
 			groupChat.getGroupMembers().remove(groupMember);
-			
+
 //			delete the group member entity
 			groupMembersDao.delete(groupMember);
-		}else throw new IllegalArgumentException("could not process request");
-		
+		} else
+			throw new IllegalArgumentException("could not process request");
+
 	}
 
 	@Override
 	public Map<Integer, LocalDateTime> groupAndJoinedAt(Integer studentId) {
-		
-		
-		
+
 		return groupMembersDao.findGroupAndJoinedAt(studentId);
 	}
-	
-	
+
 	@Override
 	public boolean hadPreviousPosts(Map<Integer, Integer> map) {
-		
+
 		final Integer studentId = map.keySet().stream().collect(Collectors.toList()).get(0);
 //		get the time the user joined the group chat
 		final LocalDateTime joinedAt = groupMembersDao.findJoinedDate(studentId, map.get(studentId));
 
 		return groupMembersDao.anyPostsSinceJoined(studentId, map.get(studentId), joinedAt);
+
+	}
+
+	@Override
+	public List<ChatDTO> getPreviousChat(Integer studentId, Integer groupId) {
 		
+		
+//		get the date the user joined the group chat, so as to not allow them view chats histories prior to when they joined
+		LocalDateTime joinedAt = groupMembersDao.findJoinedDate(studentId, groupId);
+
+//		get chats histories from the time they joined the group chat
+		List<Chat> chats = chatDao.findByGroupIdOrderBySentAt(groupId).stream().filter(chat -> chat.getSentAt().isAfter(joinedAt) ).collect(Collectors.toList());
+
+		if(chats != null && chats.size() > 0) {
+			
+			List<ChatDTO> dtos = chats.stream().map(this::_mapToChatDTO).collect(Collectors.toList());
+			
+			dtos.forEach(dto -> dto.setChatReceipient(studentId));
+			
+			return dtos;
+		}
+		
+		return null;
+	}
+
+	@Override
+	public Set<MiscellaneousNotifications> streamChatNotifications(Integer studentId) {
+		
+//		fetch miscellaneous notification for the logged in student for notification whose type is either 'join request' or 'new member'
+	     Set<MiscellaneousNotifications> requestNotifications = studentDao.findById(studentId).get()
+	    		                                        .getMiscellaneousNotices().stream().filter(n -> n.getType().equals("join group") || n.getType().equals("new member")).collect(Collectors.toSet());  
+	     
+	     requestNotifications.stream().forEach(request -> {
+	    	 
+	    	 final String requester = studentDao.getFirstName(request.getMetadata());
+	    	 
+	    	 if(requester != null) {
+	    		 
+	    		 request.setNotifier(requester);
+	    		 request.setReceipientId(studentId);
+	    	 }
+	     });
+	     
+			
+//	    get all the miscellaneous notifications to check if any needs deletion from the database
+	    List<MiscellaneousNotifications> notifications = miscellaneousNoticeDao.findAll();
+	    
+	    List<Integer> staleNotificationsId = new ArrayList<>();
+	    
+	    notifications.forEach(n -> {
+	    	
+//	    	check if there are students yet to read this notification
+	    	int unreadCount = studentDao.getUnreadNotificationCount(n.getId());
+	    	
+	    	if(unreadCount == 0) {
+	    		
+	    		staleNotificationsId.add(n.getId());
+	    		
+	    	}
+	    });
+			
+//		delete all stale notifications
+	    if(! staleNotificationsId.isEmpty()) {
+	    	miscellaneousNoticeDao.deleteAllById(staleNotificationsId);
+	    }
+		
+	    
+		return requestNotifications;
 	}
 
 }

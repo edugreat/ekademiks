@@ -22,10 +22,12 @@ public class ChatDTO {
 	@Transient
 	private String senderName;
 	
+	@Transient Integer chatReceipient;
+	
 //	keeps tracks of those who are currently online when this chat instance was created.
 //	This is used to show and update the number of group members participating in the chat.
 	@Transient
-	private int onlineMembers;
+	private long onlineMembers;
 	
 	@NotNull(message = "chat message is missing")
 	@NotEmpty(message = "chat message is missing")

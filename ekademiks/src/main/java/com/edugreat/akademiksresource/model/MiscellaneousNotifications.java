@@ -17,6 +17,14 @@ public class MiscellaneousNotifications extends Notification {
      // notifier then represents the name of the student wanting to join the group chat which can be got from the 'metadata' property of this class.
 	@Transient
 	private String notifier;
+	
+//	computes the group the notification is targeted for
+	@Transient 
+	private Integer targetGroup;
+	
+//	indicate the target user for the notification
+	@Transient
+	private Integer receipientId;
 
 	
 	public MiscellaneousNotifications() {
@@ -42,6 +50,23 @@ public class MiscellaneousNotifications extends Notification {
 		this.notifier = notifier;
 	}
 
+	public Integer getTargetGroup() {
+		return targetGroup;
+	}
+
+	public void setTargetGroup(Integer forGroupId) {
+		this.targetGroup = forGroupId;
+	}
+
+	public Integer getReceipientId() {
+		return receipientId;
+	}
+
+	public void setReceipientId(Integer receipientId) {
+		this.receipientId = receipientId;
+	}
+
+	
 	
 	
 

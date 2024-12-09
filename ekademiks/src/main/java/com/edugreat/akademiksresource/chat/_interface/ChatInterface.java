@@ -6,12 +6,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.chat.dto.GroupChatDTO;
 import com.edugreat.akademiksresource.chat.dto.MyGroupChatDTO;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
+import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
 // interface that provides contract methods for the chat functionality
 public interface ChatInterface {
@@ -28,7 +27,7 @@ public interface ChatInterface {
 
   
 //  provides end point for creating and sending chat messages
-  void sendChat(ChatDTO chat, Map<Integer, SseEmitter> emitters);
+  ChatDTO instantChat(ChatDTO chat);
   
 //  provides functionality that returns all group chat that have been created in a map object whose key is the group id
   Map<Integer, GroupChatDTO> allGroupChats();
@@ -37,10 +36,10 @@ public interface ChatInterface {
   List<Integer> myGroupIds(Integer studentId);
   
 //  provides functionality for users to request to join an existing group chat.
-  void newGroupChatJoinRequest(GroupJoinRequest request, SseEmitter notificationEmitter );
+  MiscellaneousNotifications newGroupChatJoinRequest(GroupJoinRequest request);
   
 //  provides functionality for admin to approve request to join the group chat referenced by the groupId
-  void approveJoinRequest(Integer groupId, Integer requesterId,Integer requestId, Map< Integer, SseEmitter> emitters);
+  MiscellaneousNotifications approveJoinRequest(Integer groupId, Integer requesterId,Integer requestId);
 
   
 //  provides functionality to delete all chat notifications referenced by their IDs
@@ -71,4 +70,10 @@ void leaveGroup(Map<Integer, Integer> map);
  
 // provides functionality that checks if the currently logged in user has received chat messages from the given group chat (map's value).
  boolean hadPreviousPosts(Map<Integer, Integer> map);
+ 
+// gets the logged in student's previous chats
+  List<ChatDTO> getPreviousChat(Integer studentId, Integer groupId);
+ 
+ 
+ Set<MiscellaneousNotifications> streamChatNotifications(Integer studentId);
 }

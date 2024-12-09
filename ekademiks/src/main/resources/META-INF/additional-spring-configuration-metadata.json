@@ -1,5 +1,27 @@
-{"properties": [{
-  "name": "jwt.secret",
-  "type": "java.lang.String",
-  "description": "Secret key for signing jwt and decoding jwt token'"
-}]}
+{"properties": [
+  {
+    "name": "jwt.secret",
+    "type": "java.lang.String",
+    "description": "Secret key for signing jwt and decoding jwt token'"
+  },
+  {
+    "name": "chat.queue",
+    "type": "java.lang.String",
+    "description": "rabbitmq queue configuation for chat queueu"
+  },
+  {
+    "name": "notification.queue",
+    "type": "java.lang.String",
+    "description": "rabbitmq queue configuation for notification queueu"
+  },
+  {
+    "name": "rabbitmq.exchange.name",
+    "type": "java.lang.String",
+    "description": "configures rabbitmq exchange key"
+  },
+  {
+    "name": "routing.chat.key",
+    "type": "java.lang.String",
+    "description": "configures rabbitmq chat routing key"
+  }
+]}

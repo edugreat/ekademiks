@@ -50,6 +50,7 @@ public interface GroupMembersDao extends JpaRepository<GroupMember, Integer> {
 	@Query("SELECT gm FROM GroupMember gm WHERE gm.groupChat.id =:groupId AND gm.member.id =:memberId")
 	GroupMember findByGroupChatAndMember(Integer groupId, Integer memberId);
 
+
 //   fetches the group IDs the user belongs to and the date they joined the group
 	@Query("SELECT gm.groupChat.id, gm.joinedAt FROM GroupMember gm WHERE gm.member.id =:studentId")
 	List<Object[]> findGroupAndJoinedDate(Integer studentId);
