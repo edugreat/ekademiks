@@ -1,21 +1,19 @@
-package com.edugreat.akademiksresource.service;
+package com.edugreat.akademiksresource.notification.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.NotificationInterface;
 import com.edugreat.akademiksresource.dao.AssessmentNotificationDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.NotificationRequestDTO;
-import com.edugreat.akademiksresource.events.NewAssessmentEvent;
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
+import com.edugreat.akademiksresource.model.Notification;
 import com.edugreat.akademiksresource.model.Student;
 
 import jakarta.transaction.Transactional;
@@ -29,34 +27,30 @@ public class NotificationService implements NotificationInterface {
 	@Autowired
 	private StudentDao studentDao;
 
-	
-	@Autowired
-	private ApplicationEventPublisher assessmentEventPublisher;
-
 	@Transactional
-	public void postAssessmentNotification(NotificationRequestDTO dto) {
+	public AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto) {
 
 		AssessmentUploadNotification newNotification = mapToNotification(dto);
 
-//		check if notification has been associated with the metadata
+		// check if notification has been associated with the metadata
 		var tempNotification = assessmentNotificationDao.findByMetadata(dto.getMetadata());
 		if (tempNotification != null)
 			throw new IllegalArgumentException("Suspected duplicate notifications");
 
-//		Persist to the database;
+		// Persist to the database;
 		assessmentNotificationDao.save(newNotification);
 
-//		Get creation time for this notification
+		// Get creation time for this notification
 		final LocalDateTime createdAt = newNotification.getCreatedAt();
 
 		final List<String> audience = dto.getAudience();
 
-//		if audience is null, then the notification is targeted for all students
+		// if audience is null, then the notification is targeted for all students
 		if (audience == null || audience.size() == 0) {
 
-//			Associate each notification to each student in the database
+			// Associate each notification to each student in the database
 			List<Student> students = studentDao.findAll();
-//			Updating student's records using batch updates
+			// Updating student's records using batch updates
 
 			final int batchSize = 10;
 			final int capacity = students.size();
@@ -76,35 +70,25 @@ public class NotificationService implements NotificationInterface {
 				throw new IllegalArgumentException(e);
 			}
 
-//			Get the just added notification
+			// Get the just added notification
 			AssessmentUploadNotification currentNotification = assessmentNotificationDao.findByCreatedAt(createdAt);
 
-//			Send instant notification to all logged in students
-
-			students.forEach(student -> {
-				
-				Map<Integer, AssessmentUploadNotification> notification = new HashMap<>();
-				
-				notification.put(student.getId(), currentNotification);
-				
-//				this code publishes an event to listener which extract the notification and emits them to online students
-				assessmentEventPublisher.publishEvent(new NewAssessmentEvent(this, notification));
-			});
+			return currentNotification;
 
 		} else {
 
-//			get information about the student the notification is targeted at
+			// get information about the student the notification is targeted at
 			List<Integer> idList = new ArrayList<>();
 
 			audience.forEach(x -> idList.add(Integer.parseInt(x)));
 
-//			get the students for whom the notification is sent
+			// get the students for whom the notification is sent
 
 			List<Student> targetedStudents = studentDao.findAllById(idList);
 			final int total = targetedStudents.size();
 
 			int batchSize = 5;
-//			Add notification to each of the students in batches
+			// Add notification to each of the students in batches
 			for (int start = 0; start < total; start += batchSize) {
 
 				try {
@@ -113,7 +97,7 @@ public class NotificationService implements NotificationInterface {
 					var studentList = targetedStudents.subList(start, end);
 					studentList.forEach(student -> student.AddNotification(newNotification));
 
-//					Perform batch update
+					// Perform batch update
 					studentDao.saveAllAndFlush(studentList);
 
 				} catch (Exception e) {
@@ -123,19 +107,14 @@ public class NotificationService implements NotificationInterface {
 
 			}
 
-//			get the just added notification
+			// get the just added notification
 			AssessmentUploadNotification currentNotification = assessmentNotificationDao.findByCreatedAt(createdAt);
-//			Instantly notify the intended students who are currently logged in
-			targetedStudents
-					.forEach(student -> {
-						
-						Map<Integer, AssessmentUploadNotification> notification = new HashMap<>();
-						
-						notification.put(student.getId(), currentNotification);
-						
-						assessmentEventPublisher.publishEvent(new NewAssessmentEvent(this, notification));
-					});
 
+			// sets the audience the notification targets at
+			currentNotification.setReceipientIds(
+					targetedStudents.stream().map(student -> student.getId()).collect(Collectors.toList()));
+
+			return currentNotification;
 		}
 
 	}
@@ -143,6 +122,54 @@ public class NotificationService implements NotificationInterface {
 	private AssessmentUploadNotification mapToNotification(NotificationRequestDTO dto) {
 
 		return new AssessmentUploadNotification(dto.getType(), dto.getMetadata(), dto.getMessage());
+
+	}
+
+	@Override
+	public List<AssessmentUploadNotification> unreadNotificationsFor(Integer studentId) {
+
+		return assessmentNotificationDao.getUnreadNotificationsFor(studentId);
+	}
+
+	// delete all notifications that have been read by all
+	@Override
+	public void deleteReadNotifications() {
+
+		List<AssessmentUploadNotification> notifications = assessmentNotificationDao.findAll();
+
+		removeAllReadNotifications(notifications);
+
+	}
+
+	// Removes all read notifications
+	@Transactional
+	private <T extends Notification> void removeAllReadNotifications(List<T> notifications) {
+
+		// List of notifications that have been read by every student, they should be
+		// deleted from the database
+		List<AssessmentUploadNotification> staleNotifications = new ArrayList<>();
+
+		notifications.forEach(notification -> {
+
+			// get count of students yet to read the notification
+			int unreadStudentCount = studentDao.getUnreadNotificationCountForStudents(notification.getId());
+
+			// delete notification from the database if every student has read the
+			// notification
+			if (unreadStudentCount == 0) {
+
+				// mark for deletion
+				staleNotifications.add((AssessmentUploadNotification) notification);
+
+			}
+
+		});
+
+		if (staleNotifications.size() > 0) {
+
+			// delete all stale notifications
+			assessmentNotificationDao.deleteAll(staleNotifications);
+		}
 
 	}
 

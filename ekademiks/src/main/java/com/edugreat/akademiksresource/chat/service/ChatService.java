@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -159,6 +160,13 @@ public class ChatService implements ChatInterface {
 			// map the currently saved chat object to chat dto
 			ChatDTO chatDTO = mapToChatDTO(currentlySavedChat);
 			chatDTO.setSenderName(currentChat.getSender().getFirstName());
+			
+//			if this was a replied message, set the message that got the reply
+			if(dto.getRepliedToChat() != null) {
+				
+				chatDTO.setRepliedTo(currentlySavedChat.getRepliedTo());				
+				chatDTO.setRepliedToChat(dto.getRepliedToChat());
+			}
 
 			return chatDTO;
 		}
@@ -173,6 +181,11 @@ public class ChatService implements ChatInterface {
 		final Student sender = studentDao.findById(chatDTO.getSenderId()).get();
 
 		Chat chat = new Chat(groupChat, sender, chatDTO.getContent());
+		
+		if(chatDTO.getRepliedTo() != null) {
+			
+			chat.setRepliedTo(chatDTO.getRepliedTo());
+		}
 
 		return chat;
 	}
@@ -181,6 +194,8 @@ public class ChatService implements ChatInterface {
 
 		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
 				chat.getContent(), chat.getSentAt());
+		
+		
 
 		return dto;
 	}
@@ -194,6 +209,15 @@ public class ChatService implements ChatInterface {
 
 		
 		dto.setSenderName(sender.getFirstName());
+		
+		if(chat.getRepliedTo() != null) {
+			
+//			set the chat ID that got the reply
+			dto.setRepliedTo(chat.getRepliedTo());
+			
+//			set the chat that was replied to
+			dto.setRepliedToChat(chatDao.findById(chat.getRepliedTo()).get().getContent());
+		}
 
 		return dto;
 	}
@@ -462,7 +486,7 @@ public class ChatService implements ChatInterface {
 	@Override
 	public boolean deleteGroupChat(Map<Integer, Integer> data) {
 
-		System.out.println("data: " + data.toString());
+		
 
 		Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
 
@@ -481,7 +505,7 @@ public class ChatService implements ChatInterface {
 	@Override
 	public void leaveGroup(Map<Integer, Integer> map) {
 
-		System.out.println("inside service");
+		
 
 		System.out.println(map.toString());
 
@@ -594,4 +618,95 @@ public class ChatService implements ChatInterface {
 		return requestNotifications;
 	}
 
+	@Override
+	@Transactional
+	public ChatDTO updateChat(ChatDTO chatDTO) {
+		
+		
+		
+		
+//		check if the chat exists
+		if(chatDao.existsById(chatDTO.getId())) {
+			
+			
+			
+				
+//				get the groupChat object where this chat belong
+			Optional<GroupChat> optional =	groupChatDao.findById(chatDTO.getGroupId());
+			
+			
+			
+			if(optional.isPresent()) {
+				
+				
+				GroupChat grpChat = optional.get();
+				
+//				get the chat object
+				Chat updatableChat = chatDao.findById(chatDTO.getId()).get();
+				
+//				remove the chat from the list of groupChats
+				grpChat.getChats().remove(updatableChat);
+				
+//				update the chat with the current chat content (chat message)
+				updatableChat.setContent(chatDTO.getContent());
+				
+//				Add to the list of group chats
+				grpChat.getChats().add(updatableChat);
+				
+				ChatDTO dto = mapToChatDTO(updatableChat);
+				
+				dto.setSenderName(chatDTO.getSenderName());
+				
+//				synchronize the data
+				groupChatDao.saveAndFlush(grpChat);
+				
+			
+			return dto;
+			}
+				
+			
+
+		
+
+			
+			
+			
+		}
+		
+		
+		return null;
+	}
+
+	@Override
+	@Transactional
+	public ChatDTO deleteChat(Map<Integer, Integer> map) {
+		
+		final Integer groupId = map.keySet().stream().toList().get(0);
+		
+		final Integer chatId = map.get(groupId);
+		
+		
+//		get the GroupChat the chat belongs to
+		GroupChat grpChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Couldn't delete chat from non-existent group"));
+	
+		
+//		get the chat to delete 
+		final Chat toBeDeleted = chatDao.findById(chatId).orElseThrow(() -> new IllegalArgumentException("Couldn't delete non-existent chat: "+chatId));
+	
+		grpChat.getChats().remove(toBeDeleted);
+		
+		groupChatDao.save(grpChat);
+		
+//		delete the chat from the database
+		chatDao.delete(toBeDeleted);
+		
+		ChatDTO deletedChat = mapToChatDTO(toBeDeleted);
+		
+		deletedChat.setContent("Deleted");
+		
+		return deletedChat;
+	}
+
+
+	
 }

@@ -79,8 +79,12 @@ public class GroupChat {
 	
 	public void AddMessage(Chat chat) {
 		
-		chats.add(chat);
-		chat.setGroupChat(this);
+		if(!chats.contains(chat)) {
+
+			chats.add(chat);
+			chat.setGroupChat(this);
+		}
+		
 		
 	}
 

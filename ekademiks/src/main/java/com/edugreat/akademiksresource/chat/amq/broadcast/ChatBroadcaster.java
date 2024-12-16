@@ -22,5 +22,7 @@ public interface ChatBroadcaster {
 	
 	
 	void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications);
+	
+	
 
 }

@@ -12,10 +12,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 // Entity represents a single message or conversation in a particular chat group at a particular time
 @Entity
@@ -26,7 +24,7 @@ public class Chat {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Setter(AccessLevel.NONE)
+	//@Setter(AccessLevel.NONE)
 	private Integer id;
 	
 	@ManyToOne
@@ -41,8 +39,12 @@ public class Chat {
 	private String content;
 	
 	@Column(nullable = true)
-	@Setter(AccessLevel.NONE)
+	//@Setter(AccessLevel.NONE)
 	private LocalDateTime sentAt = LocalDateTime.now();
+	
+//	Hold reference to the chat this chat replied to, if it was a replied chat
+	@Column(nullable = true, name = "replied_to")
+	private Integer repliedTo;
 	
 	public Chat(GroupChat groupChat, Student sender, String content) {
 		

@@ -2,11 +2,15 @@ package com.edugreat.akademiksresource.chat.messages;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,7 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.amq.broadcast.ChatBroadcaster;
-import com.edugreat.akademiksresource.chat.amq.consumer.ChatConsumerInterface;
+import com.edugreat.akademiksresource.chat.amq.consumer.ChatConsumer;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
@@ -33,7 +37,9 @@ public class MessageController {
 	private ChatInterface chatInterface;
 	
 	@Autowired
-	private ChatConsumerInterface chatConsumer;
+	private ChatConsumer chatConsumer;
+	
+	private final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
 	@GetMapping("/messages")
 	public SseEmitter previousMessages(@RequestParam("group") String groupId,
@@ -110,5 +116,50 @@ public class MessageController {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 
+	}
+	
+
+	@PutMapping("/modify/msg")
+	public ResponseEntity<Object> editChat(@RequestBody ChatDTO chatDTO) {
+		
+		System.out.println("Inside editChat");
+		
+		try {
+			
+			final ChatDTO editedChat = chatInterface.updateChat(chatDTO);
+			
+			broadcaster.sendInstantChat(editedChat);
+				
+				return new ResponseEntity<>(HttpStatus.OK);
+			
+			
+		} catch (Exception e) {
+			
+			LOGGER.info("ERROR :", e);
+			
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		
+	}
+	
+	
+	
+	@DeleteMapping("/del_msg")
+	public ResponseEntity<Object> deleteChat(@RequestBody Map<Integer, Integer> map){
+		
+		
+		try {
+			
+			broadcaster.sendInstantChat(chatInterface.deleteChat(map));
+			
+			return new ResponseEntity<>(HttpStatus.OK);
+		} catch (Exception e) {
+			
+LOGGER.info("ERROR :", e);
+			
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
 	}
 }

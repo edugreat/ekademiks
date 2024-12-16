@@ -9,6 +9,7 @@ import java.util.SortedMap;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.chat.dto.GroupChatDTO;
 import com.edugreat.akademiksresource.chat.dto.MyGroupChatDTO;
+import com.edugreat.akademiksresource.chat.model.Chat;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
@@ -76,4 +77,9 @@ void leaveGroup(Map<Integer, Integer> map);
  
  
  Set<MiscellaneousNotifications> streamChatNotifications(Integer studentId);
+ 
+ ChatDTO updateChat(ChatDTO chatDTO);
+ 
+// the key of map is the id pointing to the GroupChat the chat belongs to while the value is the id of the Chat
+ ChatDTO deleteChat(Map<Integer, Integer> map);
 }

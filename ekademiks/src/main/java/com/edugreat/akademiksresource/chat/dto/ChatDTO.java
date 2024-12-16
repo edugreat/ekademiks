@@ -19,14 +19,27 @@ public class ChatDTO {
 	@Min(value = 0)
 	private Integer senderId;
 	
+	//@JsonIgnore
 	@Transient
 	private String senderName;
 	
-	@Transient Integer chatReceipient;
+	//@JsonIgnore
+	@Transient 
+	Integer chatReceipient;
+	
+	
+//	points to the chat ID this chat replied to, if it was a replied chat
+	@Transient
+	private Integer repliedTo;
+	
+//	shows the actual message that got the reply
+	@Transient
+	private String repliedToChat;
 	
 //	keeps tracks of those who are currently online when this chat instance was created.
 //	This is used to show and update the number of group members participating in the chat.
 	@Transient
+	//@JsonIgnore
 	private long onlineMembers;
 	
 	@NotNull(message = "chat message is missing")

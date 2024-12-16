@@ -1,6 +1,9 @@
 package com.edugreat.akademiksresource.exception;
 
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -11,6 +14,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 
 import com.edugreat.akademiksresource.enums.Exceptions;
 
@@ -19,6 +23,8 @@ import io.jsonwebtoken.security.SignatureException;
 
 @ControllerAdvice
 public class AcademicExceptionHandler {
+	
+	private final Logger LOGGER = LoggerFactory.getLogger(AcademicExceptionHandler.class);
 
 	@ExceptionHandler(AcademicException.class)
 	private ResponseEntity<String> handleAcademicException(AcademicException ex) {
@@ -103,5 +109,17 @@ public class AcademicExceptionHandler {
 		
 	}
 	
+	
+	@ExceptionHandler
+	public void asyncRequestException(AsyncRequestTimeoutException e) {
+		
+		LOGGER.info(String.format("async request timeout %s", e.getMessage()));
+	}
+	
+	@ExceptionHandler
+	public void ioException(java.io.IOException e) {
+		
+		LOGGER.info(String.format("IOEXCEPTION %s", e.getMessage()));
+	}
 
 }

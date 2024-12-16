@@ -18,7 +18,10 @@ public class RabbitMQConfig {
 	
 	
 	@Value("${notification.queue}")
-	private String notifi_Queue;
+	private String notificationQueue;
+	
+	@Value("${notification.routing.key}")
+	private String notificationRoutingKey;
 	
 	@Value("${instant.chat.queue}")
 	private String instantChatQueue;
@@ -33,7 +36,7 @@ public class RabbitMQConfig {
 	private String previousChatRoutinKey;
 	
 	
-	@Value("${rabbitmq.exchange.name}")
+	@Value("${ekademiks.exchange.name}")
 	private String exchange; 
 	
 	@Value("${chat.notifications.queue}")
@@ -47,7 +50,7 @@ public class RabbitMQConfig {
     @Bean
     Queue notificationQueue() {
 		
-		return new Queue(notifi_Queue);
+		return new Queue(notificationQueue);
 	}
 
     @Bean
@@ -96,6 +99,12 @@ public class RabbitMQConfig {
     	return BindingBuilder.bind(previousChatQueue()).to(exchange()).with(previousChatRoutinKey);
     }
    
+    
+    @Bean
+    Binding notificationBinding() {
+    	
+    	return BindingBuilder.bind(notificationQueue()).to(exchange()).with(notificationRoutingKey);
+    }
     
     @Bean
     MessageConverter converter() {

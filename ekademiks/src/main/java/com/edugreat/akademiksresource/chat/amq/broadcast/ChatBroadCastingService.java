@@ -21,7 +21,7 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 	MiscellaneousNotificationsDao miscellaneousNotifications;
 	
 //	rabbitmq exchange 
-	@Value("${rabbitmq.exchange.name}")
+	@Value("${ekademiks.exchange.name}")
 	private String exchange;
 		
 	@Value("${previous.chat.routing.key}")
