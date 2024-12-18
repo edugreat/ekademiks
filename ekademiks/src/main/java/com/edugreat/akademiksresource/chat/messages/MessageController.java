@@ -45,6 +45,8 @@ public class MessageController {
 	public SseEmitter previousMessages(@RequestParam("group") String groupId,
 			@RequestParam("student") String studentId) {
 		
+		System.out.println(">>>>>>>>>>>>>>>>>>> "+studentId);
+		
 		SseEmitter emitter = chatConsumer.establishConnection(Integer.parseInt(studentId));
 		
 		

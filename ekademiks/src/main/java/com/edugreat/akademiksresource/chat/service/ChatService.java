@@ -17,8 +17,10 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
@@ -64,7 +66,11 @@ public class ChatService implements ChatInterface {
 
 	@Autowired
 	private MiscellaneousNotificationsDao miscellaneousNoticeDao;
-
+	
+//	configured content meant for deleted chat
+	@Value("${chat.deleted.content}")
+	private String DELETED_CHAT_CONTENT;
+	
 	@Transactional
 	@Override
 	public void createGroupChat(GroupChatDTO dto) {
@@ -185,6 +191,8 @@ public class ChatService implements ChatInterface {
 		if(chatDTO.getRepliedTo() != null) {
 			
 			chat.setRepliedTo(chatDTO.getRepliedTo());
+			chat.setRepliedToChat(chatDTO.getRepliedToChat());
+			
 		}
 
 		return chat;
@@ -202,6 +210,9 @@ public class ChatService implements ChatInterface {
 
 	private ChatDTO _mapToChatDTO(Chat chat) {
 
+		
+		
+		
 		Student sender = chat.getSender();
 
 		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
@@ -215,8 +226,9 @@ public class ChatService implements ChatInterface {
 //			set the chat ID that got the reply
 			dto.setRepliedTo(chat.getRepliedTo());
 			
-//			set the chat that was replied to
-			dto.setRepliedToChat(chatDao.findById(chat.getRepliedTo()).get().getContent());
+//			set the chat that was replied to if it hasn't been deleted
+			dto.setRepliedToChat(chat.getRepliedToChat());
+
 		}
 
 		return dto;
@@ -555,6 +567,9 @@ public class ChatService implements ChatInterface {
 	public List<ChatDTO> getPreviousChat(Integer studentId, Integer groupId) {
 		
 		
+		
+		
+		
 //		get the date the user joined the group chat, so as to not allow them view chats histories prior to when they joined
 		LocalDateTime joinedAt = groupMembersDao.findJoinedDate(studentId, groupId);
 
@@ -664,11 +679,7 @@ public class ChatService implements ChatInterface {
 			return dto;
 			}
 				
-			
-
 		
-
-			
 			
 			
 		}
@@ -702,11 +713,13 @@ public class ChatService implements ChatInterface {
 		
 		ChatDTO deletedChat = mapToChatDTO(toBeDeleted);
 		
-		deletedChat.setContent("Deleted");
+
+		deletedChat.setContent(DELETED_CHAT_CONTENT);
+
 		
 		return deletedChat;
 	}
-
+	
 
 	
 }

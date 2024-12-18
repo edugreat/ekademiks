@@ -46,6 +46,11 @@ public class Chat {
 	@Column(nullable = true, name = "replied_to")
 	private Integer repliedTo;
 	
+//	the content of chat that this chat replied to. It's set to null once the original chat has been deleted 
+	@Column(nullable = true)
+	private String repliedToChat;
+	
+	
 	public Chat(GroupChat groupChat, Student sender, String content) {
 		
 		

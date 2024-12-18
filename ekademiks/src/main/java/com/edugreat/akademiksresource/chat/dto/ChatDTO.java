@@ -35,7 +35,7 @@ public class ChatDTO {
 //	shows the actual message that got the reply
 	@Transient
 	private String repliedToChat;
-	
+
 //	keeps tracks of those who are currently online when this chat instance was created.
 //	This is used to show and update the number of group members participating in the chat.
 	@Transient

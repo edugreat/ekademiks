@@ -38,7 +38,7 @@ public class ChatConsumerService implements ChatConsumer {
 	private static final long HEARTBEAT_INTERVAL = 30000; // 30 seconds 
 
 	@RabbitListener(queues = {"${instant.chat.queue}"})
-	void consumeInstantChatMessage(ChatDTO chat) {
+ synchronized	void consumeInstantChatMessage(ChatDTO chat) {
 
 		LOGGER.info(String.format("received JSON  message -> %s", chat));
 

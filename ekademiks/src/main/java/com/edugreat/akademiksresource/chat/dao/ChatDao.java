@@ -20,5 +20,8 @@ public interface ChatDao extends JpaRepository<Chat, Integer> {
 //	checks if the group chat whose ID is referenced has had any previous post(s)
 	@Query("SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END FROM Chat c WHERE c.groupChat.id =:groupId")
 	boolean hasPreviousPosts(Integer groupId);
+	
+	@Query("SELECT c FROM Chat c WHERE c.groupChat.id =:groupId")
+	List<Chat> findByGroupId(Integer groupId);
 
 }
