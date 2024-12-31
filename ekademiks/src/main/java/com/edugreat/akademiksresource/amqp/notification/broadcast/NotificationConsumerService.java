@@ -106,7 +106,7 @@ public class NotificationConsumerService implements NotificationConsumer {
 			LOGGER.info(String.format("Error establishing connection %s", e.getMessage()));
 		});
 		
-		startHeartbeat(emitter, studentId);
+		//startHeartbeat(emitter, studentId);
 		
 
 		return emitter;
@@ -119,7 +119,7 @@ public class NotificationConsumerService implements NotificationConsumer {
 	}
 
 	@Override
-	public SseEmitter disconnectFromSSE(Integer studentId) {
+	public synchronized  SseEmitter disconnectFromSSE(Integer studentId) {
 		
 		if(clients.containsKey(studentId)) {
 			

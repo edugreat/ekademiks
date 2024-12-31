@@ -21,7 +21,7 @@ public interface ChatBroadcaster {
 	public void notifyOnNewMember(MiscellaneousNotifications newJoinNotification);
 	
 	
-	void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications);
+	void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications, Integer groupId);
 	
 	
 

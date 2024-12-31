@@ -23,5 +23,9 @@ public interface ChatDao extends JpaRepository<Chat, Integer> {
 	
 	@Query("SELECT c FROM Chat c WHERE c.groupChat.id =:groupId")
 	List<Chat> findByGroupId(Integer groupId);
+	
+//	get a list of replied chats to the given chat (chatId) belonging to the given groupId
+	@Query("SELECT c FROM Chat c WHERE c.groupChat.id =:groupId  AND c.repliedTo =:chatId")
+	List<Chat> findRepliedChats(Integer chatId, Integer groupId);
 
 }

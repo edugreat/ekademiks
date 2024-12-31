@@ -27,6 +27,9 @@ public class GroupChatDTO {
 	@NotEmpty(message = "No group name found")
 	private String groupName;
 	
+//	only admins can post to locked groups
+	private Boolean isGroupLocked = false;
+	
 	private LocalDateTime createdAt;
 
 	public GroupChatDTO(

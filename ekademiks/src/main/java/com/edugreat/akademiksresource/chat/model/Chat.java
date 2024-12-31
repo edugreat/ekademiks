@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,6 +50,15 @@ public class Chat {
 //	the content of chat that this chat replied to. It's set to null once the original chat has been deleted 
 	@Column(nullable = true)
 	private String repliedToChat;
+	
+//	column that points to the user who deleted a given chat that has some replies. 
+// Only chats that have replies can have this information populated
+	@Column(nullable = true)
+	private Integer deletedBy;
+	
+	
+	@Column(nullable = false)
+	private Boolean isEditedChat = false;
 	
 	
 	public Chat(GroupChat groupChat, Student sender, String content) {

@@ -69,23 +69,35 @@ public class AuthenticateController {
 	}
 	
 	@PostMapping("/disconnect")
-	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Integer studentId) {
+	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Map<Integer, Integer> mapObj) {
+		
+		
+		System.out.println("Disconnecting from server");
+		mapObj.forEach((k, v) -> System.out.println("groupId: "+k+", studentId: "+v));
+		
 	
 		try {
 			
-			if(chatConsumer.disconnectFromSSE(studentId) != null && notificationConsumer.disconnectFromSSE(studentId) != null ) {
-				
-				return ResponseEntity.ok(HttpStatus.OK);
+			chatConsumer.disconnectGroup(mapObj);
+			
+			Integer studentId = mapObj.get(mapObj.keySet().toArray()[0]);
+			
+			notificationConsumer.disconnectFromSSE(studentId);
 			}
 			
 			
-		} catch (Exception e) {
+		catch (Exception e) {
 			
-			return ResponseEntity.ok(HttpStatus.BAD_REQUEST);
+			System.out.println("Error disconnecting "+e);
+			
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			
+			
 		}
 		
 		
-		return null;
+		return  new ResponseEntity<>(HttpStatus.OK);
+		
 		
 		
 		

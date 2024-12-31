@@ -9,7 +9,6 @@ import java.util.SortedMap;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.chat.dto.GroupChatDTO;
 import com.edugreat.akademiksresource.chat.dto.MyGroupChatDTO;
-import com.edugreat.akademiksresource.chat.model.Chat;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
@@ -81,5 +80,9 @@ void leaveGroup(Map<Integer, Integer> map);
  ChatDTO updateChat(ChatDTO chatDTO);
  
 // the key of map is the id pointing to the GroupChat the chat belongs to while the value is the id of the Chat
- ChatDTO deleteChat(Map<Integer, Integer> map);
+ ChatDTO deleteChat(Map<Integer, Integer> map, Integer deleterId);
+ 
+// provides functionality that locks the group chat referenced by mapObj's value.
+// The key of the map is the user who intends to lock the chat, which is expected to be the group admin
+ boolean lockGroup(Map<Integer, Integer> mapObj);
 }

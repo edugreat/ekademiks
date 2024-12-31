@@ -19,6 +19,8 @@ public class ChatDTO {
 	@Min(value = 0)
 	private Integer senderId;
 	
+	private boolean isEditedChat = false;
+	
 	//@JsonIgnore
 	@Transient
 	private String senderName;
@@ -35,6 +37,15 @@ public class ChatDTO {
 //	shows the actual message that got the reply
 	@Transient
 	private String repliedToChat;
+	
+	
+//	Points to the user who has deleted a chat that has some replies. This is used at the UI to show who deleted a particular Chat with replies.
+	@Transient
+	private Integer deleterId;
+	
+//	name of the user who deleted the chat
+	@Transient
+	private String deleter;
 
 //	keeps tracks of those who are currently online when this chat instance was created.
 //	This is used to show and update the number of group members participating in the chat.

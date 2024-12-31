@@ -18,6 +18,6 @@ public interface GroupChatDao extends JpaRepository<GroupChat, Integer> {
 
 	@Query("SELECT g.groupAdminId FROM GroupChat g WHERE g.id =:groupId")
 	Integer getAdminId(Integer groupId);
-	
-	
+
+
 }

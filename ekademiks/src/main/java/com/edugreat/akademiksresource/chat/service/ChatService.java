@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
@@ -217,6 +216,8 @@ public class ChatService implements ChatInterface {
 
 		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
 				chat.getContent(), chat.getSentAt());
+		
+		dto.setEditedChat(chat.getIsEditedChat());
 
 		
 		dto.setSenderName(sender.getFirstName());
@@ -229,6 +230,14 @@ public class ChatService implements ChatInterface {
 //			set the chat that was replied to if it hasn't been deleted
 			dto.setRepliedToChat(chat.getRepliedToChat());
 
+		}
+		
+		if(chat.getDeletedBy() != null) {
+			
+			dto.setDeleter(studentDao.findById(chat.getDeletedBy())
+					.orElseThrow(() -> 
+					new IllegalArgumentException("deleter not found")).getFirstName());
+			dto.setDeleterId(chat.getDeletedBy());
 		}
 
 		return dto;
@@ -518,9 +527,6 @@ public class ChatService implements ChatInterface {
 	public void leaveGroup(Map<Integer, Integer> map) {
 
 		
-
-		System.out.println(map.toString());
-
 		Integer groupId = map.keySet().stream().collect(Collectors.toList()).get(0);
 
 //		get the group chat from which they intend to leave
@@ -533,8 +539,6 @@ public class ChatService implements ChatInterface {
 		final GroupMember groupMember = groupMembersDao.findByGroupChatAndMember(groupId, memberId);
 
 		if (groupMember != null) {
-
-			System.out.println("not null: " + groupMember.toString());
 
 //			disconnect the groupMember object from the group chat
 			groupChat.getGroupMembers().remove(groupMember);
@@ -646,7 +650,7 @@ public class ChatService implements ChatInterface {
 			
 			
 				
-//				get the groupChat object where this chat belong
+//				get the groupChat object where this chat belongs
 			Optional<GroupChat> optional =	groupChatDao.findById(chatDTO.getGroupId());
 			
 			
@@ -664,6 +668,8 @@ public class ChatService implements ChatInterface {
 				
 //				update the chat with the current chat content (chat message)
 				updatableChat.setContent(chatDTO.getContent());
+				updatableChat.setIsEditedChat(true);
+				
 				
 //				Add to the list of group chats
 				grpChat.getChats().add(updatableChat);
@@ -671,6 +677,8 @@ public class ChatService implements ChatInterface {
 				ChatDTO dto = mapToChatDTO(updatableChat);
 				
 				dto.setSenderName(chatDTO.getSenderName());
+				
+				dto.setEditedChat(true);
 				
 //				synchronize the data
 				groupChatDao.saveAndFlush(grpChat);
@@ -690,7 +698,7 @@ public class ChatService implements ChatInterface {
 
 	@Override
 	@Transactional
-	public ChatDTO deleteChat(Map<Integer, Integer> map) {
+	public ChatDTO deleteChat(Map<Integer, Integer> map, Integer deleterId) {
 		
 		final Integer groupId = map.keySet().stream().toList().get(0);
 		
@@ -701,7 +709,7 @@ public class ChatService implements ChatInterface {
 		GroupChat grpChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Couldn't delete chat from non-existent group"));
 	
 		
-//		get the chat to delete 
+//		get the chat to delete  
 		final Chat toBeDeleted = chatDao.findById(chatId).orElseThrow(() -> new IllegalArgumentException("Couldn't delete non-existent chat: "+chatId));
 	
 		grpChat.getChats().remove(toBeDeleted);
@@ -711,15 +719,71 @@ public class ChatService implements ChatInterface {
 //		delete the chat from the database
 		chatDao.delete(toBeDeleted);
 		
+		
+//		get all the chats that have replied the deleted chat and update the deletedBy property
+		List<Chat> repliedChats = repliedChats(chatId, groupId);
+		
+		
+		
+		repliedChats.forEach(reply -> {
+			
+			
+			reply.setDeletedBy(deleterId);
+		});
+		
+		chatDao.saveAllAndFlush(repliedChats);
+		
 		ChatDTO deletedChat = mapToChatDTO(toBeDeleted);
+		deletedChat.setDeleterId(deleterId);
+		
+		
+//		set the name of the user that deleted the chat
+		deletedChat.setDeleter(studentDao.findById(deleterId).orElseThrow(() -> new IllegalArgumentException("Deleter not found!")).getFirstName());
 		
 
 		deletedChat.setContent(DELETED_CHAT_CONTENT);
+		
+		
 
 		
 		return deletedChat;
 	}
 	
 
+
+// get a list of chats that have replied a given chat(referenced by chatId)
+	private List<Chat> repliedChats(Integer chatId, Integer groupId){
+		
+		return chatDao.findRepliedChats(chatId, groupId);
+		
+		
+	}
+
+	@Transactional
+	@Override
+	public boolean lockGroup(Map<Integer, Integer> mapObj) {
+		
+		final Integer groupId = mapObj.keySet().stream().collect(Collectors.toList()).get(0);
+		
+		final Integer groupAdmin = mapObj.get(groupId);
+		
+//		get the group to be locked
+		GroupChat grpChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("group chat does not exist"));
+		
+//		confirm the action is to be perform by the group admin
+	final Integer actualGroupAdmin = groupChatDao.getAdminId(groupId);
 	
+	if(! actualGroupAdmin.equals(groupAdmin)) return false;
+		
+		
+//		lock the group if the user meets the criteria to lock the chat
+	grpChat.setIsGroupLocked(true);
+	
+//	persists operation to the database
+	groupChatDao.saveAndFlush(grpChat);
+		
+
+		
+		return true;
+	}
 }

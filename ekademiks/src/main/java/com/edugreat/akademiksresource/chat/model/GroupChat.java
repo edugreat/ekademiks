@@ -52,6 +52,10 @@ public class GroupChat {
 	@Column(nullable = false)
 	private String groupIconUrl;
 	
+//	only admins can post to locked groups
+	@Column
+	private Boolean isGroupLocked = false;
+	
 	@OneToMany(mappedBy = "groupChat", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	@Setter(AccessLevel.NONE)//only GroupMembers should handle the bi-diractional relationship
 	private List<GroupMember> groupMembers = new ArrayList<>();

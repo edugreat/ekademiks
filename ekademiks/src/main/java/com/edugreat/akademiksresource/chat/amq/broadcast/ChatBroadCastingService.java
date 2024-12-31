@@ -1,7 +1,6 @@
 package com.edugreat.akademiksresource.chat.amq.broadcast;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,11 +102,18 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 
 //get chat notifications such as some new members and or request to join the group
 @Override
- public void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications) {
+ public void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications, Integer targetGroupId) {
 
 	if(chatNotifications != null && chatNotifications.size() > 0) {
 		
-		rabbitTemplate.convertAndSend(exchange, chatNotificationRoutingKey, chatNotifications);
+		for(MiscellaneousNotifications notification : chatNotifications) {
+			
+			
+			notification.setTargetGroup(targetGroupId);
+		
+		rabbitTemplate.convertAndSend(exchange, chatNotificationRoutingKey, notification);
+		}
+		
 	}
 	
 	

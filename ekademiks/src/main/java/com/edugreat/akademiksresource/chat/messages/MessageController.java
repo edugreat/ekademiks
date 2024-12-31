@@ -45,9 +45,9 @@ public class MessageController {
 	public SseEmitter previousMessages(@RequestParam("group") String groupId,
 			@RequestParam("student") String studentId) {
 		
-		System.out.println(">>>>>>>>>>>>>>>>>>> "+studentId);
 		
-		SseEmitter emitter = chatConsumer.establishConnection(Integer.parseInt(studentId));
+		
+		SseEmitter emitter = chatConsumer.establishConnection(Integer.parseInt(studentId), Integer.parseInt(groupId));
 		
 		
 		
@@ -57,7 +57,7 @@ public class MessageController {
 			broadcaster.previousChatMessages(chatInterface.getPreviousChat(Integer.parseInt(studentId), Integer.parseInt(groupId)));
 			
 //			send previous chat notifications
-			broadcaster.broadcastPreviousChatNotifications(chatInterface.streamChatNotifications(Integer.parseInt(studentId)));
+			broadcaster.broadcastPreviousChatNotifications(chatInterface.streamChatNotifications(Integer.parseInt(studentId)), Integer.parseInt(groupId));
 		}
 
 		
@@ -104,6 +104,10 @@ public class MessageController {
 
 	@PostMapping("/new_chat")
 	public ResponseEntity<Object> postChat(@RequestBody @Valid ChatDTO dto) {
+		
+		System.out.println("new message");
+		
+		
 
 		try {
 			final ChatDTO instantChat = chatInterface.instantChat(dto);
@@ -124,7 +128,6 @@ public class MessageController {
 	@PutMapping("/modify/msg")
 	public ResponseEntity<Object> editChat(@RequestBody ChatDTO chatDTO) {
 		
-		System.out.println("Inside editChat");
 		
 		try {
 			
@@ -149,17 +152,17 @@ public class MessageController {
 	
 	
 	@DeleteMapping("/del_msg")
-	public ResponseEntity<Object> deleteChat(@RequestBody Map<Integer, Integer> map){
+	public ResponseEntity<Object> deleteChat(@RequestBody Map<Integer, Integer> map, @RequestParam("del_id") Integer deleterId){
 		
 		
 		try {
 			
-			broadcaster.sendInstantChat(chatInterface.deleteChat(map));
+			broadcaster.sendInstantChat(chatInterface.deleteChat(map, deleterId));
 			
 			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 			
-LOGGER.info("ERROR :", e);
+        LOGGER.info("ERROR :", e);
 			
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
