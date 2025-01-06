@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,8 +13,6 @@ import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.AppUser;
 
-import lombok.AllArgsConstructor;
-
 @Service
 
 public class AppUserDetailsService implements UserDetailsService {
@@ -23,6 +22,10 @@ public class AppUserDetailsService implements UserDetailsService {
 
 	@Autowired
 	private StudentDao studentDao;
+	
+	@Autowired
+	private JwtUtil jwtUtil;
+	
 
 	@Override
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -42,4 +45,17 @@ public class AppUserDetailsService implements UserDetailsService {
 
 	}
 
+//	this method is utilized at the endpoint that retrieves chat messages. It is used to test if the receipient is a valid group logged user
+	public boolean isValidRequest(String token) {
+		
+		
+		final String username = jwtUtil.extractUsername(token);
+		
+		if(username == null || SecurityContextHolder.getContext().getAuthentication() == null) return false;
+		
+		
+		final UserDetails userDetails = loadUserByUsername(username);
+		
+		return jwtUtil.isTokenValid(token, userDetails);
+	}
 }

@@ -12,16 +12,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.edugreat.akademiksresource.auth.AppUserDetailsService;
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.amq.broadcast.ChatBroadcaster;
 import com.edugreat.akademiksresource.chat.amq.consumer.ChatConsumer;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
+import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
 import jakarta.validation.Valid;
@@ -39,29 +42,43 @@ public class MessageController {
 	@Autowired
 	private ChatConsumer chatConsumer;
 	
+	@Autowired
+	private AppUserDetailsService userDetailsService;
+	
 	private final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
 	@GetMapping("/messages")
 	public SseEmitter previousMessages(@RequestParam("group") String groupId,
-			@RequestParam("student") String studentId) {
+			@RequestParam("student") String studentId, @RequestHeader("authorization") String authHeader) {
 		
+		
+		final String jwtToken = authHeader.substring(7);
+		
+		
+		final boolean isValid = userDetailsService.isValidRequest(jwtToken);
+		
+		System.out.println("group "+groupId+" student "+studentId);		
 		
 		
 		SseEmitter emitter = chatConsumer.establishConnection(Integer.parseInt(studentId), Integer.parseInt(groupId));
 		
 		
 		
-		if(emitter != null) {
+		if(isValid && emitter != null) {
 			
 //			send previous chat messages
 			broadcaster.previousChatMessages(chatInterface.getPreviousChat(Integer.parseInt(studentId), Integer.parseInt(groupId)));
 			
 //			send previous chat notifications
 			broadcaster.broadcastPreviousChatNotifications(chatInterface.streamChatNotifications(Integer.parseInt(studentId)), Integer.parseInt(groupId));
+		
+			
+			return emitter;
 		}
 
+		throw new AcademicException("Unauthorized user", HttpStatus.BAD_REQUEST.name());
 		
-		return emitter;
+		
 	}
 
 //	end point for sending request to join group chat
