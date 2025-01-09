@@ -12,12 +12,14 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
+import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.QuestionDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
@@ -26,9 +28,11 @@ import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.dao.WelcomeMessageDao;
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
+import com.edugreat.akademiksresource.dto.InstitutionDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
+import com.edugreat.akademiksresource.dto.StudentRecord;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.embeddable.Options;
@@ -37,6 +41,7 @@ import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Admins;
+import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Student;
@@ -66,6 +71,10 @@ public class AdminService implements AdminInterface {
 	private final TestDao testDao;
 	private final WelcomeMessageDao welcomeMsgDao;
 	private final QuestionDao questionDao;
+	
+	private final InstitutionDao institutionDao;
+	
+	
 	
 
 	@Override
@@ -759,6 +768,109 @@ levelDao.deleteByCategory(Category.valueOf(category));
 	throw new IllegalArgumentException(e);
 	
 }
+		
+		
+	}
+
+	@Transactional
+	@Override
+	public void registerInstitution(InstitutionDTO institutionDTO) {
+			//check if the institution already exists in the database
+		Optional<Institution> optionalInstitution = institutionDao.findByNameAndLocalGovt(institutionDTO.getName(), institutionDTO.getLocalGovt());
+		
+		if(optionalInstitution.isPresent()) throw new IllegalArgumentException("already exists");
+		
+		try {
+			Institution institution = mapToInstitution(institutionDTO);
+			
+			institutionDao.save(institution);
+		} catch (Exception e) {
+			
+			throw e;
+		}
+		
+		
+		
+		
+		
+		
+	}
+	
+	
+	private Institution mapToInstitution(InstitutionDTO dto) {
+		
+		
+		
+		Institution institution = new Institution(dto.getName(), dto.getState(), dto.getLocalGovt(), dto.getCreatedBy());
+		
+		return institution;
+		
+		
+	}
+
+	@Override
+	public List<InstitutionDTO> getInstitutions(Integer adminId) {
+		
+		List<Institution> institutions = institutionDao.findByCreatedByOrderByNameAsc(adminId);
+		
+		if(!institutions.isEmpty()) return institutions.stream().map(this::mapToDTO).collect(Collectors.toList());
+		
+	
+		return List.of();
+	}
+	
+	private InstitutionDTO mapToDTO(Institution institution) {
+		
+		return new InstitutionDTO(institution.getId(), institution.getName());
+		
+	}
+
+	@Transactional
+	@Override
+	public void addStudentRecords(List<StudentRecord> studentRecords, Integer institutionId) {
+		
+//		get the institution from the database
+		final Institution institution = institutionDao.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution does not exist"));
+		
+//		get the students already registered
+		final List<Student> students = institution.getStudentList();
+		
+		final List<Student> verifiedRecords = verifyStudentRecords(studentRecords);
+		
+		for(Student s : verifiedRecords) {
+			
+			final boolean successful = institution.addStudent(students, s); 
+			
+			if(! successful) throw new IllegalArgumentException("some records already exist");
+			
+			
+		}
+		
+		studentDao.saveAllAndFlush(verifiedRecords);
+		
+		institutionDao.saveAndFlush(institution);
+		
+		
+		
+	}
+	
+//	processes the given student records against the details in the database. Returns true if successful or false otherwise 
+	private final List<Student> verifyStudentRecords(List<StudentRecord> records) {
+		
+		List<Student> students = new ArrayList<>();
+		
+//		use each information in the record to fetch the student from the database
+		for(StudentRecord r : records) {
+			
+			Optional<Student> op = studentDao.findByEmail(r.email());
+			
+			// throws exception if the student does not exist or the supplied password does not match with the actual password in the database
+			if(op.isEmpty() || !(passwordEncoder.matches(r.password(), op.get().getPassword()))) throw new IllegalArgumentException("Email and or password error");
+			
+			students.add(op.get());
+			
+		}
+		return students;
 		
 		
 	}

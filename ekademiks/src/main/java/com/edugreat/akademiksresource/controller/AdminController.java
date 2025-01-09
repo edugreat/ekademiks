@@ -13,15 +13,18 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
+import com.edugreat.akademiksresource.dto.InstitutionDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
+import com.edugreat.akademiksresource.dto.StudentRecord;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
@@ -406,5 +409,63 @@ public class AdminController {
 		
 		return new ResponseEntity<Object>(HttpStatus.OK);
 	}
+	
+	@PostMapping("/register")
+	public ResponseEntity<Object> registerInstitution(@RequestBody @Valid InstitutionDTO institutionDTO) {
+		
+		
+		try {
+			
+			service.registerInstitution(institutionDTO);
+		} catch (Exception e) {
+			
+		
+			
+			return new ResponseEntity<Object>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
+	@GetMapping("/institutions")
+	public ResponseEntity<Object> getInstitutions(@RequestHeader String adminId) {
+		
+		
+		try {
+			if(adminId != null) {
+				
+				return new ResponseEntity<Object>(service.getInstitutions(Integer.parseInt(adminId)), HttpStatus.OK);
+			}
+		} catch (Exception e) {
+			
+			
+			return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<>( new IllegalArgumentException("Number format error") ,HttpStatus.BAD_REQUEST);
+		
+		
+	}
+	
+	
+	
+	@PostMapping("/register_student")
+	public ResponseEntity<Object> addStudentRecords(@RequestBody List<StudentRecord> studentRecords, @RequestHeader String institutionId) {
+		
+		try {
+			
+			service.addStudentRecords(studentRecords, Integer.parseInt(institutionId));
+		} catch (Exception e) {
+			
+			return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+			
+		}
+		
+		
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+	
 
 }

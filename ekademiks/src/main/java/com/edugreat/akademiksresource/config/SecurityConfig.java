@@ -37,9 +37,9 @@ public class SecurityConfig {
 	private final AccountStatusFilter accountStatusFilter;
 
 	private static final String[] ALLOWED_HEADERS = { "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",
-			"Authorization", "X-Request-With", "Access-Control-Request-Method", "Access-Control-Request-Headers" };
+			"Authorization", "X-Request-With", "Access-Control-Request-Method", "Access-Control-Request-Headers","adminid", "institutionId" };
 	private static final String[] EXPOSED_HEADERS = { "Origin", "Content-Type", "Accept", "Authorization",
-			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials" };
+			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials","adminid","institutionId" };
 
 	private static final String[] ALLOWED_METHODS = { "GET", "POST", "PUT", "DELETE", "PATCH" };
 

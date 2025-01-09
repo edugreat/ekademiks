@@ -27,6 +27,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -48,6 +49,10 @@ public class Student extends AppUser {
 	@JsonIgnore
 	@ElementCollection(fetch = FetchType.EAGER)
 	private Set<Integer> pendingGroupChatRequests = new HashSet<>();
+	
+	@ManyToOne
+	@JoinColumn(name = "institution_id", nullable = true)
+	private Institution institution;
 
 	public Student() {
 		super();
@@ -211,5 +216,14 @@ public class Student extends AppUser {
 		
 	}
 
+	public Institution getInstitution() {
+		
+		return institution;
+	}
+	
+	public void setInstitution(Institution institution) {
+		
+		this.institution = institution;
+	}
 
 }

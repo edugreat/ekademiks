@@ -257,18 +257,18 @@ public class ChatConsumerService implements ChatConsumer {
 		return count;
 	}
 
-	private void startHeartbeat(SseEmitter emitter, String connectionId) {
-		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-		executorService.scheduleAtFixedRate(() -> {
-			try {
-				emitters.get(connectionId).send(SseEmitter.event().data("heartbeat").name("heartbeat"));
-			} catch (IOException e) {
-				LOGGER.error("Error sending heartbeat: " + e.getMessage());
-				emitters.remove(connectionId); // Remove the emitter if it fails
-				executorService.shutdown(); // Stop the heartbeat task if emitter is no longer valid
-			}
-		}, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
-	}
+//	private void startHeartbeat(SseEmitter emitter, String connectionId) {
+//		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+//		executorService.scheduleAtFixedRate(() -> {
+//			try {
+//				emitters.get(connectionId).send(SseEmitter.event().data("heartbeat").name("heartbeat"));
+//			} catch (IOException e) {
+//				LOGGER.error("Error sending heartbeat: " + e.getMessage());
+//				emitters.remove(connectionId); // Remove the emitter if it fails
+//				executorService.shutdown(); // Stop the heartbeat task if emitter is no longer valid
+//			}
+//		}, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
+//	}
 
 	@Override
 	public void disconnectGroup(Map<Integer, Integer> data) {

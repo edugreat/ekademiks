@@ -3,11 +3,16 @@ package com.edugreat.akademiksresource.contract;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.http.HttpStatusCode;
+
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
+import com.edugreat.akademiksresource.dto.InstitutionDTO;
 import com.edugreat.akademiksresource.dto.LevelDTO;
 import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
+import com.edugreat.akademiksresource.dto.StudentRecord;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 
@@ -88,7 +93,13 @@ public interface AdminInterface {
 //	provides functionality that deletes an assessment category by the category's name
 	void deleteCategory(String category);
 	
-	
+	void registerInstitution(InstitutionDTO institutionDTO);
+
+//	returns a list of institutions registered by the given admin
+	List<InstitutionDTO> getInstitutions(Integer adminId);
+
+//	provides method that adds student's records to registered institution
+	void addStudentRecords(List<StudentRecord> studentRecords, Integer instutionId);
 	
 	
 }
