@@ -70,6 +70,10 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 //	get the number of students yet to read the given miscellaneous notification
 	@Query("SELECT COUNT(n) FROM Student s JOIN s.miscellaneousNotices n ON n.id =:notificationId")
 	int getUnreadNotificationCount(Integer notificationId);
+
+//	retrieves a student's institution id
+	@Query("SELECT s.institution.id FROM Student s WHERE s.id =:studentId")
+	Integer getMyInstitutionId(Integer studentId);
 	
 
 	

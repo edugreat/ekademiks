@@ -41,7 +41,7 @@ public class AppAuthService implements AppAuthInterface {
 	@Override
 	public int signUp(AppUserDTO userDTO) {
 		AppUserDTO user = null;
-		AppUser appUser = null;
+		AppUser newUser = null;
 		// Check the type of user wanting to sign up.
 		// if the intending user is a student
 
@@ -70,40 +70,47 @@ public class AppAuthService implements AppAuthInterface {
 				throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
 		}
 
-		if (!userDTO.getRoles().contains(Roles.Admin.name())) {
+		if (userDTO.getRoles().contains(Roles.Student.name()) ) {
 
 			user = mapper.map(userDTO, StudentDTO.class);
-			appUser = new Student();
+			newUser = new Student();
+			user.setRoles(userDTO.getRoles());
 
-			appUser.setFirstName(user.getFirstName());
-			appUser.setLastName(user.getLastName());
-			appUser.setEmail(user.getEmail());
-			appUser.setPassword(passwordEncoder.encode(user.getPassword()));
-			((Student) appUser).addRoles(user.getRoles());
+			newUser.setFirstName(user.getFirstName());
+			newUser.setLastName(user.getLastName());
+			newUser.setEmail(user.getEmail());
+			newUser.setPassword(passwordEncoder.encode(user.getPassword()));
+			((Student) newUser).addRoles(user.getRoles());
 			if (user.getMobileNumber() != null) {
-				appUser.setMobileNumber(user.getMobileNumber());
+				newUser.setMobileNumber(user.getMobileNumber());
 			}
 
 			// save the new object to the database
-			studentDao.save((Student) appUser);
+			studentDao.save((Student) newUser);
 
 		} else {
 
 			user = mapper.map(userDTO, AdminsDTO.class);
+			user.setRoles(userDTO.getRoles());
+			
 
-			appUser = new Admins();
+			newUser = new Admins();
 
-			appUser.setFirstName(user.getFirstName());
-			appUser.setLastName(user.getLastName());
-			appUser.setEmail(user.getEmail());
-			appUser.setPassword(passwordEncoder.encode(user.getPassword()));
-			((Admins) appUser).addRoles(user.getRoles());
+			newUser.setFirstName(user.getFirstName());
+			newUser.setLastName(user.getLastName());
+			newUser.setEmail(user.getEmail());
+			newUser.setPassword(passwordEncoder.encode(user.getPassword()));
+			((Admins) newUser).addRoles(user.getRoles());
 			if (user.getMobileNumber() != null) {
-				appUser.setMobileNumber(user.getMobileNumber());
+				newUser.setMobileNumber(user.getMobileNumber());
 			}
 
 			// Save the new object to the database
-			adminsDao.save((Admins) appUser);
+			adminsDao.save((Admins) newUser);
+			
+			
+			
+			
 
 		}
 
@@ -122,7 +129,7 @@ public class AppAuthService implements AppAuthInterface {
 		String password = request.getPassword();
 
 		// check if the user is an Admin
-		if (role.equalsIgnoreCase("admin")) {
+		if (role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("superadmin")) {
 			Optional<Admins> optionalAdmin = adminsDao.findByEmail(username);
 			if (optionalAdmin.isPresent() && passwordEncoder.matches(password, optionalAdmin.get().getPassword())) {
 
@@ -164,7 +171,7 @@ public class AppAuthService implements AppAuthInterface {
 		}
 
 		// the user does not exist in the database
-		throw new AcademicException(role.equalsIgnoreCase("admin") ? "admin not found!" : "student not found!",
+		throw new AcademicException((role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("superadmin")) ? "admin not found!" : "student not found!",
 				Exceptions.RECORD_NOT_FOUND.name());
 
 	}

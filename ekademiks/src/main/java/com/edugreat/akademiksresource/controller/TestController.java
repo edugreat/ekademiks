@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,13 +76,19 @@ public class TestController {
 	// given subject and category
 	@GetMapping
 	public ResponseEntity<Object> getTestTopicsAndDurations(@RequestParam String subject,
-			@RequestParam String category) {
+			@RequestParam String category, @RequestHeader String studentId) {
+		
+		Integer _studentId = 0;
+		
+		if(studentId == null) throw new IllegalArgumentException("request header not found");
+		
+		_studentId = Integer.parseInt(studentId);
 
 		final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
 		if (!(Pattern.matches(regex, category) && Pattern.matches(regex, category)))
 			throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
 
-		return ResponseEntity.ok(service.testTopicsAndDurations(subject, category));
+		return ResponseEntity.ok(service.testTopicsAndDurations(subject, category, _studentId));
 
 	}
 

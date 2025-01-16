@@ -29,10 +29,10 @@ import lombok.AllArgsConstructor;
 @RequestMapping("/auth")
 public class AuthenticateController {
 	private final AppAuthInterface appInterface;
-	
+
 	@Autowired
 	private ChatConsumer chatConsumer;
-	
+
 	@Autowired
 	private NotificationConsumer notificationConsumer;
 
@@ -48,60 +48,50 @@ public class AuthenticateController {
 	@JsonView(UserView.SigninView.class)
 	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
 			@RequestParam String role) {
-		
-		
 
 		return ResponseEntity.ok(appInterface.signIn(request, role));
 	}
 
-	//	Controller endpoint for requesting new access token upon token expiration
+	// Controller endpoint for requesting new access token upon token expiration
 	@PostMapping("/refresh-token")
 	@JsonView(UserView.SigninView.class)
-	public ResponseEntity<AppUserDTO> refreshToken(@RequestBody Map<String, String> request, HttpServletResponse respone) throws IOException {
-		
+	public ResponseEntity<AppUserDTO> refreshToken(@RequestBody Map<String, String> request,
+			HttpServletResponse respone) throws IOException {
+
 		;
-		
+
 		final String token = request.get("refreshToken");
 		;
 
 		return ResponseEntity.ok(appInterface.generateNewToken(token, respone));
 
 	}
-	
+
 	@PostMapping("/disconnect")
 	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Map<Integer, Integer> mapObj) {
-		
-		
+
 		System.out.println("Disconnecting from server");
-		mapObj.forEach((k, v) -> System.out.println("groupId: "+k+", studentId: "+v));
-		
-	
+		mapObj.forEach((k, v) -> System.out.println("groupId: " + k + ", studentId: " + v));
+
 		try {
-			
+
 			chatConsumer.disconnectGroup(mapObj);
-			
+
 			Integer studentId = mapObj.get(mapObj.keySet().toArray()[0]);
-			
+
 			notificationConsumer.disconnectFromSSE(studentId);
-			}
-			
-			
-		catch (Exception e) {
-			
-			System.out.println("Error disconnecting "+e);
-			
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-			
-			
 		}
-		
-		
-		return  new ResponseEntity<>(HttpStatus.OK);
-		
-		
-		
-		
+
+		catch (Exception e) {
+
+			System.out.println("Error disconnecting " + e);
+
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+		}
+
+		return new ResponseEntity<>(HttpStatus.OK);
+
 	}
-	
 
 }

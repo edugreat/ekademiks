@@ -432,6 +432,7 @@ public class AdminController {
 	public ResponseEntity<Object> getInstitutions(@RequestHeader String adminId) {
 		
 		
+		
 		try {
 			if(adminId != null) {
 				
@@ -439,6 +440,7 @@ public class AdminController {
 			}
 		} catch (Exception e) {
 			
+			System.out.println(e);
 			
 			return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
 		}

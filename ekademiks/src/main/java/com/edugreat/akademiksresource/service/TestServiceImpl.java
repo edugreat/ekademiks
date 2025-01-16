@@ -198,13 +198,30 @@ public class TestServiceImpl implements TestInterface {
 
 	// implements the testTopics method of the interface
 	@Override
-	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category) {
-		return testDao.findAllTopicsAndDurations(subject, Category.valueOf(category));
+	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category, Integer studentId) {
+		
+//		get the institution the student belongs to if not a guest user
+		Integer myInstitution = null;
+		
+		if(studentId > 0) {
+			myInstitution = studentDao.getMyInstitutionId(studentId);
+			
+			if(myInstitution == null) {
+				
+				return testDao.findAllTopicsAndDurationsForGuestUser(subject, Category.valueOf(category));
+				
+				
+			}
+		}
+		
+		return testDao.findAllTopicsAndDurations(subject, Category.valueOf(category), myInstitution );
 
 	}
 
 	@Override
 	public TopicAndDuration testTopicAndDuration(Integer testId) {
+		
+
 
 		return testDao.retrieveTopicAndurationById(testId);
 	}

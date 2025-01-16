@@ -38,8 +38,12 @@ public class Institution {
 	
 	@Column
 	private String localGovt; // the LGA the institution is located
+	
 	@Column(updatable = false)
 	private Integer createdBy;  // the identifier of the admin who created the account
+	
+	@Column
+	private Integer studentPopulation;
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "institution")
 	private List<Student> studentList = new ArrayList<>();
@@ -47,6 +51,8 @@ public class Institution {
 	public Institution() {
 		
 		createdOn = LocalDateTime.now();
+		
+		studentPopulation = 0;
 	}
 	
 	
@@ -59,6 +65,9 @@ public class Institution {
 		if(!list.isEmpty()) return false; //false return shows the student is already member of the institution and hence cannot be added again
 		
 		student.setInstitution(this);
+		
+
+		studentPopulation++; // increment student population count
 		
 		return studentList.add(student);
 		

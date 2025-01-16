@@ -29,11 +29,14 @@ public class InstitutionDTO {
 	
 	@Min(value = 1)
 	private Integer createdBy;
+	
+	private int studentPopulation;
 
-	public InstitutionDTO(Integer id, @NotNull @NotEmpty String name) {
+	public InstitutionDTO(Integer id, @NotNull @NotEmpty String name, int studentPopulation) {
 		
 		this.id = id;
 		this.name = name;
+		this.studentPopulation = studentPopulation;
 	}
 	
 	

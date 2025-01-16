@@ -9,7 +9,7 @@ import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 public interface NotificationInterface {
 	
 //	provides contract to post assessment notification assessments to student who are currently online
-	AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto);
+	AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto, Integer receipientInstitution);
 	
 	List<AssessmentUploadNotification> unreadNotificationsFor(Integer studentId);
 	

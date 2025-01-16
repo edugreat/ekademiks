@@ -821,7 +821,8 @@ levelDao.deleteByCategory(Category.valueOf(category));
 	
 	private InstitutionDTO mapToDTO(Institution institution) {
 		
-		return new InstitutionDTO(institution.getId(), institution.getName());
+		
+		return  new InstitutionDTO(institution.getId(), institution.getName(), institution.getStudentPopulation());
 		
 	}
 

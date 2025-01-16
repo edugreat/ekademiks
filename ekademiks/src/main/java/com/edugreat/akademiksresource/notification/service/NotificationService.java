@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.notification.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.NotificationInterface;
 import com.edugreat.akademiksresource.dao.AssessmentNotificationDao;
+import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.NotificationRequestDTO;
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
+import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Notification;
 import com.edugreat.akademiksresource.model.Student;
 
@@ -27,8 +30,12 @@ public class NotificationService implements NotificationInterface {
 	@Autowired
 	private StudentDao studentDao;
 
+	@Autowired
+	private InstitutionDao institutionDao;
+
 	@Transactional
-	public AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto) {
+	public AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto,
+			Integer receipientInstitutitonId) {
 
 		AssessmentUploadNotification newNotification = mapToNotification(dto);
 
@@ -75,7 +82,7 @@ public class NotificationService implements NotificationInterface {
 
 			return currentNotification;
 
-		} else {
+		} else if (audience.size() > 0) {
 
 			// get information about the student the notification is targeted at
 			List<Integer> idList = new ArrayList<>();
@@ -84,8 +91,8 @@ public class NotificationService implements NotificationInterface {
 
 			// get the students for whom the notification is sent
 
-			List<Student> targetedStudents = studentDao.findAllById(idList);
-			final int total = targetedStudents.size();
+			List<Student> targetStudents = studentDao.findAllById(idList);
+			final int total = targetStudents.size();
 
 			int batchSize = 5;
 			// Add notification to each of the students in batches
@@ -94,7 +101,7 @@ public class NotificationService implements NotificationInterface {
 				try {
 
 					int end = Math.min(start + batchSize, total);
-					var studentList = targetedStudents.subList(start, end);
+					var studentList = targetStudents.subList(start, end);
 					studentList.forEach(student -> student.AddNotification(newNotification));
 
 					// Perform batch update
@@ -112,9 +119,54 @@ public class NotificationService implements NotificationInterface {
 
 			// sets the audience the notification targets at
 			currentNotification.setReceipientIds(
-					targetedStudents.stream().map(student -> student.getId()).collect(Collectors.toList()));
+					targetStudents.stream().map(student -> student.getId()).collect(Collectors.toList()));
 
 			return currentNotification;
+		} else {
+
+//			the notification targets a particular institution
+
+//			get the institution
+			final Institution targetInstitution = institutionDao.findById(receipientInstitutitonId)
+					.orElseThrow(() -> new IllegalArgumentException("Targetted institution not found"));
+
+			List<Student> targetStudents = targetInstitution.getStudentList();
+
+			if (targetStudents.size() > 0) {
+
+				final int total = targetStudents.size();
+
+				int batchSize = 5;
+
+				for (int start = 0; start < total; start += batchSize) {
+
+					try {
+
+						int end = Math.min(start + batchSize, total);
+						var studentList = targetStudents.subList(start, end);
+						studentList.forEach(student -> student.AddNotification(newNotification));
+
+						// Perform batch update
+						studentDao.saveAllAndFlush(studentList);
+
+					} catch (Exception e) {
+
+						throw new IllegalArgumentException("Something went wrong!");
+					}
+
+				}
+
+			}
+
+			// get the just added notification
+			AssessmentUploadNotification currentNotification = assessmentNotificationDao.findByCreatedAt(createdAt);
+
+			// sets the audience the notification targets at
+			currentNotification.setReceipientIds(
+					targetStudents.stream().map(student -> student.getId()).collect(Collectors.toList()));
+
+			return currentNotification;
+
 		}
 
 	}

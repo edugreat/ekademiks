@@ -40,6 +40,10 @@ public class Test {
 
 	@Column
 	private long duration;
+	
+//	institution that owns the Test assessment. By default, the value null showing it belongs to all institutions
+	@Column
+	private Integer owningInstitution;
 
 	@ElementCollection
 	@CollectionTable(name = "instructions")
@@ -111,6 +115,17 @@ public class Test {
 	public Integer getId() {
 
 		return this.id;
+	}
+	
+	
+	
+
+	public Integer getOwningInstitution() {
+		return owningInstitution;
+	}
+
+	public void setOwningInstitution(Integer owningInstitution) {
+		this.owningInstitution = owningInstitution;
 	}
 
 	public void addQuestions(Collection<Question> questions) {

@@ -48,4 +48,7 @@ public class TestDTO {
 	@Pattern(regexp = "^[a-zA-Z\\s]+$", message = "subject name no acceptable")
 	// subject that this test is to be associated to; retrievable from the database
 	private String subjectName;
+	
+//	field refers to the institution which owns this test
+	private Integer owingInstitution;
 }

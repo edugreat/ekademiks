@@ -23,7 +23,7 @@ public interface TestInterface {
 
 	// method that retrieves all the topics and their durations for a subject and
 	// category
-	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category);
+	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category, Integer studentId);
 
 	/*
 	 * Returns questions wrapper using the test topic and category The

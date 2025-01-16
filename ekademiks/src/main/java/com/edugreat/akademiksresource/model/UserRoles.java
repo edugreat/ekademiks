@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 public class UserRoles {
 
 	@Enumerated(EnumType.STRING)
+	@Column(length = 16)
 	private Roles role;
 
 }
