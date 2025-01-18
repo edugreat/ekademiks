@@ -53,6 +53,10 @@ public class Student extends AppUser {
 	@ManyToOne
 	@JoinColumn(name = "institution_id", nullable = true)
 	private Institution institution;
+	
+//	status depicts student's academic status such as SENIOR or JUNIOR
+	@Column(nullable = false)
+	String status;
 
 	public Student() {
 		super();
@@ -225,5 +229,15 @@ public class Student extends AppUser {
 		
 		this.institution = institution;
 	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
+	
 
 }

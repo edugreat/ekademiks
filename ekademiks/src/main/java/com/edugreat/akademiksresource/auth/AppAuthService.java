@@ -165,6 +165,14 @@ public class AppAuthService implements AppAuthInterface {
 				var dto = mapper.map(student, StudentDTO.class);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
+				
+				
+				
+				
+				dto.setStatus(student.getStatus());
+				
+				
+				
 				return (T) dto;
 			}
 
