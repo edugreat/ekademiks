@@ -1,19 +1,24 @@
 package com.edugreat.akademiksresource.assignment;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
 
 // Base class of theory and PDF based assignments
 
-@MappedSuperclass
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "type")
 @Data
-public class Assignment {
+public abstract class Assignment {
 	
 	
 	@Column
@@ -41,7 +46,7 @@ public class Assignment {
 	}
 	
 	
-	
+	public abstract String getType();
 	
 	
 	

@@ -16,13 +16,18 @@ public class AssignmentDTO {
 	@NotNull
 	private String answer;
 	
+	private String type;
+	
+	
+	
 	public AssignmentDTO() {}
 
-	public AssignmentDTO(Integer id, @NotNull int _index, @NotNull String problem, @NotNull String answer) {
+	public AssignmentDTO(Integer id, @NotNull int _index, @NotNull String problem, @NotNull String answer, String type) {
 		this.id = id;
 		this._index = _index;
 		this.problem = problem;
 		this.answer = answer;
+		this.type = type;
 	}
 
 	public AssignmentDTO(@NotNull int _index, @NotNull String problem, @NotNull String answer) {
@@ -31,7 +36,7 @@ public class AssignmentDTO {
 		this.answer = answer;
 	}
 	
-	
+
 	
 
 }

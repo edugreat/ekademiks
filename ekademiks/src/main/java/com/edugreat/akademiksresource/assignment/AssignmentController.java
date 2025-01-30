@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
 
 
-@RestController("/assignment")
+
+@RestController("/assignments")
 public class AssignmentController {
 	
 	@Autowired
@@ -64,6 +66,32 @@ public class AssignmentController {
 		
 		
 	}
+	
+	@PostMapping
+	public ResponseEntity<Object> postAssignment(@RequestBody @Valid AssignmentDetailsDTO details) {
+		
+		Integer detailsId = null;
+		
+		try {
+			
+			detailsId = interfaceObj.setAssignment(details);
+			
+		} catch (Exception e) {
+			
+			return new ResponseEntity<Object>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+		}
+		
+		
+		return new ResponseEntity<Object>(detailsId, HttpStatus.OK);
+	}
+	
+	@GetMapping("/hasInst")
+	public String getMethodName(@RequestParam String param) {
+		
+		return new String();
+	}
+	
+	
 	
 
 }

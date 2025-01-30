@@ -41,6 +41,8 @@ public class SecurityConfig {
 			"Access-Control-Request-Headers","adminid", "institutionId","studentId" };
 	private static final String[] EXPOSED_HEADERS = { "Origin", "Content-Type", "Accept", "Authorization",
 			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials","adminid","institutionId","studentId" };
+	
+	private static final String[] ADMINS_URL = {"/admins/**","/assignments"};
 
 	private static final String[] ALLOWED_METHODS = { "GET", "POST", "PUT", "DELETE", "PATCH" };
 
@@ -55,7 +57,7 @@ public class SecurityConfig {
 			configuration.setExposedHeaders(List.of(EXPOSED_HEADERS));
 			return configuration;
 		})).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_API)
-				.permitAll().requestMatchers("/admins/**").hasAnyAuthority("Admin").requestMatchers("/chats/**").hasAnyAuthority("Student")
+				.permitAll().requestMatchers(ADMINS_URL).hasAnyAuthority("Admin").requestMatchers("/chats/**").hasAnyAuthority("Student")
 
 		)
 

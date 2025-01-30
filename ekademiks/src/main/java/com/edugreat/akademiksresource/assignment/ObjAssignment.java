@@ -5,16 +5,26 @@ import java.util.Set;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
 
 @Entity
-@Table
+@DiscriminatorValue("objectives")
 public class ObjAssignment extends Assignment {
 	
-	
+
+
+	public ObjAssignment() {
+		super();
+		
+	}
+
+	public ObjAssignment(int _index, String problem, String answer) {
+		super(_index, problem, answer);
+		
+	}
 
 	@ElementCollection
 	@CollectionTable(name = "assignment_options",
@@ -29,6 +39,13 @@ public class ObjAssignment extends Assignment {
 
 	public void setOptions(Set<String> options) {
 		this.options = options;
+	}
+
+	@Override
+	public String getType() {
+	
+		
+		return "objectives";
 	}
 	
 	

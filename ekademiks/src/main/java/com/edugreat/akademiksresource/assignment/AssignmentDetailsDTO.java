@@ -27,15 +27,13 @@ public class AssignmentDetailsDTO {
 //	institution that owns the assignment
 	private int institution;
 
-	
-//	Assignment can be one or more objective questions, one or theoretical questions or none(the case where assignment is contained in an uploaded file)
-	private Set<Assignment> assignments;
-	
+
 	@NotNull
 	@Digits(fraction = 1, integer = 3,  message = "invalid mark for assignment")
 	private Double allocatedMark;
 	
-	private AssignmentDTO assignmentDTO;
+//	Assignment can be one or more objective questions, one or theoretical questions or none(the case where assignment is contained in an uploaded file)
+	private Set<AssignmentDTO> assignmentDTO;
 	
 	
 	private LocalDateTime creationDate;
@@ -57,7 +55,7 @@ public class AssignmentDetailsDTO {
 	public AssignmentDetailsDTO(Integer id, @NotNull String name, Integer instructor, @NotNull String subject,
 			int institution,
 			@NotNull @Digits(fraction = 1, integer = 3, message = "invalid mark for assignment") Double allocatedMark,
-			AssignmentDTO assignmentDTO, LocalDateTime creationDate, @Future LocalDateTime submissionEnds,
+			 LocalDateTime creationDate, @Future LocalDateTime submissionEnds,
 			@NotNull String category, @Min(value = 1) int totalQuestions) {
 		this.id = id;
 		this.name = name;
@@ -65,7 +63,6 @@ public class AssignmentDetailsDTO {
 		this.subject = subject;
 		this.institution = institution;
 		this.allocatedMark = allocatedMark;
-		this.assignmentDTO = assignmentDTO;
 		this.creationDate = creationDate;
 		this.submissionEnds = submissionEnds;
 		this.category = category;
