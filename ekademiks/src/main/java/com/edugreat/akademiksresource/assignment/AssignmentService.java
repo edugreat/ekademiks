@@ -118,11 +118,6 @@ public class AssignmentService implements AssignmentInterface {
 		return assignmentDetailsDao.save(assignmentDetails).getId();
 	}
 
-	@Override
-	public boolean hasInstitution(Integer adminId) {
-		
-		return assignmentDetailsDao.hasInstitution(adminId);
-	}
 	
 	
 

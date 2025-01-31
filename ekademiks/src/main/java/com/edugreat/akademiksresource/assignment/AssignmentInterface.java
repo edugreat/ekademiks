@@ -9,11 +9,7 @@ public interface AssignmentInterface {
 	
 //	sets assignment without PDF files
 	Integer setAssignment(AssignmentDetailsDTO details);
-	
-//	used to determines if the admin user whose ID is referenced has any registered institutions for which they can be allowed
-//	to post assignments
-	boolean hasInstitution(Integer adminId);
-	
+
 	
 
 }

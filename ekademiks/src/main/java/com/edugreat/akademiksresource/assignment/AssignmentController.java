@@ -87,12 +87,6 @@ public class AssignmentController {
 		return new ResponseEntity<Object>(detailsId, HttpStatus.OK);
 	}
 	
-	@GetMapping("/hasInst")
-	public ResponseEntity<Object> hasInstitutions(@RequestHeader String adminId) {
-		
-		return new ResponseEntity<Object>(interfaceObj.hasInstitution(Integer.parseInt(adminId)), HttpStatus.CONTINUE);
-	}
-	
 	
 	
 
