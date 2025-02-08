@@ -1,65 +1,49 @@
 package com.edugreat.akademiksresource.assignment;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Setter;
 
-@Table
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+
+
 @Entity
-@Data
-public class AssignmentPDF {
+@DiscriminatorValue("pdf")
+public class AssignmentPDF extends AssignmentResource {
 	
-	@Column
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Setter(AccessLevel.NONE)
-	private Integer id;
+
 	
-	 @Column
-	  private String fileName;
-	  
-	 @Column
-	  private String fileType;
-	  
-	  @Column(length = 500000)
-	  private byte[] fileByte;
-	  
-	  public  AssignmentPDF() {}
-	  
-	
-	public AssignmentPDF(String fileName, String fileType, byte[] fileByte) {
-		this.fileName = fileName;
-		this.fileType = fileType;
-		this.fileByte = fileByte;
+
+	public AssignmentPDF() {
+		super();
+		
 	}
 
 
+	public AssignmentPDF(String fileName, String fileType, byte[] fileByte) {
+		super(fileName, fileType, fileByte);
+		
+	}
+
 
 	@Override
-	public boolean equals(Object obj) {
+	public String getType() {
 		
-		if(this == obj) return true;
-		
-		if(obj == null || getClass() != obj.getClass()) return false;
-		
+		return "application/pdf";
+	}
 	
-		
-		
-		return this.id.equals(((AssignmentPDF)obj).id);
+	
+	@Override
+	public boolean equals(Object o) {
+	    if (this == o) return true;
+	    if (o == null || getClass() != o.getClass()) return false;
+	    Objectives that = (Objectives) o;
+	    return super.getId() != null && super.getId().equals(that.getId());
 	}
 
 	@Override
 	public int hashCode() {
-		
-		return id.hashCode();
+	    return getClass().hashCode();
 	}
-	
-	
 
+
+	
 }

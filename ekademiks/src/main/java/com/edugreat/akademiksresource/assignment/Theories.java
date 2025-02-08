@@ -2,18 +2,19 @@ package com.edugreat.akademiksresource.assignment;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import lombok.AllArgsConstructor;
 
 @Entity
 @DiscriminatorValue("theory")
-public class TheoryAssignment extends Assignment {
+@AllArgsConstructor
+public class Theories extends AssignmentResource {
+	
 
-	public TheoryAssignment() {
-		super();
-		
-	}
+	
+	
 
-	public TheoryAssignment(int _index, String problem, String answer) {
-		super(_index, problem, answer);
+	public Theories(String answer, int _index, String problem) {
+		super(answer, _index, problem);
 		
 	}
 
@@ -22,9 +23,13 @@ public class TheoryAssignment extends Assignment {
 		
 		return "theory";
 	}
+
 	
 	
-	
+
+
+
+
 	
 	
 }

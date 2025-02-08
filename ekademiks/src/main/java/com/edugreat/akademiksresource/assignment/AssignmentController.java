@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,28 +15,37 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 
 
-@RestController("/assignments")
+@RestController
+@RequestMapping("/assignments")
 public class AssignmentController {
 	
 	@Autowired
-	private AssignmentInterface interfaceObj;
+	private AssignmentInterface _interface;
 	
 	
 	
+//	post assignment details along with pdf 
 	@PostMapping(path = "/file", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-	public ResponseEntity<Object> postAssignment(@RequestPart @Valid AssignmentDetailsDTO details,
-			@RequestPart  MultipartFile[] pdfs) {
+	public ResponseEntity<Object> postAssignment(@RequestPart("details") AssignmentDetailsDTO details, 
+			@RequestPart("pdf") MultipartFile[] files) {
+		
+		System.out.println(">>>>>>>>>>>>>>>>>>>");
+		
+		
 		
 		Integer detailsId  = null;
+		
+		
 		
 		try {
 			
 			
-			detailsId = interfaceObj.setAssignment(details, processFiles(pdfs));
+			
+			detailsId = _interface.setAssignment(details, processFiles(files));
 		} catch (Exception e2) {
 			
 			return new ResponseEntity<Object>(e2.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
@@ -55,12 +63,14 @@ public class AssignmentController {
 		for(MultipartFile file: files) {
 			
 			AssignmentPdfDTO pdf = new AssignmentPdfDTO(
-					file.getOriginalFilename(), 
+					file.getOriginalFilename(),
 					file.getContentType(),
 					file.getBytes()
 					);
 			
 			pdfs.add(pdf);
+			
+			System.out.println(pdf.toString());
 		}
 		
 		
@@ -69,6 +79,7 @@ public class AssignmentController {
 		
 	}
 	
+//	post assignment with no pdf
 	@PostMapping
 	public ResponseEntity<Object> postAssignment(@RequestBody @Valid AssignmentDetailsDTO details) {
 		
@@ -76,7 +87,7 @@ public class AssignmentController {
 		
 		try {
 			
-			detailsId = interfaceObj.setAssignment(details);
+			detailsId = _interface.setAssignment(details);
 			
 		} catch (Exception e) {
 			

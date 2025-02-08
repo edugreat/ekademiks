@@ -14,6 +14,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -28,8 +30,7 @@ import lombok.Setter;
 // Entity holds details about a given assignment
 public class AssignmentDetails {
 	
-//	unique identifier
-	@Column
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Setter(AccessLevel.NONE)
@@ -40,7 +41,8 @@ public class AssignmentDetails {
 	private String name;
 	
 //	the instructor that set the assignment 
-	@OneToOne
+	@ManyToOne
+	@JoinColumn(name = "instructor_id")
 	private Admins instructor;
 	
 //	the assignment subject
@@ -48,14 +50,15 @@ public class AssignmentDetails {
 	private String subject;
 	
 //	institution the assignment belongs to
-	@OneToOne
+	@ManyToOne
+	@JoinColumn(name = "institution_id")
 	private Institution institution;
 	
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	private Set<AssignmentPDF> assignmentPDFs = new HashSet<>();
+
 	
-	@OneToMany(cascade = CascadeType.ALL)
-	private Set<Assignment> assignments = new HashSet<>();
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JoinColumn(name = "assignment_details_id")
+	private Set<AssignmentResource> assignmentResources = new HashSet<>();
 	
 //	allocated mark for the assignment
 	@Column(updatable = true, nullable = false)
@@ -104,19 +107,13 @@ public class AssignmentDetails {
 	}
 	
 	
-	public void addPDF(AssignmentPDF pdf) {
+	public void addAssignment(AssignmentResource resource) {
 		
-		if(assignmentPDFs.contains(pdf)) throw new IllegalArgumentException("Atempt to upload duplicate PDFs");
+		if(assignmentResources.contains(resource)) throw new IllegalArgumentException("attempt at posting duplicate assignments!");
 		
-		assignmentPDFs.add(pdf);
-	}
-	
-	
-	public void addAssignment(Assignment assignment) {
+		assignmentResources.add(resource);
 		
-		if(assignments.contains(assignment)) throw new IllegalArgumentException("Duplicate assignment");
 		
-		assignments.add(assignment);
 	}
 	
 

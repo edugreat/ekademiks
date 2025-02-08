@@ -2,6 +2,6 @@ package com.edugreat.akademiksresource.assignment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TheoryAssignmentDao extends JpaRepository<TheoryAssignment, Integer> {
+public interface TheoryAssignmentDao extends JpaRepository<Theories, Integer> {
 
 }

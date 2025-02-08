@@ -3,10 +3,11 @@ package com.edugreat.akademiksresource.assignment;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-@Data
-public class AssignmentPdfDTO {
+
+
+public class AssignmentPdfDTO extends AssignmentResourceDTO {
 	
-	private Integer id;
+	
 	
 	@NotNull
 	private String fileName;
@@ -14,23 +15,56 @@ public class AssignmentPdfDTO {
 	@NotNull
 	private String fileType;
 	
+	@Override
+	public String getType() {
+		
+		return "pdf";
+	}
+
+
 	@NotNull
 	private byte[] fileByte;
 	
 	public AssignmentPdfDTO() {}
 
-	public AssignmentPdfDTO(Integer id, @NotNull String fileName, @NotNull String fileType, @NotNull byte[] fileByte) {
-		this.id = id;
-		this.fileName = fileName;
-		this.fileType = fileType;
-		this.fileByte = fileByte;
-	}
-
+	
 	public AssignmentPdfDTO(@NotNull String fileName, @NotNull String fileType, @NotNull byte[] fileByte) {
 		this.fileName = fileName;
 		this.fileType = fileType;
 		this.fileByte = fileByte;
 	}
+
+
+	public String getFileName() {
+		return fileName;
+	}
+
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+
+	public String getFileType() {
+		return fileType;
+	}
+
+
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
+	}
+
+
+	public byte[] getFileByte() {
+		return fileByte;
+	}
+
+
+	public void setFileByte(byte[] fileByte) {
+		this.fileByte = fileByte;
+	}
+	
+	
 	
 	
 	

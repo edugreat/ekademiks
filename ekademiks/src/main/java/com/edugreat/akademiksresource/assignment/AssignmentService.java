@@ -1,6 +1,5 @@
 package com.edugreat.akademiksresource.assignment;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +25,15 @@ public class AssignmentService implements AssignmentInterface {
 	@Override
 	@Transactional
 	public Integer setAssignment(AssignmentDetailsDTO details, Set<AssignmentPdfDTO> pdfs) {
-
+		
 //		confirm such assignment does not exist for the institution
-		final boolean conflicts = assignmentDetailsDao.existConflicts(details.getInstitution(), details.getCategory(),
+		final boolean conflicts = assignmentDetailsDao.existsConflicts(details.getInstitution(), details.getCategory(),
 				details.getName());
+		
+		System.out.println("returned value");
+		System.out.println(conflicts);
+		
+		
 
 		if (conflicts)
 			throw new IllegalArgumentException("duplicate assignment");
@@ -37,27 +41,39 @@ public class AssignmentService implements AssignmentInterface {
 //		get the admin's ID
 		var admin = adminsDao.findById(details.getAdmin())
 				.orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+		
+		System.out.println("after 1");
 
 //		get the institution
 		var institution = institutionDao.findById(details.getInstitution())
 				.orElseThrow(() -> new IllegalArgumentException("institution not found"));
+		System.out.println("after 2");
+		
 
 		AssignmentDetails assignmentDetails = new AssignmentDetails(admin, details.getSubject(), institution,
 				details.getAllocatedMark(), details.getSubmissionEnds(), details.getName(), details.getCategory(),
 				details.getType(), details.getTotalQuestions());
+		
+		System.out.println("after 3");
 
-		Set<AssignmentPDF> _pdfs = new HashSet<>();
+		
 
-		for (var pdf : pdfs) {
+		for (var _pdf : pdfs) {
 
-			var _pdf = new AssignmentPDF(pdf.getFileName(), pdf.getFileType(), pdf.getFileByte());
-			_pdfs.add(_pdf);
+			var pdf = new AssignmentPDF(_pdf.getFileName(), _pdf.getFileType(), _pdf.getFileByte());
+			assignmentDetails.addAssignment(pdf);
 		}
+		
+		var saved =  assignmentDetailsDao.save(assignmentDetails);
+		
+		System.out.println("saved: "+saved.getId());
+		
+		
 
-		assignmentDetails.setAssignmentPDFs(_pdfs);
+		
 
 //		returns the ID to the client
-		return assignmentDetailsDao.save(assignmentDetails).getId();
+		return saved.getId();
 
 	}
 
@@ -66,7 +82,7 @@ public class AssignmentService implements AssignmentInterface {
 	public Integer setAssignment(AssignmentDetailsDTO details) {
 
 //		checks there is no duplicate attempt
-		final boolean conflicts = assignmentDetailsDao.existConflicts(details.getInstitution(), details.getCategory(),
+		final boolean conflicts = assignmentDetailsDao.existsConflicts(details.getInstitution(), details.getCategory(),
 				details.getName());
 
 		if (conflicts)
@@ -84,41 +100,49 @@ public class AssignmentService implements AssignmentInterface {
 				details.getAllocatedMark(), details.getSubmissionEnds(), details.getName(), details.getCategory(),
 				details.getType(), details.getTotalQuestions());
 
-		Set<AssignmentDTO> dtos = details.getAssignmentDTO();
+		Set<AssignmentResourceDTO> dtos = details.getAssignmentResourceDTO();
+		
+		
 
-//		get the question type
-		switch (details.getType().toLowerCase()) {
-
-		case "theory":
-
-			for (var dto : dtos) {
-
-				Assignment theory = new TheoryAssignment(dto.get_index(), dto.getProblem(), dto.getAnswer());
-				assignmentDetails.addAssignment(theory);
-
+		
+		for(var _dto : dtos) {
+			
+			if(_dto.getType().equalsIgnoreCase("objectives")) {
+				
+				System.out.println("objectives question");
+				
+				var obj = (ObjectiveAssignmentDTO)_dto;
+				
+				var assignment = new Objectives(obj.getAnswer(), obj.get_index(), obj.getProblem());
+				
+				assignment.addOptions(obj.getOptions());
+				
+				
+				assignmentDetails.addAssignment(assignment);
+				
+				
+				
+			}else if(_dto.getType().equalsIgnoreCase("theory")) {
+				
+				System.out.println("theory question");
+				
+				var theory = (TheoreticalAssigDTO)_dto;
+				
+				var assignment = new Theories(theory.getAnswer(), theory.get_index(), theory.getProblem());	
+				
+				assignmentDetails.addAssignment(assignment);
+				
 			}
+			
 
-			break;
-
-		case "objectives":
-
-			for (var dto : dtos) {
-
-				Assignment obj = new ObjAssignment(dto.get_index(), dto.getProblem(), dto.getAnswer());
-				((ObjAssignment) obj).setOptions(((ObjAssigDTO) dto).getOptions());
-
-			}
-
-			break;
-
-		default:
-			throw new IllegalArgumentException("Unexpected value: " + details.getType().toLowerCase());
-		}
-
-		return assignmentDetailsDao.save(assignmentDetails).getId();
+		
+		
 	}
 
 	
+		return assignmentDetailsDao.save(assignmentDetails).getId();
+	
+	}
 	
 
 }
