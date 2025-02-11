@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.assignment;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.validation.constraints.Digits;
@@ -33,7 +34,7 @@ public class AssignmentDetailsDTO {
 	private Double allocatedMark;
 	
 //	AssignmentResource can be one or more objective questions, one or theoretical questions or none(the case where assignment is contained in an uploaded file)
-	private Set<AssignmentResourceDTO> assignmentResourceDTO;
+	private Set<AssignmentResourceDTO> assignmentResourceDTO = new HashSet<>();
 	
 	
 	private LocalDateTime creationDate;

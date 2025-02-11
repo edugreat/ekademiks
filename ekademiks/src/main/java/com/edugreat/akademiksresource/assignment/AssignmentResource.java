@@ -68,7 +68,7 @@ public abstract class AssignmentResource {
 			return true;
 		if (o == null || getClass() != o.getClass())
 			return false;
-		Objectives that = (Objectives) o;
+		AssignmentResource that = (AssignmentResource) o;
 		return getId() != null && getId().equals(that.getId());
 	}
 

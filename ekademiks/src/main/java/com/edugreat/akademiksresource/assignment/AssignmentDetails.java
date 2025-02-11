@@ -109,9 +109,15 @@ public class AssignmentDetails {
 	
 	public void addAssignment(AssignmentResource resource) {
 		
+		
+		
 		if(assignmentResources.contains(resource)) throw new IllegalArgumentException("attempt at posting duplicate assignments!");
 		
+		
+		
 		assignmentResources.add(resource);
+		
+		
 		
 		
 	}

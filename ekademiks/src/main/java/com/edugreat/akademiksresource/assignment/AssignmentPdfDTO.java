@@ -5,7 +5,7 @@ import lombok.Data;
 
 
 
-public class AssignmentPdfDTO extends AssignmentResourceDTO {
+public class AssignmentPdfDTO  {
 	
 	
 	
@@ -15,7 +15,7 @@ public class AssignmentPdfDTO extends AssignmentResourceDTO {
 	@NotNull
 	private String fileType;
 	
-	@Override
+	
 	public String getType() {
 		
 		return "pdf";

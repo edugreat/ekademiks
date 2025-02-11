@@ -83,6 +83,9 @@ public class AssignmentController {
 	@PostMapping
 	public ResponseEntity<Object> postAssignment(@RequestBody @Valid AssignmentDetailsDTO details) {
 		
+		
+		System.out.println("controller");
+		
 		Integer detailsId = null;
 		
 		try {
@@ -90,6 +93,9 @@ public class AssignmentController {
 			detailsId = _interface.setAssignment(details);
 			
 		} catch (Exception e) {
+			
+			System.out.println(e.getMessage());
+			
 			
 			return new ResponseEntity<Object>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
 		}

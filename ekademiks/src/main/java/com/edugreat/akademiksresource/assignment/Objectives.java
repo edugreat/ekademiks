@@ -1,7 +1,7 @@
 package com.edugreat.akademiksresource.assignment;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -9,6 +9,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapKeyColumn;
 
 @Entity
 @DiscriminatorValue("obj")
@@ -19,11 +20,10 @@ public class Objectives extends AssignmentResource {
 	
 
 	@ElementCollection
-	@CollectionTable(name = "obj_options",
-	joinColumns = @JoinColumn(name = "obj_id")
-			)
-	@Column(name = "obj_option")
-	private Set<String> options = new HashSet<>();
+	@CollectionTable(name = "obj_options")
+	@MapKeyColumn(name = "letter")
+	@Column(name = "`option`")
+	private Map<String, String> options = new HashMap<>();
 
 
 
@@ -55,14 +55,17 @@ public class Objectives extends AssignmentResource {
 	}
 
 	
-	public void addOptions(Set<String> otpions) {
+	public void addOptions(Map<String, String> options) {
 		
-		for(String option : options) {
+		options.forEach((k,v ) -> {
 			
-			if(this.options.contains(option)) throw new IllegalArgumentException("attempt at having duplicate options");
+			if(this.options.containsValue(v)) throw new IllegalArgumentException("Duplicate options detected!");
 			
-			this.options.add(option);
-		}
+			this.options.put(k, v);
+			
+		});
+		
+	
 	}
 	
 
