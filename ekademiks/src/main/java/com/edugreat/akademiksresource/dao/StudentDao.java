@@ -74,6 +74,9 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 //	retrieves a student's institution id
 	@Query("SELECT s.institution.id FROM Student s WHERE s.id =:studentId")
 	Integer getMyInstitutionId(Integer studentId);
+
+	@Query("SELECT s.id FROM Student s")
+	List<Integer> findAllIds();
 	
 
 	

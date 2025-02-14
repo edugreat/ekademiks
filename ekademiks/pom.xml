@@ -69,6 +69,14 @@
 
 		</dependency>
 
+		<!-- REDIS DEPENDENCY-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		
+		
+
 		<!--
 		https://mvnrepository.com/artifact/io.hypersistence/hypersistence-utils-hibernate-62 -->
 		<dependency>

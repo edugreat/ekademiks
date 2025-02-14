@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -110,10 +113,33 @@ public class AdminService implements AdminInterface {
 		return searchUser(email);
 	}
 
+
+	
+//	returns cached objects of student from the studentCache
 	@Override
 	public List<StudentDTO> allStudents() {
+		
+		var studentIds = getAllStudentIds();
 
-		return studentDao.findAll().stream().map(student -> this.mapToStudentDTO(student)).collect(Collectors.toList());
+		return studentIds.stream().
+				map(this::findStudentById)
+				.collect(Collectors.toList());
+				
+	}
+	
+	
+	@Cacheable(value = "studentIdsCache")
+	private List<Integer> getAllStudentIds(){
+		
+		return studentDao.findAllIds();
+	}
+	
+	@Cacheable(value = "studentCache", key = "#id")
+	private StudentDTO findStudentById(Integer id) {
+		
+		var student = studentDao.findById(id).orElseThrow(() -> new RuntimeException("Student not found !"));
+		
+		return  this.mapToStudentDTO(student);
 	}
 
 	@Override
@@ -189,9 +215,16 @@ public class AdminService implements AdminInterface {
 		});
 
 	}
-
+	
 	@Transactional
 	@Override
+	@Caching(
+			evict = {
+					@CacheEvict(value = "studentCache", key = "#studentId"),
+					@CacheEvict(value = "studentIdsCache", allEntries = true)
+			}
+			
+			)
 	public void deleteStudentAccount(Integer studentId) {
 
 		final Optional<Student> optional = studentDao.findById(studentId);
@@ -652,10 +685,34 @@ public class AdminService implements AdminInterface {
 		
 	}
 	
+	
+
+	@Cacheable(value = "subjectIdsCache")
+	private List<Integer> findAllSubjectIdsByCategory(Category category){
+		
+		return subjectDao.allIdsByCategory(category);
+		
+	}
+	
+//	fetches a list of subject names belonging to the given category
+	@Cacheable(value = "subjectNameCache", key = "#id")
+	private String findSubjectNameByCategoryAndId(Integer id) {
+		
+		return subjectDao.findSubjectNameByCategoryAndId(id);
+		
+		
+		
+		
+	}
+
+	
 	@Override
 	public Map<String, List<String>> assessmentSubjects() {
 		
 		Map<String, List<String>> subjectNames = new TreeMap<>();
+		
+//		get cached values of subject names
+		List<Integer> subjectNameIds = 
 		
 		List<String> subjectNamesForJuniorCategory = subjectDao.findSubjectNamesByCategory(Category.valueOf("JUNIOR"));
 		
