@@ -29,8 +29,8 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 	@Query("SELECT s.id FROM Subject s WHERE s.level.category =:category")
 	public List<Integer> allIdsByCategory(Category category);
 
-	@Query("SELECT s.name FROM Subject s WHERE s.id =:id")
-	public String findSubjectNameByCategoryAndId(Integer id);
+	@Query("SELECT s.subjectName FROM Subject s WHERE s.id =:id")
+	public String findSubjectNameById(Integer id);
 
 
 
