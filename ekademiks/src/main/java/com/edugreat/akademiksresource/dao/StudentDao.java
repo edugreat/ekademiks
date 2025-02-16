@@ -5,6 +5,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -77,8 +83,32 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 
 	@Query("SELECT s.id FROM Student s")
 	List<Integer> findAllIds();
+
+	@Override
+	@CachePut(value = "studentCache", key = "#entity.id")
+	 <S extends Student> S save(S entity);
+
+	@Override
+	@Cacheable(value = "studentCache", key = "#id")
+    Optional<Student> findById(Integer id);
+
+	@Override
+	@Caching(evict = {
+			@CacheEvict(value = "studentCache", key = "#id"),
+			@CacheEvict(value = "studentsCache", key = "'allStudents'")
+	})
+	 void deleteById(Integer id);
+
+	@Override
+	@Cacheable(value = "studentsCache", key = "'allStudents'")
+	 <S extends Student> List<S> findAll(Example<S> example);
+
+	@Override
+	@Cacheable(value = "studentsCache", key = "'allStudents'")
+	 <S extends Student> List<S> findAll(Example<S> example, Sort sort);
 	
 
+	
 	
 	
 }

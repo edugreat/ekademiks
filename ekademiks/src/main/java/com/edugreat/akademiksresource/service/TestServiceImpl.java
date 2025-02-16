@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import jakarta.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
@@ -70,7 +71,10 @@ public class TestServiceImpl implements TestInterface {
 	}
 
 	@Override
+	@Cacheable(value = "welcomeMessageCache")
 	public Collection<String> getWelcomeMessages() {
+		
+		System.out.println("welcome message called");
 
 		return welcomeMsgDao.findAllMessages();
 	}
@@ -169,7 +173,7 @@ public class TestServiceImpl implements TestInterface {
 			double score = scoreTest(questions, selectedOptions);
 			
 //			Compute the student's average score
-		final double averageScore = 	computeAverageScore(totalQuestionsAsked, score);
+		   final double averageScore = 	computeAverageScore(totalQuestionsAsked, score);
 
 			// create new StudentTest object to associate the records with and return the
 			// object

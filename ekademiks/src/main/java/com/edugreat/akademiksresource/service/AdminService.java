@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -123,6 +124,8 @@ public class AdminService implements AdminInterface {
 
 	@Cacheable(value = "studentIdsCache")
 	public List<Integer> getAllStudentIds() {
+		
+		System.out.println("fetching all students");
 
 		return studentDao.findAllIds();
 	}
@@ -565,7 +568,10 @@ public class AdminService implements AdminInterface {
 	}
 
 	@Override
+	@Cacheable(value = "assessmentLevelCache", key = "'allLevels'")
 	public Iterable<LevelDTO> findAllLevels() {
+		
+		System.out.println("Academic level called");
 
 		return levelDao.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
 	}
@@ -665,6 +671,8 @@ public class AdminService implements AdminInterface {
 
 	@Cacheable(value = "subjectIdsByCategoryCache", key = "#category")
 	public List<Integer> findAllSubjectIdsByCategory(String category) {
+		
+		System.out.println("fetching category");
 
 		return subjectDao.allIdsByCategory(Category.valueOf(category));
 
@@ -673,7 +681,8 @@ public class AdminService implements AdminInterface {
 //	fetches name belonging to the given category
 	@Cacheable(value = "subjectNameByIdCache", key = "#id")
 	public String findSubjectNameById(Integer id) {
-
+		
+		System.out.println("fetching subjects");
 		return subjectDao.findSubjectNameById(id);
 
 	}
@@ -682,6 +691,8 @@ public class AdminService implements AdminInterface {
 	public Map<String, List<String>> assessmentSubjects() {
 
 		Map<String, List<String>> subjectNames = new TreeMap<>();
+		
+		
 
 //		get the cached list of categories 
 		List<Integer> seniorCategoryIds = findAllSubjectIdsByCategory(Category.SENIOR.name());
