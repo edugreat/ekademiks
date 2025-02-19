@@ -621,7 +621,10 @@ public class AdminService implements AdminInterface {
 	}
 
 	@Override
+	@Cacheable(value = CacheNames.ASSESSMENT_TOPICS_CACHE, key = "'allTopics'")
 	public Map<String, List<String>> getAssessmentTopics() {
+		
+		System.out.println("fetching topics");
 
 		Map<String, List<String>> map = new TreeMap<>();
 //		get all assessment topics for junior assessments
@@ -665,6 +668,13 @@ public class AdminService implements AdminInterface {
 
 			updatableTest.setTestName(newName);
 			testDao.saveAndFlush(updatableTest);
+			
+			Cache cachedTopics = cacheManager.getCache(CacheNames.ASSESSMENT_TOPICS_CACHE);
+			Cache cachedAssessmentCategory = cacheManager.getCache(CacheNames.ASSESSMENT_CATEGORIES_CACHE);
+			
+			cachedTopics.invalidate();
+			
+			cachedAssessmentCategory.invalidate();
 
 		});
 
@@ -680,6 +690,16 @@ public class AdminService implements AdminInterface {
 			throw new IllegalArgumentException("Record does not exist!");
 
 		testDao.delete(deletable);
+		
+		Cache cachedTopics = cacheManager.getCache(CacheNames.ASSESSMENT_TOPICS_CACHE);
+		
+		Cache cachedAssessments = cacheManager.getCache(CacheNames.ASSESSMENT_CATEGORIES_CACHE);
+		
+		
+		
+		
+		cachedTopics.invalidate();
+		cachedAssessments.invalidate();
 
 	}
 
@@ -822,6 +842,11 @@ public class AdminService implements AdminInterface {
 			Institution institution = mapToInstitution(institutionDTO);
 
 			institutionDao.save(institution);
+			
+//			removes previous record of institution cached with the adminId
+			Cache cache = cacheManager.getCache(CacheNames.INSTITUTION_CACHE);
+			cache.evictIfPresent(institutionDTO.getCreatedBy());
+			
 		} catch (Exception e) {
 
 			throw e;
@@ -839,6 +864,7 @@ public class AdminService implements AdminInterface {
 	}
 
 	@Override
+	@Cacheable(value = CacheNames.INSTITUTION_CACHE, key = "#adminId")
 	public List<InstitutionDTO> getInstitutions(Integer adminId) {
 
 		List<Institution> institutions = institutionDao.findByCreatedByOrderByNameAsc(adminId);
