@@ -74,7 +74,7 @@ public interface AdminInterface {
 //	Category represents the assessment category under which the assessment falls
 	 void updateAssessmentTopic(Map<String, String>record, String category);
 
-//	deleted the given assessment from the database
+//	delete the given assessment from the database
 	void deleteAssessment(String category, String topic);
 
 //	provides functionality for retrieving all assessment subject names as a map whose keys are the assessment categories and values are the subject names

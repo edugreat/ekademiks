@@ -2,6 +2,10 @@ package com.edugreat.akademiksresource.dao;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -24,6 +28,7 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 
 
 	@Query("SELECT s.subjectName FROM Subject s join s.level l ON l.category =:category")
+	@Cacheable(value = "subjectNamesCache", key = "#category.name()")
 	public List<String> findSubjectNamesByCategory(Category category);
 
 	@Query("SELECT s.id FROM Subject s WHERE s.level.category =:category")
@@ -32,6 +37,36 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 	@Query("SELECT s.subjectName FROM Subject s WHERE s.id =:id")
 	public String findSubjectNameById(Integer id);
 
+	@Override
+	@CachePut(value = "subjectCache", key ="#entity.id")
+	 <S extends Subject> S save(S entity);
+	
+	
+	
 
+	@Override
+	@Cacheable(value = "allSubjectsCache", key = "'allSubjects'")
+	 List<Subject> findAll();
+
+	@Override
+	@Caching(evict = {
+			@CacheEvict(value = "studentCache", key = "#id"),
+			@CacheEvict(value = "subjectNamesCache", allEntries = true),
+			@CacheEvict(value = "allSubjectsCache", key = "'allSubjects'")
+	})
+	 void deleteById(Integer id);
+
+	@Override
+	@Caching(evict = {
+			@CacheEvict(value = "studentCache", key = "#id"),
+			@CacheEvict(value = "subjectNamesCache", key = "#entity.level.category.name()"),
+			@CacheEvict(value = "allSubjectsCache", key = "'allSubjects'")
+	})
+	 void delete(Subject entity);
+	
+	
+
+
+	
 
 }

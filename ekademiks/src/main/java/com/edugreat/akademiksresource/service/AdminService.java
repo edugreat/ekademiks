@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,14 +15,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.aop.framework.AopContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.edugreat.akademiksresource.config.CacheNames;
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.InstitutionDao;
@@ -78,6 +81,9 @@ public class AdminService implements AdminInterface {
 	private final QuestionDao questionDao;
 
 	private final InstitutionDao institutionDao;
+	
+	@Autowired
+	private CacheManager cacheManager;
 
 	@Override
 	@Transactional
@@ -112,23 +118,19 @@ public class AdminService implements AdminInterface {
 		return searchUser(email);
 	}
 
-//	returns cached objects of student from the studentCache
+
 	@Override
+	@Cacheable(value = CacheNames.STUDENTS_CACHE, key = "'allStudents'")
 	public List<StudentDTO> allStudents() {
-
-		var studentIds = getAllStudentIds();
-
-		return studentIds.stream().map(this::findStudentById).collect(Collectors.toList());
-
-	}
-
-	@Cacheable(value = "studentIdsCache")
-	public List<Integer> getAllStudentIds() {
 		
 		System.out.println("fetching all students");
+		
 
-		return studentDao.findAllIds();
+		return studentDao.findAll().stream().map(this::mapToStudentDTO).collect(Collectors.toList());
+
 	}
+
+	
 
 	@Cacheable(value = "studentCache", key = "#id")
 	public StudentDTO findStudentById(Integer id) {
@@ -195,6 +197,8 @@ public class AdminService implements AdminInterface {
 
 		});
 
+
+		
 		subjectDTOs.forEach(dto -> {
 
 			Category category = Category.valueOf(dto.getCategory());
@@ -207,17 +211,22 @@ public class AdminService implements AdminInterface {
 			subjects.add(subject);
 
 			subjectDao.save(subject);
+			
+			
 
 		});
+		
 
+         //      clear the cache
+		
+		Cache cache  = cacheManager.getCache(CacheNames.ASSESSMENT_CATEGORIES_CACHE);
+		cache.invalidate();
+		
 	}
 
 	@Transactional
 	@Override
-	@Caching(evict = { @CacheEvict(value = "studentCache", key = "#studentId"),
-			@CacheEvict(value = "studentIdsCache", allEntries = true) }
-
-	)
+	@CacheEvict(value = "studentsCache", key = "'allStudents'")
 	public void deleteStudentAccount(Integer studentId) {
 
 		final Optional<Student> optional = studentDao.findById(studentId);
@@ -559,6 +568,11 @@ public class AdminService implements AdminInterface {
 			// record to the data transfer object
 			if (levels.size() > 0) {
 				levelDao.saveAll(levels);
+				
+				Cache cache = cacheManager.getCache(CacheNames.ASSESSMENT_CATEGORIES_CACHE);
+				
+//				clear the cache so that next call for findAllLevels() would do a re-population of data
+				cache.invalidate();
 			}
 
 		} catch (IllegalArgumentException e) {
@@ -568,7 +582,7 @@ public class AdminService implements AdminInterface {
 	}
 
 	@Override
-	@Cacheable(value = "assessmentLevelCache", key = "'allLevels'")
+	@Cacheable(value =CacheNames.ASSESSMENT_CATEGORIES_CACHE, key = "'allLevels'")
 	public Iterable<LevelDTO> findAllLevels() {
 		
 		System.out.println("Academic level called");
@@ -669,42 +683,25 @@ public class AdminService implements AdminInterface {
 
 	}
 
-	@Cacheable(value = "subjectIdsByCategoryCache", key = "#category")
-	public List<Integer> findAllSubjectIdsByCategory(String category) {
-		
-		System.out.println("fetching category");
+	
 
-		return subjectDao.allIdsByCategory(Category.valueOf(category));
-
-	}
-
-//	fetches name belonging to the given category
-	@Cacheable(value = "subjectNameByIdCache", key = "#id")
-	public String findSubjectNameById(Integer id) {
-		
-		System.out.println("fetching subjects");
-		return subjectDao.findSubjectNameById(id);
-
-	}
 
 	@Override
+	@Cacheable(value = CacheNames.ASSESSMENT_CATEGORIES_CACHE, key = "'allCategoryBySubject'")
 	public Map<String, List<String>> assessmentSubjects() {
+		
+
 
 		Map<String, List<String>> subjectNames = new TreeMap<>();
 		
 		
 
-//		get the cached list of categories 
-		List<Integer> seniorCategoryIds = findAllSubjectIdsByCategory(Category.SENIOR.name());
+		List<String> seniorCategorySubjectNames = subjectDao.findSubjectNamesByCategory(Category.SENIOR)
+				                                            .stream().collect(Collectors.toList());  
 
-		List<Integer> juniorCategoryIds = findAllSubjectIdsByCategory(Category.JUNIOR.name());
+		List<String> juniorCategorySubjectNames =  subjectDao.findSubjectNamesByCategory(Category.JUNIOR)
+                .stream().collect(Collectors.toList());  
 
-//		fetch cached list of subject names from the cached category
-		List<String> seniorCategorySubjectNames = seniorCategoryIds.stream().map(this::findSubjectNameById)
-				.collect(Collectors.toList());
-
-		List<String> juniorCategorySubjectNames = juniorCategoryIds.stream().map(this::findSubjectNameById)
-				.collect(Collectors.toList());
 
 		subjectNames.put("JUNIOR", juniorCategorySubjectNames);
 		subjectNames.put("SENIOR", seniorCategorySubjectNames);
@@ -720,28 +717,23 @@ public class AdminService implements AdminInterface {
 
 			Subject updatableSubject = subjectDao.findBySubjectNameAndCategory(oldName, Category.valueOf(category));
 
-			updateSubjectName(updatableSubject, newName);
+			if(updatableSubject != null) {
+				
+				updatableSubject.setSubjectName(newName);	
+				
+				
+				subjectDao.save(updatableSubject);
+				
+			}else throw new RuntimeException("No record found for update");
 
 		});
 
 	}
 
-//	updates subject's name in the database and updates caches that points to the old subject name
-	@CachePut(value = "subjectNameByIdCache", key = "#subject.id")
-	public void updateSubjectName(Subject subject, String newSubjectName) {
 
-		if (subject != null) {
-
-			subject.setSubjectName(newSubjectName);
-
-		} else
-			throw new RuntimeException("No record found for update");
-
-	}
 
 	@Override
 	@Transactional
-	@Caching(evict = { @CacheEvict(value = "subjectIdsByCategoryCache", key = "#category") })
 	public void deleteSubject(String category, String subjectName) {
 
 //			check if the record exists in the database
@@ -754,14 +746,11 @@ public class AdminService implements AdminInterface {
 
 		subjectDao.delete(subject);
 
-		evictSubjectNameCache(subject.getId());
+		
 
 	}
 
-	@CacheEvict(value = "subjectNameByIdCache", key = "#id")
-	private void evictSubjectNameCache(Integer id) {
-	}
-
+	
 	@Override
 	@Transactional
 	public void updateCategoryName(String currentName, String previousName) {
@@ -781,6 +770,10 @@ public class AdminService implements AdminInterface {
 			updatableCategory.setCategory(Category.valueOf(currentName));
 
 			levelDao.saveAndFlush(updatableCategory);
+			
+//			invalidate the cache so that next call to findAllLevels() would do a fresh population
+			Cache cache = cacheManager.getCache(CacheNames.ASSESSMENT_CATEGORIES_CACHE);
+			cache.invalidate();
 
 		} catch (Exception e) {
 
@@ -792,7 +785,6 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
-	@Caching(evict = { @CacheEvict(value = "subjectIdsByCategoryCache", key = "#category") })
 	public void deleteCategory(String category) {
 
 		try {
@@ -801,7 +793,12 @@ public class AdminService implements AdminInterface {
 			if (!levelDao.existsByCategory(Category.valueOf(category)))
 				throw new IllegalArgumentException("Record not found");
 
-			levelDao.deleteByCategory(Category.valueOf(category));
+			levelDao.delete(levelDao.findByCategory(Category.valueOf(category)));
+			
+//			invalidate the cache so that next call to findAllLevels() would do a fresh population
+			Cache cache = cacheManager.getCache(CacheNames.ASSESSMENT_CATEGORIES_CACHE);
+			
+			cache.invalidate();
 
 		} catch (Exception e) {
 
