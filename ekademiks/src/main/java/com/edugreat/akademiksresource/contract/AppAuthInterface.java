@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
+import com.edugreat.akademiksresource.model.AppUser;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -20,6 +21,9 @@ public interface AppAuthInterface {
 	
 //	Generates new token using the refresh token to validate the user
 	public<T extends AppUserDTO> T generateNewToken (String refreshToken, HttpServletResponse response) throws IOException;
+
+//	return redis cached logged in user
+	<T extends AppUserDTO> T getCachedUser();
 	}
 	
 

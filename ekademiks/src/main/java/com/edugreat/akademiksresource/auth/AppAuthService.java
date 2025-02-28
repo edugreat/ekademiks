@@ -3,15 +3,18 @@ package com.edugreat.akademiksresource.auth;
 import java.io.IOException;
 import java.util.Optional;
 
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
-
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.config.CacheNamespaceHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
@@ -25,6 +28,8 @@ import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.AppUser;
 import com.edugreat.akademiksresource.model.Student;
 
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -36,6 +41,9 @@ public class AppAuthService implements AppAuthInterface {
 	private final JwtUtil jwtUtil;
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper mapper;
+	
+	@Autowired
+	private CacheManager cacheManager;
 
 	@Transactional
 	@Override
@@ -123,6 +131,7 @@ public class AppAuthService implements AppAuthInterface {
 	// AuthenticationMangager bean to authenticate automatically
 	@SuppressWarnings("unchecked")
 	@Override
+	@Cacheable(value = RedisValues.userCache, key = "'user'")
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 
 		String username = request.getEmail();
@@ -242,6 +251,25 @@ public class AppAuthService implements AppAuthInterface {
 		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
 		
 		return null;
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public  <T extends AppUserDTO> T getCachedUser(){
+		
+		System.out.println("Looking for cached data");
+				
+		Cache cache = cacheManager.getCache(RedisValues.userCache);
+		
+		if(cache == null) throw new RuntimeException("cache value does not exist");
+		
+		Cache.ValueWrapper valueWrapper = cache.get("user");
+		
+		if(valueWrapper != null) return (T) valueWrapper.get();	
+		
+		return null;
+		
 		
 	}
 
