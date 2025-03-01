@@ -58,6 +58,10 @@ public class AppUserDTO {
 
 	@JsonView(UserView.SigninView.class)
 	private String signInErrorMessage;
+	
+	@JsonView(UserView.SigninView.class)
+	private Integer cachingKey;
+	
 
 	@JsonView(UserView.class)
 	private Set<String> roles = new HashSet<>();

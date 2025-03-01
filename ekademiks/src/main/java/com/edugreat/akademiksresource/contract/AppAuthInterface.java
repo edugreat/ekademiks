@@ -23,7 +23,7 @@ public interface AppAuthInterface {
 	public<T extends AppUserDTO> T generateNewToken (String refreshToken, HttpServletResponse response) throws IOException;
 
 //	return redis cached logged in user
-	<T extends AppUserDTO> T getCachedUser();
+	<T extends AppUserDTO> T getCachedUser(Integer cacheKey);
 	}
 	
 

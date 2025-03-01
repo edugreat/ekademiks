@@ -1,14 +1,16 @@
 package com.edugreat.akademiksresource.auth;
 
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.config.CacheNamespaceHandler;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +46,9 @@ public class AppAuthService implements AppAuthInterface {
 	
 	@Autowired
 	private CacheManager cacheManager;
+	
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
 
 	@Transactional
 	@Override
@@ -131,7 +136,7 @@ public class AppAuthService implements AppAuthInterface {
 	// AuthenticationMangager bean to authenticate automatically
 	@SuppressWarnings("unchecked")
 	@Override
-	@Cacheable(value = RedisValues.userCache, key = "'user'")
+	//@Cacheable(value = RedisValues.userCache, key = "'user'")
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 
 		String username = request.getEmail();
@@ -150,6 +155,14 @@ public class AppAuthService implements AppAuthInterface {
 				var dto = mapper.map(admin, AdminsDTO.class);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
+				
+//				generate new cache key;
+				
+				Integer cacheKey = generateCachingKey();
+				
+				dto.setCachingKey(cacheKey);
+				
+				cacheManager.getCache(RedisValues.userCache).put(cacheKey, (T)dto);
 
 				return (T) dto;
 			}
@@ -175,10 +188,16 @@ public class AppAuthService implements AppAuthInterface {
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
 				
-				
-				
-				
 				dto.setStatus(student.getStatus());
+				
+//				generate new cache key;
+				
+				Integer cacheKey = generateCachingKey();
+                dto.setCachingKey(cacheKey);
+                
+                System.out.println("cached key "+cacheKey);
+				
+				cacheManager.getCache(RedisValues.userCache).put(cacheKey, (T)dto);
 				
 				
 				
@@ -256,7 +275,7 @@ public class AppAuthService implements AppAuthInterface {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public  <T extends AppUserDTO> T getCachedUser(){
+	public  <T extends AppUserDTO> T getCachedUser(Integer cacheKey){
 		
 		System.out.println("Looking for cached data");
 				
@@ -264,7 +283,7 @@ public class AppAuthService implements AppAuthInterface {
 		
 		if(cache == null) throw new RuntimeException("cache value does not exist");
 		
-		Cache.ValueWrapper valueWrapper = cache.get("user");
+		Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
 		
 		if(valueWrapper != null) return (T) valueWrapper.get();	
 		
@@ -272,5 +291,45 @@ public class AppAuthService implements AppAuthInterface {
 		
 		
 	}
+	
+	private Integer generateCachingKey() {
+		
+		SecureRandom rand = new SecureRandom();
+//		get the existing cache keys
+		Cache cache = cacheManager.getCache(RedisValues.userCache);
+		
+		if(cache != null) {
+			
+			
+			Set<Integer> cacheKeys = getAllCacheKeys(cache.getName());
+			
+			Integer newCacheKey = rand.nextInt();
+			
+//			safe approach to ensure key uniqueness
+			while(cacheKeys.contains(newCacheKey)) newCacheKey = rand.nextInt();
+			
+			return newCacheKey;
+			
+		}
+		
+		throw new RuntimeException("Something went wrong");
+	}
+	 private Set<Integer> getAllCacheKeys(String cacheName) {
+	        // Default pattern for keys in the cache
+	        final String pattern = cacheName + "::*";
+
+	        Set<Integer> keys = new HashSet<>();
+
+	        redisTemplate.keys(pattern)
+	        .parallelStream().forEach((key) -> {
+	        	Integer numericalKey = Integer.parseInt(key.substring(cacheName.length()+2));
+	        
+	        	keys.add(numericalKey);
+	        	
+	        	
+	        });
+	        
+	        return keys;
+	    }
 
 }

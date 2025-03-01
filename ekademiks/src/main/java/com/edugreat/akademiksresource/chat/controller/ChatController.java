@@ -63,10 +63,14 @@ public class ChatController {
 
 	@GetMapping("/inGroup")
 	public ResponseEntity<Object> isGroupMember(@RequestParam("id") String studentId) {
+		
+		System.out.println("is group member called");
 
 		try {
 			return new ResponseEntity<Object>(chatInterface.isGroupMember(Integer.parseInt(studentId)), HttpStatus.OK);
 		} catch (Exception e) {
+			
+			System.out.println(e.getLocalizedMessage());
 
 			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
 		}
