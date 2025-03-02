@@ -285,6 +285,7 @@ public class AppAuthService implements AppAuthInterface {
 		
 		Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
 		
+		
 		if(valueWrapper != null) return (T) valueWrapper.get();	
 		
 		return null;
