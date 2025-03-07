@@ -11,11 +11,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.Transactional;
-
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.stereotype.Service;
 
+import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.TestInterface;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
@@ -33,8 +36,10 @@ import com.edugreat.akademiksresource.model.StudentTest;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
-
 import com.edugreat.akademiksresource.util.AttemptUtil;
+import com.edugreat.akademiksresource.util.PerformanceObj;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 //Test service implementation class that provides implementation for Test interface
@@ -53,6 +58,9 @@ public class TestServiceImpl implements TestInterface {
 	private final WelcomeMessageDao welcomeMsgDao;
 
 	private final StudentDao studentDao;
+	
+	@Autowired
+	private RedisCacheManager cacheManager;
 
 	// helper method that gets from the database test whose id is given
 	private Test getTest(Integer id) {
@@ -105,7 +113,10 @@ public class TestServiceImpl implements TestInterface {
 
 	// fetches all the subject names for the given academic level
 	@Override
+	@Cacheable(value = RedisValues.SUBJECT_NAMES, key = "#level")
 	public List<String> testSubjectFor(String level) {
+		
+		System.out.println("finding all text");
 		// return all subjects for the given level,then map to their respective subject
 		// names
 		return subjectDao.findSubjectNamesByCategory(Category.valueOf(level));
@@ -203,17 +214,21 @@ public class TestServiceImpl implements TestInterface {
 //		get the institution the student belongs to if not a guest user
 		Integer myInstitution = null;
 		
-		if(studentId > 0) {
+//		for guest users, an arbitrary student ID of -1 is set at the front end.
+		if(studentId != null) {
+			
 			myInstitution = studentDao.getMyInstitutionId(studentId);
 			
 			if(myInstitution == null) {
+				
+				System.out.println("institution is null");
 				
 				return testDao.findAllTopicsAndDurationsForGuestUser(subject, Category.valueOf(category));
 				
 				
 			}
 		}
-		
+		System.out.println("institution is not null");
 		return testDao.findAllTopicsAndDurations(subject, Category.valueOf(category), myInstitution );
 
 	}
@@ -335,6 +350,34 @@ public class TestServiceImpl implements TestInterface {
 
 		return (op1.isPresent() && op2.isPresent());
 
+	}
+
+	@Override
+	public PerformanceObj getRecentPerformanceFromCache(String cachingKey) {
+		
+		final Cache recentPerformance = cacheManager.getCache(RedisValues.RECENT_PERFORMANCE);
+		
+		if(recentPerformance != null) {
+			
+			Cache.ValueWrapper valueWrapper =  recentPerformance.get(cachingKey);
+			
+			return (PerformanceObj) valueWrapper.get();
+		}
+	
+		return null;
+	}
+
+	@Override
+	public void saveRecentPerformanceToCache(PerformanceObj performance, String cachingKey) {
+		
+//		get an object of recent performance cache
+		Cache recentPerformanceCache = cacheManager.getCache(RedisValues.RECENT_PERFORMANCE);
+		if(recentPerformanceCache != null) {
+			
+			recentPerformanceCache.put(cachingKey, recentPerformanceCache);
+		}
+		
+		
 	}
 
 }

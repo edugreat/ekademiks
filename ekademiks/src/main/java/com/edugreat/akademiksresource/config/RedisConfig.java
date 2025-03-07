@@ -19,25 +19,48 @@ public class RedisConfig {
 	
 	
 	@Bean
-    RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        // Default cache configuration with a TTL of 10 minutes
-        RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10)) // Set TTL to 10 minutes
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer())); 
-        
-//        custom cache configuration for specific cache names
-        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        
-        cacheConfigurations.put(RedisValues.userCache, 
-        		RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(30))
-        		.disableCachingNullValues());
+	RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+	    // Default cache configuration with a TTL of 10 minutes
+	    RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+	            .entryTtl(Duration.ofMinutes(10)) // Set TTL to 10 minutes
+	            .serializeValuesWith(RedisSerializationContext.SerializationPair
+	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
-        // Create and return the RedisCacheManager
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(cacheConfiguration)
-                .build();
-    }
+	    // Custom cache configuration for specific cache names
+	    Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+
+	    // Example: Set TTL to 30 minutes for the "USER_CACHE"
+	    cacheConfigurations.put(RedisValues.USER_CACHE, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofMinutes(Integer.MAX_VALUE))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
+
+//	    configures caching for subject names
+	    cacheConfigurations.put(RedisValues.SUBJECT_NAMES, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(1))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
+	    
+//	    configures caching for student's recent performance
+//	    configures caching for subject names
+	    cacheConfigurations.put(RedisValues.RECENT_PERFORMANCE, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(1))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
+
+
+	    // Create and return the RedisCacheManager
+	    return RedisCacheManager.builder(connectionFactory)
+	            .cacheDefaults(defaultCacheConfig) // Apply default configuration
+	            .withInitialCacheConfigurations(cacheConfigurations) // Apply custom configurations
+	            .build();
+	}
 	
 	@Bean
      RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {

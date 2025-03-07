@@ -80,8 +80,8 @@ public interface AdminInterface {
 //	provides functionality for retrieving all assessment subject names as a map whose keys are the assessment categories and values are the subject names
 	 Map<String, List<String>> assessmentSubjects();
 
-//	 provides functionality for updating an assessment subject's name, where map's key is the category the subject belongs to,
-//	 and key is the new name for subject
+//	 provides functionality for updating an assessment subject's name, where map's key is the category the subject belongs in,
+//	 and value is the new name for subject
 	void updateSubjectName(Map<String, String> editedObject, String oldName);
 
 //	provides functionality for deleting an assessment subject

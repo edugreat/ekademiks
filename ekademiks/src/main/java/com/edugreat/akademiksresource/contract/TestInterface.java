@@ -7,6 +7,7 @@ import java.util.Map;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
 import com.edugreat.akademiksresource.util.AttemptUtil;
+import com.edugreat.akademiksresource.util.PerformanceObj;
 
 //declare contracts that would be implemented
 public interface TestInterface {
@@ -39,5 +40,9 @@ public interface TestInterface {
 
 //		get the topic and duration for a given test id
 	public TopicAndDuration testTopicAndDuration(Integer testId);
+	
+	public PerformanceObj getRecentPerformanceFromCache(String cachingKey);
+	
+	public void saveRecentPerformanceToCache(PerformanceObj performance, String cachingKey);
 
 }

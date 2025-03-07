@@ -20,6 +20,7 @@ import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.AttemptUtil;
+import com.edugreat.akademiksresource.util.PerformanceObj;
 
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
@@ -68,6 +69,8 @@ public class TestController {
 	// Retrieves from the database, all test names for the given academic level
 	@GetMapping("/level")
 	public ResponseEntity<Object> getForLevel(@RequestParam String level) {
+		
+		System.out.println("test controller called");
 
 		return ResponseEntity.ok(service.testSubjectFor(level));
 	}
@@ -121,5 +124,22 @@ public class TestController {
 
 		return ResponseEntity.ok(service.subjectAndCategory(Integer.parseInt(testId)));
 	}
+	
+	@GetMapping("/recent_performance")
+	public ResponseEntity<Object> getRecentPerformance(@RequestParam ("key") String cachingKey) {
+		
+		return ResponseEntity.ok(service.getRecentPerformanceFromCache(cachingKey));
+	}
+	
+	@PostMapping("/recent_performance")
+	public void saveRecentPerformanceToCache(@RequestBody PerformanceObj performance,
+			
+			@RequestParam("key") String cachingKey) {
+		
+		
+	    service.saveRecentPerformanceToCache(performance, cachingKey);
+	}
+	
+	
 
 }

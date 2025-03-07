@@ -136,7 +136,7 @@ public class AppAuthService implements AppAuthInterface {
 	// AuthenticationMangager bean to authenticate automatically
 	@SuppressWarnings("unchecked")
 	@Override
-	//@Cacheable(value = RedisValues.userCache, key = "'user'")
+	//@Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 
 		String username = request.getEmail();
@@ -162,7 +162,7 @@ public class AppAuthService implements AppAuthInterface {
 				
 				dto.setCachingKey(cacheKey);
 				
-				cacheManager.getCache(RedisValues.userCache).put(cacheKey, (T)dto);
+				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T)dto);
 
 				return (T) dto;
 			}
@@ -197,7 +197,7 @@ public class AppAuthService implements AppAuthInterface {
                 
                 System.out.println("cached key "+cacheKey);
 				
-				cacheManager.getCache(RedisValues.userCache).put(cacheKey, (T)dto);
+				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T)dto);
 				
 				
 				
@@ -279,7 +279,7 @@ public class AppAuthService implements AppAuthInterface {
 		
 		System.out.println("Looking for cached data");
 				
-		Cache cache = cacheManager.getCache(RedisValues.userCache);
+		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
 		
 		if(cache == null) throw new RuntimeException("cache value does not exist");
 		
@@ -297,7 +297,7 @@ public class AppAuthService implements AppAuthInterface {
 		
 		SecureRandom rand = new SecureRandom();
 //		get the existing cache keys
-		Cache cache = cacheManager.getCache(RedisValues.userCache);
+		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
 		
 		if(cache != null) {
 			

@@ -14,9 +14,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.InstitutionDao;
@@ -73,6 +77,9 @@ public class AdminService implements AdminInterface {
 	private final QuestionDao questionDao;
 	
 	private final InstitutionDao institutionDao;
+	
+	@Autowired
+	private CacheManager cacheManager;
 	
 	
 	
@@ -693,6 +700,13 @@ public class AdminService implements AdminInterface {
 		if(updatableSubject != null) {
 			
 			updatableSubject.setSubjectName(subjectName);
+			
+//			evicts previously cached object of subject names
+			Cache cache = cacheManager.getCache(RedisValues.SUBJECT_NAMES);
+			
+			if(cache != null) {
+				cache.evict(category);
+			}
 			
 		}else throw new IllegalArgumentException("No record found for update");
 		
