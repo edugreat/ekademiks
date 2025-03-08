@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.config.RedisValues;
@@ -37,6 +38,7 @@ import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
 import com.edugreat.akademiksresource.util.AttemptUtil;
+import com.edugreat.akademiksresource.util.CachingKeysUtil;
 import com.edugreat.akademiksresource.util.PerformanceObj;
 
 import jakarta.transaction.Transactional;
@@ -61,6 +63,11 @@ public class TestServiceImpl implements TestInterface {
 	
 	@Autowired
 	private RedisCacheManager cacheManager;
+	
+	@Autowired
+	private CachingKeysUtil cachingKeysUtil;
+	
+	
 
 	// helper method that gets from the database test whose id is given
 	private Test getTest(Integer id) {
@@ -221,14 +228,14 @@ public class TestServiceImpl implements TestInterface {
 			
 			if(myInstitution == null) {
 				
-				System.out.println("institution is null");
+				
 				
 				return testDao.findAllTopicsAndDurationsForGuestUser(subject, Category.valueOf(category));
 				
 				
 			}
 		}
-		System.out.println("institution is not null");
+		
 		return testDao.findAllTopicsAndDurations(subject, Category.valueOf(category), myInstitution );
 
 	}
@@ -355,29 +362,50 @@ public class TestServiceImpl implements TestInterface {
 	@Override
 	public PerformanceObj getRecentPerformanceFromCache(String cachingKey) {
 		
+		System.out.println("caching key: "+cachingKey);
 		final Cache recentPerformance = cacheManager.getCache(RedisValues.RECENT_PERFORMANCE);
-		
+		System.out.println("----------");
 		if(recentPerformance != null) {
 			
+			System.out.println("recent performance not null");
 			Cache.ValueWrapper valueWrapper =  recentPerformance.get(cachingKey);
+			
+			System.out.println("after value wrapper");
 			
 			return (PerformanceObj) valueWrapper.get();
 		}
 	
+		System.out.println("returning null object");
 		return null;
 	}
 
 	@Override
-	public void saveRecentPerformanceToCache(PerformanceObj performance, String cachingKey) {
+	// Note: for guest user, the client code is implemented to supply empty String for cachingKey
+	public String saveRecentPerformanceToCache(PerformanceObj performance, String cachingKey) {
+
+		
+		String key = cachingKey;
+		
+		
+		
+//		generate new encrypted caching key if the supplied cachingKey is empty(especially for guest users
+		if(cachingKey.trim().length() == 0) key = cachingKeysUtil.generateCachingKey(RedisValues.RECENT_PERFORMANCE);
+		
+		
 		
 //		get an object of recent performance cache
 		Cache recentPerformanceCache = cacheManager.getCache(RedisValues.RECENT_PERFORMANCE);
+		
 		if(recentPerformanceCache != null) {
 			
-			recentPerformanceCache.put(cachingKey, recentPerformanceCache);
+//			add recent performance object to the redis and associate it with the key
+			recentPerformanceCache.put(key, performance);
+			
+			
 		}
 		
-		
+//		return key for use in fetching recent performance
+		return key;
 	}
 
 }

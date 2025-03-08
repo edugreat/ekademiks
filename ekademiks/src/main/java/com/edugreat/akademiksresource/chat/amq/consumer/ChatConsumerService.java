@@ -95,8 +95,6 @@ public class ChatConsumerService implements ChatConsumer {
 //		check if the group admin is currently connected to receive notification
 		if (groupAdminId != null && emitters.containsKey(targetGroupId+"_"+groupAdminId)) {
 			
-			System.out.println("contains admin connection id");
-			
 			final String connectionId = targetGroupId+"_"+groupAdminId;
 
 			try {
@@ -138,7 +136,7 @@ public class ChatConsumerService implements ChatConsumer {
 				emitters.remove(connectionId);
 				LOGGER.info(String.format("unable to send previous chat to %s", studentId + " -> group: " + groupId));
 			}
-		}else System.out.println("does not contain "+connectionId);
+		}
 	}
 
 //	notifies group members about a new member that just joined the group
@@ -162,7 +160,6 @@ public class ChatConsumerService implements ChatConsumer {
 				LOGGER.info("error notifying member: ", _key, e.getMessage());
 				toBeRemoved.add(_key);
 
-				System.out.println("Error notifying logged in group members: " + e.getMessage());
 			}
 
 		});

@@ -1,16 +1,11 @@
 package com.edugreat.akademiksresource.auth;
 
 import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +24,7 @@ import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.AppUser;
 import com.edugreat.akademiksresource.model.Student;
+import com.edugreat.akademiksresource.util.CachingKeysUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -48,7 +44,8 @@ public class AppAuthService implements AppAuthInterface {
 	private CacheManager cacheManager;
 	
 	@Autowired
-	private RedisTemplate<String, Object> redisTemplate;
+	private CachingKeysUtil  cachingKeysUtil;
+	
 
 	@Transactional
 	@Override
@@ -158,7 +155,7 @@ public class AppAuthService implements AppAuthInterface {
 				
 //				generate new cache key;
 				
-				Integer cacheKey = generateCachingKey();
+				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
 				
 				dto.setCachingKey(cacheKey);
 				
@@ -190,15 +187,11 @@ public class AppAuthService implements AppAuthInterface {
 				
 				dto.setStatus(student.getStatus());
 				
-//				generate new cache key;
+//				generate new caching key;
+				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
 				
-				Integer cacheKey = generateCachingKey();
                 dto.setCachingKey(cacheKey);
-                
-                System.out.println("cached key "+cacheKey);
-				
-				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T)dto);
-				
+               
 				
 				
 				return (T) dto;
@@ -275,15 +268,12 @@ public class AppAuthService implements AppAuthInterface {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public  <T extends AppUserDTO> T getCachedUser(Integer cacheKey){
+	public  <T extends AppUserDTO> T getCachedUser(String cachingKey){
 		
-		System.out.println("Looking for cached data");
 				
 		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
 		
-		if(cache == null) throw new RuntimeException("cache value does not exist");
-		
-		Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
+		Cache.ValueWrapper valueWrapper = cache.get(cachingKey);
 		
 		
 		if(valueWrapper != null) return (T) valueWrapper.get();	
@@ -293,44 +283,5 @@ public class AppAuthService implements AppAuthInterface {
 		
 	}
 	
-	private Integer generateCachingKey() {
-		
-		SecureRandom rand = new SecureRandom();
-//		get the existing cache keys
-		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
-		
-		if(cache != null) {
-			
-			
-			Set<Integer> cacheKeys = getAllCacheKeys(cache.getName());
-			
-			Integer newCacheKey = rand.nextInt();
-			
-//			safe approach to ensure key uniqueness
-			while(cacheKeys.contains(newCacheKey)) newCacheKey = rand.nextInt();
-			
-			return newCacheKey;
-			
-		}
-		
-		throw new RuntimeException("Something went wrong");
-	}
-	 private Set<Integer> getAllCacheKeys(String cacheName) {
-	        // Default pattern for keys in the cache
-	        final String pattern = cacheName + "::*";
-
-	        Set<Integer> keys = new HashSet<>();
-
-	        redisTemplate.keys(pattern)
-	        .parallelStream().forEach((key) -> {
-	        	Integer numericalKey = Integer.parseInt(key.substring(cacheName.length()+2));
-	        
-	        	keys.add(numericalKey);
-	        	
-	        	
-	        });
-	        
-	        return keys;
-	    }
-
+	
 }

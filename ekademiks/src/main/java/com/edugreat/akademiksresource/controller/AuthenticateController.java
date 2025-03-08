@@ -71,9 +71,6 @@ public class AuthenticateController {
 	@PostMapping("/disconnect")
 	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Map<Integer, Integer> mapObj) {
 
-		System.out.println("Disconnecting from server");
-		mapObj.forEach((k, v) -> System.out.println("groupId: " + k + ", studentId: " + v));
-
 		try {
 
 			chatConsumer.disconnectGroup(mapObj);
@@ -85,7 +82,7 @@ public class AuthenticateController {
 
 		catch (Exception e) {
 
-			System.out.println("Error disconnecting " + e);
+			
 
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
@@ -96,7 +93,7 @@ public class AuthenticateController {
 	}
 	
 	@GetMapping("/cached/user")
-	public ResponseEntity<Object> cachedUser(@RequestParam ("cache")Integer key){
+	public ResponseEntity<Object> cachedUser(@RequestParam ("cache")String key){
 		
 		try {
 			

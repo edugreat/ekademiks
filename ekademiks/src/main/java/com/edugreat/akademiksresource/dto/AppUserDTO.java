@@ -60,7 +60,7 @@ public class AppUserDTO {
 	private String signInErrorMessage;
 	
 	@JsonView(UserView.SigninView.class)
-	private Integer cachingKey;
+	private String cachingKey;
 	
 
 	@JsonView(UserView.class)

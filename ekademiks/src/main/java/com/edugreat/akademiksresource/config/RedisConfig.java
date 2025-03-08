@@ -40,7 +40,7 @@ public class RedisConfig {
 //	    configures caching for subject names
 	    cacheConfigurations.put(RedisValues.SUBJECT_NAMES, 
 	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(1))
+	                    .entryTtl(Duration.ofHours(24))
 	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
 	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
 	                    .disableCachingNullValues());

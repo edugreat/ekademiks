@@ -33,7 +33,6 @@ public class AssignmentController {
 	public ResponseEntity<Object> postAssignment(@RequestPart("details") AssignmentDetailsDTO details, 
 			@RequestPart("pdf") MultipartFile[] files) {
 		
-		System.out.println(">>>>>>>>>>>>>>>>>>>");
 		
 		
 		
@@ -70,7 +69,6 @@ public class AssignmentController {
 			
 			pdfs.add(pdf);
 			
-			System.out.println(pdf.toString());
 		}
 		
 		

@@ -30,8 +30,7 @@ public class AssignmentService implements AssignmentInterface {
 		final boolean conflicts = assignmentDetailsDao.existsConflicts(details.getInstitution(), details.getCategory(),
 				details.getName());
 		
-		System.out.println("returned value");
-		System.out.println(conflicts);
+		
 		
 		
 
@@ -42,19 +41,19 @@ public class AssignmentService implements AssignmentInterface {
 		var admin = adminsDao.findById(details.getAdmin())
 				.orElseThrow(() -> new IllegalArgumentException("Admin not found"));
 		
-		System.out.println("after 1");
+		
 
 //		get the institution
 		var institution = institutionDao.findById(details.getInstitution())
 				.orElseThrow(() -> new IllegalArgumentException("institution not found"));
-		System.out.println("after 2");
+		
 		
 
 		AssignmentDetails assignmentDetails = new AssignmentDetails(admin, details.getSubject(), institution,
 				details.getAllocatedMark(), details.getSubmissionEnds(), details.getName(), details.getCategory(),
 				details.getType(), details.getTotalQuestions());
 		
-		System.out.println("after 3");
+		
 
 		
 
@@ -66,7 +65,7 @@ public class AssignmentService implements AssignmentInterface {
 		
 		var saved =  assignmentDetailsDao.save(assignmentDetails);
 		
-		System.out.println("saved: "+saved.getId());
+		
 		
 		
 
@@ -109,7 +108,7 @@ public class AssignmentService implements AssignmentInterface {
 			
 			if(_dto.getType().equalsIgnoreCase("objectives")) {
 				
-				System.out.println("objectives question");
+				
 				
 				var obj = (ObjectiveAssignmentDTO)_dto;
 				
@@ -124,7 +123,7 @@ public class AssignmentService implements AssignmentInterface {
 				
 			}else if(_dto.getType().equalsIgnoreCase("theory")) {
 				
-				System.out.println("theory question");
+				
 				
 				var theory = (TheoreticalAssigDTO)_dto;
 				

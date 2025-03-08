@@ -70,7 +70,7 @@ public class TestController {
 	@GetMapping("/level")
 	public ResponseEntity<Object> getForLevel(@RequestParam String level) {
 		
-		System.out.println("test controller called");
+		
 
 		return ResponseEntity.ok(service.testSubjectFor(level));
 	}
@@ -128,16 +128,35 @@ public class TestController {
 	@GetMapping("/recent_performance")
 	public ResponseEntity<Object> getRecentPerformance(@RequestParam ("key") String cachingKey) {
 		
-		return ResponseEntity.ok(service.getRecentPerformanceFromCache(cachingKey));
+		try {
+			return ResponseEntity.ok(service.getRecentPerformanceFromCache(cachingKey));
+			
+		} catch (Exception e) {
+			
+			
+			System.out.println(e.getLocalizedMessage());
+			
+		}
+		
+		return ResponseEntity.badRequest().build();
 	}
 	
 	@PostMapping("/recent_performance")
-	public void saveRecentPerformanceToCache(@RequestBody PerformanceObj performance,
+	public ResponseEntity<Object> saveRecentPerformanceToCache(@RequestBody PerformanceObj performance,
 			
 			@RequestParam("key") String cachingKey) {
 		
 		
-	    service.saveRecentPerformanceToCache(performance, cachingKey);
+		try {
+			return ResponseEntity.ok(service.saveRecentPerformanceToCache(performance, cachingKey));
+			
+		} catch (Exception e) {
+			
+			System.out.println(e.getLocalizedMessage());
+		}
+		
+		return ResponseEntity.badRequest().build();
+	    
 	}
 	
 	

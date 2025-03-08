@@ -41,8 +41,10 @@ public interface TestInterface {
 //		get the topic and duration for a given test id
 	public TopicAndDuration testTopicAndDuration(Integer testId);
 	
+//	returns student's recent performance by querying the redis cache against the supplied caching key.
 	public PerformanceObj getRecentPerformanceFromCache(String cachingKey);
 	
-	public void saveRecentPerformanceToCache(PerformanceObj performance, String cachingKey);
+//	saves students recent performance to the redis cache and returns key for accessing it in in the future(keys are creating for guest users. For logged  users, keys get created on login)
+	public String saveRecentPerformanceToCache(PerformanceObj performance, String cachingKey);
 
 }
