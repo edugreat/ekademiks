@@ -61,7 +61,7 @@ public class ChatController {
 	@GetMapping("/inGroup")
 	public ResponseEntity<Object> isGroupMember(@RequestParam("id") String studentId) {
 		
-		System.out.println("is group member called");
+		
 
 		try {
 			return new ResponseEntity<Object>(chatInterface.isGroupMember(Integer.parseInt(studentId)), HttpStatus.OK);
@@ -188,6 +188,8 @@ public class ChatController {
 		try {
 			return new ResponseEntity<Object>(chatInterface.groupAndJoinedAt(studentId), HttpStatus.OK);
 		} catch (Exception e) {
+			System.out.println("error:");
+			System.out.println(e);
 
 			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
 		}

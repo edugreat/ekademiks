@@ -38,7 +38,7 @@ public class SecurityConfig {
 
 	private static final String[] ALLOWED_HEADERS = { "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",
 			"Authorization", "X-Request-With", "Access-Control-Request-Method", 
-			"Access-Control-Request-Headers","adminid", "institutionId","studentId" };
+			"Access-Control-Request-Headers","adminid", "institutionId","studentId"};
 	private static final String[] EXPOSED_HEADERS = { "Origin", "Content-Type", "Accept", "Authorization",
 			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials","adminid","institutionId","studentId" };
 	

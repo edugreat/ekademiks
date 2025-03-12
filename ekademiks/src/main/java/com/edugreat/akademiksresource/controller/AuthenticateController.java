@@ -95,10 +95,14 @@ public class AuthenticateController {
 	@GetMapping("/cached/user")
 	public ResponseEntity<Object> cachedUser(@RequestParam ("cache")String key){
 		
+		
+		
 		try {
 			
 			return  ResponseEntity.ok(appInterface.getCachedUser(key));
 		} catch (Exception e) {
+			
+			System.out.println(e.getLocalizedMessage());
 			
 			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}

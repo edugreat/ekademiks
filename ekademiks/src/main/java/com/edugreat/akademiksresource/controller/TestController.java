@@ -81,6 +81,8 @@ public class TestController {
 	public ResponseEntity<Object> getTestTopicsAndDurations(@RequestParam String subject,
 			@RequestParam String category, @RequestHeader String studentId) {
 		
+		
+		
 		Integer _studentId = 0;
 		
 		if(studentId == null) throw new IllegalArgumentException("request header not found");
@@ -91,6 +93,7 @@ public class TestController {
 		if (!(Pattern.matches(regex, category) && Pattern.matches(regex, category)))
 			throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
 
+		
 		return ResponseEntity.ok(service.testTopicsAndDurations(subject, category, _studentId));
 
 	}
@@ -104,6 +107,8 @@ public class TestController {
 
 	@GetMapping("/start")
 	public ResponseEntity<Object> commenceTest(@RequestParam String topic, @RequestParam String category) {
+		
+		
 		final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
 		if (!(Pattern.matches(regex, category) && Pattern.matches(regex, category)))
 			throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());

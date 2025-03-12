@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.chat.dao;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,13 +61,13 @@ public interface GroupMembersDao extends JpaRepository<GroupMember, Integer> {
     GroupChat getGroupChat(Integer studentId, LocalDateTime joinedAt);
 	
 	
-	default Map<Integer, LocalDateTime> findGroupAndJoinedAt(Integer studentId){
+	default Map<Integer, String> findGroupAndJoinedAt(Integer studentId){
 		
 		List<Object[]> data = findGroupAndJoinedDate(studentId);
 		
 		return data.stream().collect(Collectors.toMap(result -> (Integer) result[0], //group IDs
 				
-				                                      result -> (LocalDateTime) result[1] // joined date
+	 result -> ((LocalDateTime) result[1]).format(DateTimeFormatter.ISO_LOCAL_DATE) // joined date
 						));
 	}
 	

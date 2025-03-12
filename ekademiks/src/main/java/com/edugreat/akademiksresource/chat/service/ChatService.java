@@ -18,6 +18,10 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.Cache.ValueWrapper;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,7 @@ import com.edugreat.akademiksresource.chat.model.Chat;
 import com.edugreat.akademiksresource.chat.model.GroupChat;
 import com.edugreat.akademiksresource.chat.model.GroupMember;
 import com.edugreat.akademiksresource.chat.projection.GroupChatInfo;
+import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
@@ -65,11 +70,11 @@ public class ChatService implements ChatInterface {
 
 	@Autowired
 	private MiscellaneousNotificationsDao miscellaneousNoticeDao;
-	
-//	configured content meant for deleted chat
+
+	//	configured content meant for deleted chat
 	@Value("${chat.deleted.content}")
 	private String DELETED_CHAT_CONTENT;
-	
+
 	@Transactional
 	@Override
 	public void createGroupChat(GroupChatDTO dto) {
@@ -165,11 +170,11 @@ public class ChatService implements ChatInterface {
 			// map the currently saved chat object to chat dto
 			ChatDTO chatDTO = mapToChatDTO(currentlySavedChat);
 			chatDTO.setSenderName(currentChat.getSender().getFirstName());
-			
+
 //			if this was a replied message, set the message that got the reply
-			if(dto.getRepliedToChat() != null) {
-				
-				chatDTO.setRepliedTo(currentlySavedChat.getRepliedTo());				
+			if (dto.getRepliedToChat() != null) {
+
+				chatDTO.setRepliedTo(currentlySavedChat.getRepliedTo());
 				chatDTO.setRepliedToChat(dto.getRepliedToChat());
 			}
 
@@ -186,12 +191,12 @@ public class ChatService implements ChatInterface {
 		final Student sender = studentDao.findById(chatDTO.getSenderId()).get();
 
 		Chat chat = new Chat(groupChat, sender, chatDTO.getContent());
-		
-		if(chatDTO.getRepliedTo() != null) {
-			
+
+		if (chatDTO.getRepliedTo() != null) {
+
 			chat.setRepliedTo(chatDTO.getRepliedTo());
 			chat.setRepliedToChat(chatDTO.getRepliedToChat());
-			
+
 		}
 
 		return chat;
@@ -201,48 +206,41 @@ public class ChatService implements ChatInterface {
 
 		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
 				chat.getContent(), chat.getSentAt());
-		
-		
 
 		return dto;
 	}
 
 	private ChatDTO _mapToChatDTO(Chat chat) {
 
-		
-		
-		
 		Student sender = chat.getSender();
 
 		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
 				chat.getContent(), chat.getSentAt());
-		
+
 		dto.setEditedChat(chat.getIsEditedChat());
 
-		
 		dto.setSenderName(sender.getFirstName());
-		
-		if(chat.getRepliedTo() != null) {
-			
+
+		if (chat.getRepliedTo() != null) {
+
 //			set the chat ID that got the reply
 			dto.setRepliedTo(chat.getRepliedTo());
-			
+
 //			set the chat that was replied to if it hasn't been deleted
 			dto.setRepliedToChat(chat.getRepliedToChat());
 
 		}
-		
-		if(chat.getDeletedBy() != null) {
-			
+
+		if (chat.getDeletedBy() != null) {
+
 			dto.setDeleter(studentDao.findById(chat.getDeletedBy())
-					.orElseThrow(() -> 
-					new IllegalArgumentException("deleter not found")).getFirstName());
+					.orElseThrow(() -> new IllegalArgumentException("deleter not found")).getFirstName());
 			dto.setDeleterId(chat.getDeletedBy());
 		}
 
 		return dto;
 	}
-	
+
 	@Override
 	public Map<Integer, GroupChatDTO> allGroupChats() {
 
@@ -301,7 +299,7 @@ public class ChatService implements ChatInterface {
 
 			// save the notification
 			joinRequestNotification = miscellaneousNoticeDao.save(joinRequestNotification);
-			
+
 //			set the group chat this request notification targets at
 			joinRequestNotification.setTargetGroup(request.getGroupId());
 
@@ -507,8 +505,6 @@ public class ChatService implements ChatInterface {
 	@Override
 	public boolean deleteGroupChat(Map<Integer, Integer> data) {
 
-		
-
 		Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
 
 //		confirm group admin is the on trying to delete the group chat
@@ -526,7 +522,6 @@ public class ChatService implements ChatInterface {
 	@Override
 	public void leaveGroup(Map<Integer, Integer> map) {
 
-		
 		Integer groupId = map.keySet().stream().collect(Collectors.toList()).get(0);
 
 //		get the group chat from which they intend to leave
@@ -551,10 +546,14 @@ public class ChatService implements ChatInterface {
 	}
 
 	@Override
-	public Map<Integer, LocalDateTime> groupAndJoinedAt(Integer studentId) {
-
+	@Cacheable(value = RedisValues.JOIN_DATE, key = "#studentId")
+	public Map<Integer, String> groupAndJoinedAt(Integer studentId) {
+		
+	
 		return groupMembersDao.findGroupAndJoinedAt(studentId);
 	}
+		
+		
 
 	@Override
 	public boolean hadPreviousPosts(Map<Integer, Integer> map) {
@@ -569,221 +568,191 @@ public class ChatService implements ChatInterface {
 
 	@Override
 	public List<ChatDTO> getPreviousChat(Integer studentId, Integer groupId) {
-		
-		
-		
-		
-		
+
 //		get the date the user joined the group chat, so as to not allow them view chats histories prior to when they joined
 		LocalDateTime joinedAt = groupMembersDao.findJoinedDate(studentId, groupId);
 
 //		get chats histories from the time they joined the group chat
-		List<Chat> chats = chatDao.findByGroupIdOrderBySentAt(groupId).stream().filter(chat -> chat.getSentAt().isAfter(joinedAt) ).collect(Collectors.toList());
+		List<Chat> chats = chatDao.findByGroupIdOrderBySentAt(groupId).stream()
+				.filter(chat -> chat.getSentAt().isAfter(joinedAt)).collect(Collectors.toList());
 
-		if(chats != null && chats.size() > 0) {
-			
+		if (chats != null && chats.size() > 0) {
+
 			List<ChatDTO> dtos = chats.stream().map(this::_mapToChatDTO).collect(Collectors.toList());
-			
+
 			dtos.forEach(dto -> dto.setChatReceipient(studentId));
-			
+
 			return dtos;
 		}
-		
+
 		return null;
 	}
 
 	@Override
 	public Set<MiscellaneousNotifications> streamChatNotifications(Integer studentId) {
-		
+
 //		fetch miscellaneous notification for the logged in student for notification whose type is either 'join request' or 'new member'
-	     Set<MiscellaneousNotifications> requestNotifications = studentDao.findById(studentId).get()
-	    		                                        .getMiscellaneousNotices().stream().filter(n -> n.getType().equals("join group") || n.getType().equals("new member")).collect(Collectors.toSet());  
-	     
-	     requestNotifications.stream().forEach(request -> {
-	    	 
-	    	 final String requester = studentDao.getFirstName(request.getMetadata());
-	    	 
-	    	 if(requester != null) {
-	    		 
-	    		 request.setNotifier(requester);
-	    		 request.setReceipientId(studentId);
-	    	 }
-	     });
-	     
-			
+		Set<MiscellaneousNotifications> requestNotifications = studentDao.findById(studentId).get()
+				.getMiscellaneousNotices().stream()
+				.filter(n -> n.getType().equals("join group") || n.getType().equals("new member"))
+				.collect(Collectors.toSet());
+
+		requestNotifications.stream().forEach(request -> {
+
+			final String requester = studentDao.getFirstName(request.getMetadata());
+
+			if (requester != null) {
+
+				request.setNotifier(requester);
+				request.setReceipientId(studentId);
+			}
+		});
+
 //	    get all the miscellaneous notifications to check if any needs deletion from the database
-	    List<MiscellaneousNotifications> notifications = miscellaneousNoticeDao.findAll();
-	    
-	    List<Integer> staleNotificationsId = new ArrayList<>();
-	    
-	    notifications.forEach(n -> {
-	    	
+		List<MiscellaneousNotifications> notifications = miscellaneousNoticeDao.findAll();
+
+		List<Integer> staleNotificationsId = new ArrayList<>();
+
+		notifications.forEach(n -> {
+
 //	    	check if there are students yet to read this notification
-	    	int unreadCount = studentDao.getUnreadNotificationCount(n.getId());
-	    	
-	    	if(unreadCount == 0) {
-	    		
-	    		staleNotificationsId.add(n.getId());
-	    		
-	    	}
-	    });
-			
+			int unreadCount = studentDao.getUnreadNotificationCount(n.getId());
+
+			if (unreadCount == 0) {
+
+				staleNotificationsId.add(n.getId());
+
+			}
+		});
+
 //		delete all stale notifications
-	    if(! staleNotificationsId.isEmpty()) {
-	    	miscellaneousNoticeDao.deleteAllById(staleNotificationsId);
-	    }
-		
-	    
+		if (!staleNotificationsId.isEmpty()) {
+			miscellaneousNoticeDao.deleteAllById(staleNotificationsId);
+		}
+
 		return requestNotifications;
 	}
 
 	@Override
 	@Transactional
 	public ChatDTO updateChat(ChatDTO chatDTO) {
-		
-		
-		
-		
+
 //		check if the chat exists
-		if(chatDao.existsById(chatDTO.getId())) {
-			
-			
-			
-				
+		if (chatDao.existsById(chatDTO.getId())) {
+
 //				get the groupChat object where this chat belongs
-			Optional<GroupChat> optional =	groupChatDao.findById(chatDTO.getGroupId());
-			
-			
-			
-			if(optional.isPresent()) {
-				
-				
+			Optional<GroupChat> optional = groupChatDao.findById(chatDTO.getGroupId());
+
+			if (optional.isPresent()) {
+
 				GroupChat grpChat = optional.get();
-				
+
 //				get the chat object
 				Chat updatableChat = chatDao.findById(chatDTO.getId()).get();
-				
+
 //				remove the chat from the list of groupChats
 				grpChat.getChats().remove(updatableChat);
-				
+
 //				update the chat with the current chat content (chat message)
 				updatableChat.setContent(chatDTO.getContent());
 				updatableChat.setIsEditedChat(true);
-				
-				
+
 //				Add to the list of group chats
 				grpChat.getChats().add(updatableChat);
-				
+
 				ChatDTO dto = mapToChatDTO(updatableChat);
-				
+
 				dto.setSenderName(chatDTO.getSenderName());
-				
+
 				dto.setEditedChat(true);
-				
+
 //				synchronize the data
 				groupChatDao.saveAndFlush(grpChat);
-				
-			
-			return dto;
+
+				return dto;
 			}
-				
-		
-			
-			
+
 		}
-		
-		
+
 		return null;
 	}
 
 	@Override
 	@Transactional
 	public ChatDTO deleteChat(Map<Integer, Integer> map, Integer deleterId) {
-		
+
 		final Integer groupId = map.keySet().stream().toList().get(0);
-		
+
 		final Integer chatId = map.get(groupId);
-		
-		
+
 //		get the GroupChat the chat belongs to
-		GroupChat grpChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("Couldn't delete chat from non-existent group"));
-	
-		
+		GroupChat grpChat = groupChatDao.findById(groupId)
+				.orElseThrow(() -> new IllegalArgumentException("Couldn't delete chat from non-existent group"));
+
 //		get the chat to delete  
-		final Chat toBeDeleted = chatDao.findById(chatId).orElseThrow(() -> new IllegalArgumentException("Couldn't delete non-existent chat: "+chatId));
-	
+		final Chat toBeDeleted = chatDao.findById(chatId)
+				.orElseThrow(() -> new IllegalArgumentException("Couldn't delete non-existent chat: " + chatId));
+
 		grpChat.getChats().remove(toBeDeleted);
-		
+
 		groupChatDao.save(grpChat);
-		
+
 //		delete the chat from the database
 		chatDao.delete(toBeDeleted);
-		
-		
+
 //		get all the chats that have replied the deleted chat and update the deletedBy property
 		List<Chat> repliedChats = repliedChats(chatId, groupId);
-		
-		
-		
+
 		repliedChats.forEach(reply -> {
-			
-			
+
 			reply.setDeletedBy(deleterId);
 		});
-		
+
 		chatDao.saveAllAndFlush(repliedChats);
-		
+
 		ChatDTO deletedChat = mapToChatDTO(toBeDeleted);
 		deletedChat.setDeleterId(deleterId);
-		
-		
+
 //		set the name of the user that deleted the chat
-		deletedChat.setDeleter(studentDao.findById(deleterId).orElseThrow(() -> new IllegalArgumentException("Deleter not found!")).getFirstName());
-		
+		deletedChat.setDeleter(studentDao.findById(deleterId)
+				.orElseThrow(() -> new IllegalArgumentException("Deleter not found!")).getFirstName());
 
 		deletedChat.setContent(DELETED_CHAT_CONTENT);
-		
-		
 
-		
 		return deletedChat;
 	}
-	
-
 
 // get a list of chats that have replied a given chat(referenced by chatId)
-	private List<Chat> repliedChats(Integer chatId, Integer groupId){
-		
+	private List<Chat> repliedChats(Integer chatId, Integer groupId) {
+
 		return chatDao.findRepliedChats(chatId, groupId);
-		
-		
+
 	}
 
 	@Transactional
 	@Override
 	public boolean lockGroup(Map<Integer, Integer> mapObj) {
-		
-		final Integer groupId = mapObj.keySet().stream().collect(Collectors.toList()).get(0);
-		
-		final Integer groupAdmin = mapObj.get(groupId);
-		
-//		get the group to be locked
-		GroupChat grpChat = groupChatDao.findById(groupId).orElseThrow(() -> new IllegalArgumentException("group chat does not exist"));
-		
-//		confirm the action is to be perform by the group admin
-	final Integer actualGroupAdmin = groupChatDao.getAdminId(groupId);
-	
-	if(! actualGroupAdmin.equals(groupAdmin)) return false;
-		
-		
-//		lock the group if the user meets the criteria to lock the chat
-	grpChat.setIsGroupLocked(true);
-	
-//	persists operation to the database
-	groupChatDao.saveAndFlush(grpChat);
-		
 
-		
+		final Integer groupId = mapObj.keySet().stream().collect(Collectors.toList()).get(0);
+
+		final Integer groupAdmin = mapObj.get(groupId);
+
+//		get the group to be locked
+		GroupChat grpChat = groupChatDao.findById(groupId)
+				.orElseThrow(() -> new IllegalArgumentException("group chat does not exist"));
+
+//		confirm the action is to be perform by the group admin
+		final Integer actualGroupAdmin = groupChatDao.getAdminId(groupId);
+
+		if (!actualGroupAdmin.equals(groupAdmin))
+			return false;
+
+//		lock the group if the user meets the criteria to lock the chat
+		grpChat.setIsGroupLocked(true);
+
+//	persists operation to the database
+		groupChatDao.saveAndFlush(grpChat);
+
 		return true;
 	}
 }

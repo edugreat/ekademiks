@@ -191,6 +191,8 @@ public class AppAuthService implements AppAuthInterface {
 				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
 				
                 dto.setCachingKey(cacheKey);
+                
+                cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T)dto);
                
 				
 				
@@ -274,6 +276,8 @@ public class AppAuthService implements AppAuthInterface {
 		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
 		
 		Cache.ValueWrapper valueWrapper = cache.get(cachingKey);
+		
+		
 		
 		
 		if(valueWrapper != null) return (T) valueWrapper.get();	

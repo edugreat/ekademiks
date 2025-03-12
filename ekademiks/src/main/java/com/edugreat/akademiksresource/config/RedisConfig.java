@@ -51,8 +51,42 @@ public class RedisConfig {
 	            RedisCacheConfiguration.defaultCacheConfig()
 	                    .entryTtl(Duration.ofHours(1))
 	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 1 hour
+	                    .disableCachingNullValues());
+	    
+//	    configures caching for assessment topics and durations
+	    cacheConfigurations.put(RedisValues.TOPICS_AND_DURATIONS, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(1))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 24 hours
+	                    .disableCachingNullValues());
+//	    configures caching for assessment topic and duration(a particular assessment and its duration
+	    cacheConfigurations.put(RedisValues.TOPIC_AND_DURATION, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(1))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
 	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
 	                    .disableCachingNullValues());
+	    
+//	    configures caching for assessment test(an object of TestWrapper)
+	    cacheConfigurations.put(RedisValues.ASSESSMENT_TEST, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(1))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
+	    
+//	    configures caching for when a user joins a group chat
+	    cacheConfigurations.put(RedisValues.JOIN_DATE, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(24))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
+	    
+	    
+	    
 
 
 	    // Create and return the RedisCacheManager

@@ -66,7 +66,7 @@ void leaveGroup(Map<Integer, Integer> map);
 
 // provides functionality to retrieve all group IDs and the joined date for the student referenced by studentId
 
- Map<Integer, LocalDateTime> groupAndJoinedAt(Integer studentId);
+ Map<Integer, String> groupAndJoinedAt(Integer studentId);
  
 // provides functionality that checks if the currently logged in user has received chat messages from the given group chat (map's value).
  boolean hadPreviousPosts(Map<Integer, Integer> map);

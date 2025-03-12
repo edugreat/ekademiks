@@ -8,5 +8,13 @@ public class RedisValues {
 	public static final String SUBJECT_NAMES = "subjectNames";
 	
 	public static final String RECENT_PERFORMANCE = "recent_performance"; 
+	
+	public static final String TOPICS_AND_DURATIONS = "topics_and_durations";
+	
+	public static final String TOPIC_AND_DURATION = "topic_and_duration";
+	
+	public static final String ASSESSMENT_TEST = "assessment_test";
+	
+	public static final String JOIN_DATE = "join_date"; //caches when a user joins a group chat
 
 }

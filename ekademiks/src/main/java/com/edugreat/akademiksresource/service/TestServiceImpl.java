@@ -91,7 +91,6 @@ public class TestServiceImpl implements TestInterface {
 	}
 
 	@Override
-	// returns a test wrapper containing all questions for the given test id
 	public TestWrapper takeTest(Integer testId) {
 		TestWrapper wrapper = new TestWrapper();
 		// we may need some attributes of this test object in the future(eg test
@@ -123,7 +122,7 @@ public class TestServiceImpl implements TestInterface {
 	@Cacheable(value = RedisValues.SUBJECT_NAMES, key = "#level")
 	public List<String> testSubjectFor(String level) {
 		
-		System.out.println("finding all text");
+		
 		// return all subjects for the given level,then map to their respective subject
 		// names
 		return subjectDao.findSubjectNamesByCategory(Category.valueOf(level));
@@ -216,7 +215,10 @@ public class TestServiceImpl implements TestInterface {
 
 	// implements the testTopics method of the interface
 	@Override
+	@Cacheable(value = RedisValues.TOPICS_AND_DURATIONS, key = "#category + #subject")
 	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category, Integer studentId) {
+		
+		
 		
 //		get the institution the student belongs to if not a guest user
 		Integer myInstitution = null;
@@ -241,9 +243,11 @@ public class TestServiceImpl implements TestInterface {
 	}
 
 	@Override
+	@Cacheable(value = RedisValues.TOPIC_AND_DURATION, key = "#testId")
 	public TopicAndDuration testTopicAndDuration(Integer testId) {
 		
 
+		
 
 		return testDao.retrieveTopicAndurationById(testId);
 	}
@@ -251,7 +255,11 @@ public class TestServiceImpl implements TestInterface {
 	// implements the interface method to return a list of questions for the given
 	// argument
 	@Override
+	// returns a test wrapper containing all questions for the given test id
+	@Cacheable(value = RedisValues.ASSESSMENT_TEST, key = "#topic+#category")
 	public TestWrapper takeTest(String topic, String category) {
+		
+		
 
 		Test test = testDao.findByTestNameAndCategory(topic, Category.valueOf(category));
 
@@ -362,20 +370,20 @@ public class TestServiceImpl implements TestInterface {
 	@Override
 	public PerformanceObj getRecentPerformanceFromCache(String cachingKey) {
 		
-		System.out.println("caching key: "+cachingKey);
+		
 		final Cache recentPerformance = cacheManager.getCache(RedisValues.RECENT_PERFORMANCE);
-		System.out.println("----------");
+		
 		if(recentPerformance != null) {
 			
-			System.out.println("recent performance not null");
+			
 			Cache.ValueWrapper valueWrapper =  recentPerformance.get(cachingKey);
 			
-			System.out.println("after value wrapper");
 			
-			return (PerformanceObj) valueWrapper.get();
+			
+			return valueWrapper != null ? (PerformanceObj) valueWrapper.get() : null;
 		}
 	
-		System.out.println("returning null object");
+		
 		return null;
 	}
 

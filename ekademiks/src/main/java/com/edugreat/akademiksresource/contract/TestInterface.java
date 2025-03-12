@@ -23,7 +23,7 @@ public interface TestInterface {
 	public List<String> testSubjectFor(String level);
 
 	// method that retrieves all the topics and their durations for a subject and
-	// category
+	// category. 
 	public List<TopicAndDuration> testTopicsAndDurations(String subject, String category, Integer studentId);
 
 	/*
