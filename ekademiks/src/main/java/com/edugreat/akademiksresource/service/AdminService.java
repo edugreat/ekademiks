@@ -17,6 +17,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -75,17 +77,16 @@ public class AdminService implements AdminInterface {
 	private final TestDao testDao;
 	private final WelcomeMessageDao welcomeMsgDao;
 	private final QuestionDao questionDao;
-	
+
 	private final InstitutionDao institutionDao;
-	
+
 	@Autowired
 	private CacheManager cacheManager;
-	
-	
 	
 
 	@Override
 	@Transactional
+	@CacheEvict(value = RedisValues.USER_CACHE, allEntries = true)
 	public void updatePassword(AppUserDTO dto) {
 
 		// check if the user exists in the database
@@ -154,6 +155,8 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public void setSubject(List<SubjectDTO> subjectDTOs) {
 
 		List<Subject> subjects = new ArrayList<>();
@@ -255,6 +258,8 @@ public class AdminService implements AdminInterface {
 
 	@Transactional
 	@Override
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public void modifyAssessment(Map<String, Object> modifiedAssessment, Integer assessmentId) {
 
 		// get the assessment to be modified
@@ -275,14 +280,14 @@ public class AdminService implements AdminInterface {
 
 	@Transactional
 	@Override
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public void deleteQuestion(Integer testId, Integer questionId) {
 
 		// fetch from the database, the Test object referred to by testId
 		Optional<Test> optional = testDao.findById(testId);
 
 		if (optional.isPresent()) {
-
-			
 
 			// Get the Test object
 			Test test = optional.get();
@@ -302,25 +307,27 @@ public class AdminService implements AdminInterface {
 		}
 
 	}
-	
+
 	@Transactional
 	@Override
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public void deleteAssessment(Integer testId) {
-		
+
 //		get the assessment to delete
 		Test test = testDao.findById(testId).orElseThrow(() -> new IllegalArgumentException("Record not found!"));
-		
+
 //		get the subject associated to this assessment
 		Subject associatedSubject = test.getSubject();
-		
+
 //		break the relationship
 		associatedSubject.getTest().remove(test);
-		
+
 //		delete the test finally
 		testDao.delete(test);
-		
+
 		subjectDao.saveAndFlush(associatedSubject);
-		
+
 	}
 
 	@Override
@@ -357,9 +364,10 @@ public class AdminService implements AdminInterface {
 
 	@Transactional
 	@Override
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public Integer uploadAssessment(TestDTO testDTO) {
-		
-		
+
 		// check if test name exists in the database
 		Test t = testDao.findByTestNameAndCategory(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
 		if (t != null) {
@@ -399,6 +407,8 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public void updateTest(Integer testId, Map<String, Object> updates) {
 
 		// fetch the database,the Test object intended to update
@@ -483,12 +493,6 @@ public class AdminService implements AdminInterface {
 		return validOptions;
 	}
 
-	// private SubjectDTO convertToDTO(Subject subject) {
-	//
-	// return new SubjectDTO(subject.getId(), subject.getSubjectName(),
-	// subject.getLevel().getCategory().name());
-	// }
-
 	private AppUserDTO searchUser(String username) {
 
 		final boolean isStudent = studentDao.existsByEmail(username);
@@ -514,6 +518,8 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
+	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public void addLevels(List<LevelDTO> dtos) {
 
 		try {
@@ -564,6 +570,7 @@ public class AdminService implements AdminInterface {
 
 	@Transactional
 	@Override
+	@CacheEvict(value = RedisValues.WELCOME_MSG)
 	public void createWelcomeMessages(Map<String, Collection<String>> msgs) {
 
 		WelcomeMessage welcome = new WelcomeMessage();
@@ -587,307 +594,304 @@ public class AdminService implements AdminInterface {
 		return Pattern.matches("^[A-Za-z0-9\s,;:!.'\"-]+[.!?]*$", msg);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, List<String>> getAssessmentTopics() {
-		
-		
-		
+
 		Map<String, List<String>> map = new TreeMap<>();
+
+		Cache juniorCategoryCache = cacheManager.getCache(RedisValues.ASSESSMENT_TOPICS);
 //		get all assessment topics for junior assessments
-		List<String> juniorCategory = testDao.getTopicsFor(Category.JUNIOR);
-		
-		List<String> seniorCategory = testDao.getTopicsFor(Category.SENIOR);
-		
-		
-		if(juniorCategory.size() > 0) {
-			
+		List<String> juniorCategory = null;
+
+		if (juniorCategoryCache != null && juniorCategoryCache.get("JUNIOR") != null) {
+
+			Cache.ValueWrapper valueWrapper = juniorCategoryCache.get("JUNIOR");
+			juniorCategory = new ArrayList<>((List<String>) valueWrapper);
+		} else {
+
+			juniorCategory = testDao.getTopicsFor(Category.JUNIOR);
+		}
+
+		Cache seniorCategoryCache = cacheManager.getCache(RedisValues.ASSESSMENT_TOPICS);
+
+		List<String> seniorCategory = null;
+
+		if (seniorCategoryCache != null && juniorCategoryCache.get("SENIOR") != null) {
+
+			Cache.ValueWrapper valueWrapper = juniorCategoryCache.get("SENIOR");
+			seniorCategory = new ArrayList<>((List<String>) valueWrapper);
+		} else {
+
+			seniorCategory = testDao.getTopicsFor(Category.SENIOR);
+		}
+
+		testDao.getTopicsFor(Category.SENIOR);
+
+		if (juniorCategory.size() > 0) {
+
 			Collections.sort(juniorCategory);
 			map.put("JUNIOR", juniorCategory);
-			
+
 		}
-		
-		if(seniorCategory.size() > 0) {
-			
+
+		if (seniorCategory.size() > 0) {
+
 			Collections.sort(seniorCategory);
 			map.put("SENIOR", seniorCategory);
 		}
-		
-		
-		if(! map.isEmpty()) {
-			
+
+		if (!map.isEmpty()) {
+
 			return map;
-		};
-		
-		
+		}
+		;
+
 		return null;
 	}
 
 	@Override
 	@Transactional
-	public void updateAssessmentTopic(Map<String, String> record,  String category) {
-		
+	public void updateAssessmentTopic(Map<String, String> record, String category) {
+
 		record.forEach((oldName, newName) -> {
-			
+
 			Test updatableTest = testDao.findByTestNameAndCategory(oldName, Category.valueOf(category));
-			if(updatableTest == null) {
-				
+			if (updatableTest == null) {
+
 				throw new IllegalArgumentException("Record not found!");
 			}
-			
+
 			updatableTest.setTestName(newName);
-			testDao.saveAndFlush(updatableTest);	
-			
-			
+			testDao.saveAndFlush(updatableTest);
+
 		});
-		
-		
-		
+
 	}
-	
+
 	@Override
 	@Transactional
 	public void deleteAssessment(String category, String topic) {
-		
+
 		Test deletable = testDao.findByTestNameAndCategory(topic, Category.valueOf(category));
-		
-		if(deletable  == null) throw new IllegalArgumentException("Record does not exist!");
-		
+
+		if (deletable == null)
+			throw new IllegalArgumentException("Record does not exist!");
+
 		testDao.delete(deletable);
-		
-		
-		
-		
+
 	}
-	
+
 	@Override
 	public Map<String, List<String>> assessmentSubjects() {
-		
+
 		Map<String, List<String>> subjectNames = new TreeMap<>();
-		
+
 		List<String> subjectNamesForJuniorCategory = subjectDao.findSubjectNamesByCategory(Category.valueOf("JUNIOR"));
-		
-		
-		
-		if(subjectNamesForJuniorCategory.size() > 0) {
-			
+
+		if (subjectNamesForJuniorCategory.size() > 0) {
+
 			Collections.sort(subjectNamesForJuniorCategory);
-			
+
 			subjectNames.put("JUNIOR", subjectNamesForJuniorCategory);
 		}
-		
+
 		List<String> subjectNamesForSeniorCategory = subjectDao.findSubjectNamesByCategory(Category.valueOf("SENIOR"));
-		
-		if(subjectNamesForSeniorCategory.size() > 0) {
-			
+
+		if (subjectNamesForSeniorCategory.size() > 0) {
+
 			Collections.sort(subjectNamesForSeniorCategory);
 			subjectNames.put("SENIOR", subjectNamesForSeniorCategory);
 		}
-		
-		
-		
-		
+
 		return subjectNames;
 
 	}
-	
+
 	@Override
 	@Transactional
 	public void updateSubjectName(Map<String, String> editedObject, String oldName) {
-	editedObject.forEach((category, subjectName) -> {
-		
-		Subject updatableSubject = subjectDao.findBySubjectNameAndCategory(oldName, Category.valueOf(category));
-		
-		if(updatableSubject != null) {
-			
-			updatableSubject.setSubjectName(subjectName);
-			
+		editedObject.forEach((category, subjectName) -> {
+
+			Subject updatableSubject = subjectDao.findBySubjectNameAndCategory(oldName, Category.valueOf(category));
+
+			if (updatableSubject != null) {
+
+				updatableSubject.setSubjectName(subjectName);
+
 //			evicts previously cached object of subject names
-			Cache cache = cacheManager.getCache(RedisValues.SUBJECT_NAMES);
-			
-			if(cache != null) {
-				cache.evict(category);
-			}
-			
-		}else throw new IllegalArgumentException("No record found for update");
-		
-	});
-		
-		
-		
-		
-		
-		
+				Cache cache = cacheManager.getCache(RedisValues.SUBJECT_NAMES);
+
+				if (cache != null) {
+					cache.evict(category);
+				}
+
+			} else
+				throw new IllegalArgumentException("No record found for update");
+
+		});
+
 	}
-	
+
 	@Override
 	@Transactional
 	public void deleteSubject(String category, String subjectName) {
-		
-		
+
 //			check if the record exists in the database
-			final boolean recordExists = subjectDao.subjectExists(subjectName, Category.valueOf(category));
-			
-			if(! recordExists) throw new IllegalArgumentException("No such record !");
-			
-			var subject = subjectDao.findBySubjectNameAndCategory(subjectName, Category.valueOf(category));
-			
-			subjectDao.delete(subject);
-		
+		final boolean recordExists = subjectDao.subjectExists(subjectName, Category.valueOf(category));
+
+		if (!recordExists)
+			throw new IllegalArgumentException("No such record !");
+
+		var subject = subjectDao.findBySubjectNameAndCategory(subjectName, Category.valueOf(category));
+
+		subjectDao.delete(subject);
+
 	}
-	
+
 	@Override
 	@Transactional
 	public void updateCategoryName(String currentName, String previousName) {
-		
+
 //		verify the supplied category is allowed
 		try {
-			
+
 			Category.valueOf(currentName);
-			
+
 			final boolean exists = levelDao.existsByCategory(Category.valueOf(previousName));
-			
-			if(! exists) throw new IllegalArgumentException("No record for "+previousName);
-			
+
+			if (!exists)
+				throw new IllegalArgumentException("No record for " + previousName);
+
 			var updatableCategory = levelDao.findByCategory(Category.valueOf(previousName));
-			
-			
+
 			updatableCategory.setCategory(Category.valueOf(currentName));
-			
+
 			levelDao.saveAndFlush(updatableCategory);
-			
+
 		} catch (Exception e) {
-			
+
 			throw new IllegalArgumentException(e);
-			
+
 		}
-		
-		
+
 	}
-	
+
 	@Override
 	@Transactional
 	public void deleteCategory(String category) {
-		
-try {
-	
+
+		try {
+
 //	check the existence of the record
-if(! levelDao.existsByCategory(Category.valueOf(category))) throw new IllegalArgumentException("Record not found");
+			if (!levelDao.existsByCategory(Category.valueOf(category)))
+				throw new IllegalArgumentException("Record not found");
 
+			levelDao.deleteByCategory(Category.valueOf(category));
 
-levelDao.deleteByCategory(Category.valueOf(category));
+		} catch (Exception e) {
 
-	
-} catch (Exception e) {
-	
-	throw new IllegalArgumentException(e);
-	
-}
-		
-		
+			throw new IllegalArgumentException(e);
+
+		}
+
 	}
 
 	@Transactional
 	@Override
 	public void registerInstitution(InstitutionDTO institutionDTO) {
-			//check if the institution already exists in the database
-		Optional<Institution> optionalInstitution = institutionDao.findByNameAndLocalGovt(institutionDTO.getName(), institutionDTO.getLocalGovt());
-		
-		if(optionalInstitution.isPresent()) throw new IllegalArgumentException("already exists");
-		
+		// check if the institution already exists in the database
+		Optional<Institution> optionalInstitution = institutionDao.findByNameAndLocalGovt(institutionDTO.getName(),
+				institutionDTO.getLocalGovt());
+
+		if (optionalInstitution.isPresent())
+			throw new IllegalArgumentException("already exists");
+
 		try {
 			Institution institution = mapToInstitution(institutionDTO);
-			
+
 			institutionDao.save(institution);
 		} catch (Exception e) {
-			
+
 			throw e;
 		}
-		
-		
-		
-		
-		
-		
+
 	}
-	
-	
+
 	private Institution mapToInstitution(InstitutionDTO dto) {
-		
-		
-		
-		Institution institution = new Institution(dto.getName(), dto.getState(), dto.getLocalGovt(), dto.getCreatedBy());
-		
+
+		Institution institution = new Institution(dto.getName(), dto.getState(), dto.getLocalGovt(),
+				dto.getCreatedBy());
+
 		return institution;
-		
-		
+
 	}
 
 	@Override
 	public List<InstitutionDTO> getInstitutions(Integer adminId) {
-		
+
 		List<Institution> institutions = institutionDao.findByCreatedByOrderByNameAsc(adminId);
-		
-		if(!institutions.isEmpty()) return institutions.stream().map(this::mapToDTO).collect(Collectors.toList());
-		
-	
+
+		if (!institutions.isEmpty())
+			return institutions.stream().map(this::mapToDTO).collect(Collectors.toList());
+
 		return List.of();
 	}
-	
+
 	private InstitutionDTO mapToDTO(Institution institution) {
-		
-		
-		return  new InstitutionDTO(institution.getId(), institution.getName(), institution.getStudentPopulation());
-		
+
+		return new InstitutionDTO(institution.getId(), institution.getName(), institution.getStudentPopulation());
+
 	}
 
 	@Transactional
 	@Override
 	public void addStudentRecords(List<StudentRecord> studentRecords, Integer institutionId) {
-		
+
 //		get the institution from the database
-		final Institution institution = institutionDao.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution does not exist"));
-		
+		final Institution institution = institutionDao.findById(institutionId)
+				.orElseThrow(() -> new IllegalArgumentException("Institution does not exist"));
+
 //		get the students already registered
 		final List<Student> students = institution.getStudentList();
-		
+
 		final List<Student> verifiedRecords = verifyStudentRecords(studentRecords);
-		
-		for(Student s : verifiedRecords) {
-			
-			final boolean successful = institution.addStudent(students, s); 
-			
-			if(! successful) throw new IllegalArgumentException("some records already exist");
-			
-			
+
+		for (Student s : verifiedRecords) {
+
+			final boolean successful = institution.addStudent(students, s);
+
+			if (!successful)
+				throw new IllegalArgumentException("some records already exist");
+
 		}
-		
+
 		studentDao.saveAllAndFlush(verifiedRecords);
-		
+
 		institutionDao.saveAndFlush(institution);
-		
-		
-		
+
 	}
-	
+
 //	processes the given student records against the details in the database. Returns true if successful or false otherwise 
 	private final List<Student> verifyStudentRecords(List<StudentRecord> records) {
-		
+
 		List<Student> students = new ArrayList<>();
-		
+
 //		use each information in the record to fetch the student from the database
-		for(StudentRecord r : records) {
-			
+		for (StudentRecord r : records) {
+
 			Optional<Student> op = studentDao.findByEmail(r.email());
-			
-			// throws exception if the student does not exist or the supplied password does not match with the actual password in the database
-			if(op.isEmpty() || !(passwordEncoder.matches(r.password(), op.get().getPassword()))) throw new IllegalArgumentException("Email and or password error");
-			
+
+			// throws exception if the student does not exist or the supplied password does
+			// not match with the actual password in the database
+			if (op.isEmpty() || !(passwordEncoder.matches(r.password(), op.get().getPassword())))
+				throw new IllegalArgumentException("Email and or password error");
+
 			students.add(op.get());
-			
+
 		}
 		return students;
-		
-		
+
 	}
 
 }

@@ -39,13 +39,12 @@ public class AppAuthService implements AppAuthInterface {
 	private final JwtUtil jwtUtil;
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper mapper;
-	
+
 	@Autowired
 	private CacheManager cacheManager;
-	
+
 	@Autowired
-	private CachingKeysUtil  cachingKeysUtil;
-	
+	private CachingKeysUtil cachingKeysUtil;
 
 	@Transactional
 	@Override
@@ -80,7 +79,7 @@ public class AppAuthService implements AppAuthInterface {
 				throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
 		}
 
-		if (userDTO.getRoles().contains(Roles.Student.name()) ) {
+		if (userDTO.getRoles().contains(Roles.Student.name())) {
 
 			user = mapper.map(userDTO, StudentDTO.class);
 			newUser = new Student();
@@ -102,7 +101,6 @@ public class AppAuthService implements AppAuthInterface {
 
 			user = mapper.map(userDTO, AdminsDTO.class);
 			user.setRoles(userDTO.getRoles());
-			
 
 			newUser = new Admins();
 
@@ -117,10 +115,6 @@ public class AppAuthService implements AppAuthInterface {
 
 			// Save the new object to the database
 			adminsDao.save((Admins) newUser);
-			
-			
-			
-			
 
 		}
 
@@ -133,7 +127,7 @@ public class AppAuthService implements AppAuthInterface {
 	// AuthenticationMangager bean to authenticate automatically
 	@SuppressWarnings("unchecked")
 	@Override
-	//@Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
+	// @Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 
 		String username = request.getEmail();
@@ -147,19 +141,18 @@ public class AppAuthService implements AppAuthInterface {
 				Admins admin = optionalAdmin.get();
 				var accessToken = jwtUtil.generateToken(admin);
 				var refreshToken = jwtUtil.createRefreshToken(admin);
-				
-				
+
 				var dto = mapper.map(admin, AdminsDTO.class);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
-				
+
 //				generate new cache key;
-				
+
 				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
-				
+
 				dto.setCachingKey(cacheKey);
-				
-				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T)dto);
+
+				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T) dto);
 
 				return (T) dto;
 			}
@@ -171,121 +164,134 @@ public class AppAuthService implements AppAuthInterface {
 			if (optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
 
 				Student student = optionalStudent.get();
-				
+
 //				check if the user's account has yet to be enabled
-				if( ! student.isAccountEnabled()) {
-					
+				if (!student.isAccountEnabled()) {
+
 					throw new DisabledException("Account is disabled !");
 				}
 //				proceed from here since account is enabled
 				var accessToken = jwtUtil.generateToken(student);
-				
+
 				var refreshToken = jwtUtil.createRefreshToken(student);
 				var dto = mapper.map(student, StudentDTO.class);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
-				
+
 				dto.setStatus(student.getStatus());
-				
+
 //				generate new caching key;
 				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
-				
-                dto.setCachingKey(cacheKey);
-                
-                cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T)dto);
-               
-				
-				
+
+				dto.setCachingKey(cacheKey);
+
+				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T) dto);
+
 				return (T) dto;
 			}
 
 		}
 
 		// the user does not exist in the database
-		throw new AcademicException((role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("superadmin")) ? "admin not found!" : "student not found!",
+		throw new AcademicException(
+				(role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("superadmin")) ? "admin not found!"
+						: "student not found!",
 				Exceptions.RECORD_NOT_FOUND.name());
 
 	}
 
-	
-	
 //	Implementation that generates new token using the refresh token (for user validation) after the expiration of the existing token
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends AppUserDTO> T generateNewToken(String refreshToken, HttpServletResponse response) throws IOException {
-		
-		
+	public <T extends AppUserDTO> T generateNewToken(String refreshToken, HttpServletResponse response)
+			throws IOException {
+
 //		extract username from the token
 		var email = jwtUtil.extractUsername(refreshToken);
 		var roles = jwtUtil.extractRoles(refreshToken);
-		
+
 		String role = roles.get(0);
 		switch (role.toLowerCase()) {
 		case "admin": {
-			
+
 			Optional<Admins> optional = adminsDao.findByEmail(email);
-			if(optional.isEmpty()) {
+			if (optional.isEmpty()) {
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
 				return null;
 			}
-			
+
 			Admins admin = optional.get();
 			String token = jwtUtil.generateToken(admin);
-			;			
+			;
 			var dto = mapper.map(admin, AdminsDTO.class);
-			
+
 			dto.setAccessToken(token);
-			
-			return (T)dto;
-			
-		}
-		
-		case "student":{
-			
-			Optional<Student> optional = studentDao.findByEmail(email);
-			
-			if(optional.isEmpty()) {
-				
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
-			return null;
+
+//			re-insert cached object after generating new JWT for the user
+			Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
+
+			if (cache != null) {
+
+//				generate new caching key;
+				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
+
+				cache.put(cacheKey, (T) dto);
 			}
-			
+
+			return (T) dto;
+
+		}
+
+		case "student": {
+
+			Optional<Student> optional = studentDao.findByEmail(email);
+
+			if (optional.isEmpty()) {
+
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
+				return null;
+			}
+
 			Student student = optional.get();
 			String token = jwtUtil.generateToken(student);
 			var dto = mapper.map(student, StudentDTO.class);
-			
+
 			dto.setAccessToken(token);
-			
-			return (T)dto;
-			
+
+//			re-insert cached object after generating new JWT for the user
+			Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
+
+			if (cache != null) {
+
+//				generate new caching key;
+				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
+
+				cache.put(cacheKey, (T) dto);
+			}
+			return (T) dto;
+
 		}
 		}
-		
 
 		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized!");
-		
+
 		return null;
-		
+
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
-	public  <T extends AppUserDTO> T getCachedUser(String cachingKey){
-		
-				
+	public <T extends AppUserDTO> T getCachedUser(String cachingKey) {
+
 		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
-		
+
 		Cache.ValueWrapper valueWrapper = cache.get(cachingKey);
-		
-		
-		
-		
-		if(valueWrapper != null) return (T) valueWrapper.get();	
-		
+
+		if (valueWrapper != null)
+			return (T) valueWrapper.get();
+
 		return null;
-		
-		
+
 	}
-	
-	
+
 }

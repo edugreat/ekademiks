@@ -85,6 +85,23 @@ public class RedisConfig {
 	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
 	                    .disableCachingNullValues());
 	    
+//	    configures caching for welcome messages
+
+	    cacheConfigurations.put(RedisValues.WELCOME_MSG, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(24))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
+	    
+	    
+//	    configures caching for all assessment topics
+	    cacheConfigurations.put(RedisValues.ASSESSMENT_TOPICS, 
+	            RedisCacheConfiguration.defaultCacheConfig()
+	                    .entryTtl(Duration.ofHours(24))
+	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
+	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
+	                    .disableCachingNullValues());
 	    
 	    
 

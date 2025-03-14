@@ -17,4 +17,10 @@ public class RedisValues {
 	
 	public static final String JOIN_DATE = "join_date"; //caches when a user joins a group chat
 
+//	caches all institutions a particular (admin) user has registered
+	public static final String MY_INSTITUTIONS = "my_institutions";
+
+	public static final String WELCOME_MSG = "welcome_msg";
+
+	public static final String ASSESSMENT_TOPICS = "assessment_topics";
 }

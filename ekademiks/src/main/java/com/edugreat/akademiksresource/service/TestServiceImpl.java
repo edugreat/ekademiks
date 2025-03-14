@@ -85,8 +85,10 @@ public class TestServiceImpl implements TestInterface {
 	}
 
 	@Override
+	@Cacheable(value = RedisValues.WELCOME_MSG)
 	public Collection<String> getWelcomeMessages() {
 
+		
 		return welcomeMsgDao.findAllMessages();
 	}
 
