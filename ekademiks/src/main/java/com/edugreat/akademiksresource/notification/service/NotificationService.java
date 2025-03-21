@@ -34,8 +34,11 @@ public class NotificationService implements NotificationInterface {
 	private InstitutionDao institutionDao;
 
 	@Transactional
+	@Override
 	public AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto,
 			Integer receipientInstitutitonId) {
+		
+		System.out.println("calling notification service");
 
 		AssessmentUploadNotification newNotification = mapToNotification(dto);
 
@@ -47,7 +50,7 @@ public class NotificationService implements NotificationInterface {
 		// Persist to the database;
 		assessmentNotificationDao.save(newNotification);
 
-		// Get creation time for this notification
+		// Get creation time for that notification
 		final LocalDateTime createdAt = newNotification.getCreatedAt();
 
 		final List<String> audience = dto.getAudience();
@@ -84,14 +87,14 @@ public class NotificationService implements NotificationInterface {
 
 		} else if (audience.size() > 0) {
 
-			// get information about the student the notification is targeted at
+			
 			List<Integer> idList = new ArrayList<>();
 
 			audience.forEach(x -> idList.add(Integer.parseInt(x)));
 
-			// get the students for whom the notification is sent
-
+			// get the target students
 			List<Student> targetStudents = studentDao.findAllById(idList);
+			
 			final int total = targetStudents.size();
 
 			int batchSize = 5;

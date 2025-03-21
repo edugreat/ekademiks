@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.edugreat.akademiksresource.amqp.notification.broadcast.NotificationConsumer;
+import com.edugreat.akademiksresource.amqp.notification.consumer.NotificationConsumer;
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
 import com.edugreat.akademiksresource.chat.amq.consumer.ChatConsumer;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;

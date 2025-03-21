@@ -80,6 +80,8 @@ public class AssignmentService implements AssignmentInterface {
 	@Transactional
 	public Integer setAssignment(AssignmentDetailsDTO details) {
 
+		Integer assignmentId = null;
+		
 //		checks there is no duplicate attempt
 		final boolean conflicts = assignmentDetailsDao.existsConflicts(details.getInstitution(), details.getCategory(),
 				details.getName());
@@ -92,55 +94,97 @@ public class AssignmentService implements AssignmentInterface {
 				.orElseThrow(() -> new IllegalArgumentException("Admin not found"));
 
 //		get the institution
-		var institution = institutionDao.findById(null)
+		var institution = institutionDao.findById(details.getInstitution())
 				.orElseThrow(() -> new IllegalArgumentException("institution not found"));
 
 		AssignmentDetails assignmentDetails = new AssignmentDetails(admin, details.getSubject(), institution,
 				details.getAllocatedMark(), details.getSubmissionEnds(), details.getName(), details.getCategory(),
 				details.getType(), details.getTotalQuestions());
 
-		Set<AssignmentResourceDTO> dtos = details.getAssignmentResourceDTO();
-		
-		
-
-		
-		for(var _dto : dtos) {
 			
-			if(_dto.getType().equalsIgnoreCase("objectives")) {
+	
+		
+//		confirm the type of assignment posted
+		if(details.getType().equalsIgnoreCase("objectives")) {
+			
+			
+			for(var resourceDTO: details.getAssignmentResourceDTO()) {
 				
+				var objAssignment= new Objectives(
+						((ObjectiveAssignmentDTO)resourceDTO).getAnswer(),
+						
+						((ObjectiveAssignmentDTO)resourceDTO).get_index(), 
+						
+						((ObjectiveAssignmentDTO)resourceDTO).getProblem());
 				
+				objAssignment.addOptions(((ObjectiveAssignmentDTO)resourceDTO).getOptions());
+			
+				assignmentDetails.addAssignment(objAssignment);
+			
+			}
+			
+			
+			assignmentId = assignmentDetailsDao.saveAndFlush(assignmentDetails).getId();
+			
+			System.out.println("ID returned: ");
+			System.out.println(assignmentId);
+		}else if(details.getType().equalsIgnoreCase("theory")) {
+			
+			
+			for(var resourceDTO : details.getAssignmentResourceDTO()) {
 				
-				var obj = (ObjectiveAssignmentDTO)_dto;
+				var theoryAssignment = new Theories(
+						((TheoreticalAssigDTO)resourceDTO).getAnswer(), 
+						((TheoreticalAssigDTO)resourceDTO).get_index(),
+						((TheoreticalAssigDTO)resourceDTO).getProblem());
 				
-				var assignment = new Objectives(obj.getAnswer(), obj.get_index(), obj.getProblem());
-				
-				assignment.addOptions(obj.getOptions());
-				
-				
-				assignmentDetails.addAssignment(assignment);
-				
-				
-				
-			}else if(_dto.getType().equalsIgnoreCase("theory")) {
-				
-				
-				
-				var theory = (TheoreticalAssigDTO)_dto;
-				
-				var assignment = new Theories(theory.getAnswer(), theory.get_index(), theory.getProblem());	
-				
-				assignmentDetails.addAssignment(assignment);
+				assignmentDetails.addAssignment(theoryAssignment);
+						
 				
 			}
 			
+			assignmentId = assignmentDetailsDao.saveAndFlush(assignmentDetails).getId();
+			
+			System.out.println("ID returned: ");
+			System.out.println(assignmentId);
+		}
+		
+		
+		
+		
+		
+		
 
 		
-		
+	
+
+//		save and return the ID of assignment for notification purpose
+		return assignmentId;
+	
 	}
 
-	
-		return assignmentDetailsDao.save(assignmentDetails).getId();
-	
+	@Override
+	public AssignmentDetailsDTO getAssignmentDetails(Integer assignmentId) {
+		
+		var assignmentDetails = assignmentDetailsDao.findById(assignmentId).orElseThrow(() -> new RuntimeException("Assignment not found!"));
+		
+		AssignmentDetailsDTO dto = mapToAssignmentDetailsDTO(assignmentDetails);
+		
+		dto.setType(assignmentDetails.getType());
+		
+		return dto;
+	}
+
+	private AssignmentDetailsDTO mapToAssignmentDetailsDTO(AssignmentDetails details) {
+		
+		AssignmentDetailsDTO dto = new AssignmentDetailsDTO(details.getId(), 
+				details.getName(),details.getInstructor().getId(), 
+				details.getSubject(), details.getInstitution().getId(), 
+				details.getAllocatedMark(), details.getCreationDate(), 
+				details.getSubmissionEnds(), details.getCategory(), 
+				details.getTotalQuestions());
+		
+		return null;
 	}
 	
 

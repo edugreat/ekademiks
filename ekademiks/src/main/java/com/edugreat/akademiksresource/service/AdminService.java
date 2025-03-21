@@ -390,7 +390,7 @@ public class AdminService implements AdminInterface {
 
 		loadedSubject.addTest(validTest);
 
-		// return the id of the just uploaded test assessment
+		// return the id of the just uploaded test assessment for notification purpose
 		Integer id = findId(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
 		if (id == null)
 			throw new IllegalArgumentException("Invalid request");

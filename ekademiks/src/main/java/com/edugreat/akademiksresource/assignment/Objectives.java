@@ -11,61 +11,49 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 
 @Entity
-@DiscriminatorValue("obj")
+@DiscriminatorValue("objectives")
 public class Objectives extends AssignmentResource {
-	
-
-
-	
 
 	@ElementCollection
-	@CollectionTable(name = "obj_options",
-	joinColumns = @JoinColumn(name = "obj_id")
-			)
+	@CollectionTable(name = "obj_options")
 	@Column(name = "obj_option")
 	private Set<String> options = new HashSet<>();
 
-
-
 	public Objectives(String answer, int _index, String problem) {
 		super(answer, _index, problem);
-		
+
 	}
-	
-	
 
 	@Override
 	public String getType() {
-	
-		
+
 		return "objectives";
 	}
 
 	@Override
 	public boolean equals(Object o) {
-	    if (this == o) return true;
-	    if (o == null || getClass() != o.getClass()) return false;
-	    Objectives that = (Objectives) o;
-	    return super.getId() != null && super.getId().equals(that.getId());
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		Objectives that = (Objectives) o;
+		return super.getId() != null && super.getId().equals(that.getId());
 	}
 
 	@Override
 	public int hashCode() {
-	    return getClass().hashCode();
+		return getClass().hashCode();
 	}
 
-	
-	public void addOptions(Set<String> otpions) {
-		
-		for(String option : options) {
-			
-			if(this.options.contains(option)) throw new IllegalArgumentException("attempt at having duplicate options");
-			
+//	ensures non-duplicity of data
+	public void addOptions(Set<String> options) {
+
+		for (String option : options) {
+
+			if (this.options.contains(option)) throw new IllegalArgumentException("attempt at having duplicate options");
+
 			this.options.add(option);
 		}
 	}
-	
 
-
-	
 }

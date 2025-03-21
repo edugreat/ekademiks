@@ -1,4 +1,4 @@
-package com.edugreat.akademiksresource.amqp.notification.broadcast;
+package com.edugreat.akademiksresource.amqp.notification.consumer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,16 +20,14 @@ import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 @Service
 public class NotificationConsumerService implements NotificationConsumer {
 
-	private static final long HEARTBEAT_INTERVAL = 30000;//30 seconds heart-beat interval
+	//private static final long HEARTBEAT_INTERVAL = 30000;//30 seconds heart-beat interval
 
 	private Map<Integer, SseEmitter> clients = new ConcurrentHashMap<>();
 	
 	private final Logger LOGGER = LoggerFactory.getLogger(NotificationConsumerService.class);
 
-	@RabbitListener(queues = { "${notification.queue}" })
+	@RabbitListener(queues = { "${previous.notification.queue}" })
 	 void consumePreviousNotification(AssessmentUploadNotification notification) {
-
-		
 		
 //		get the receipient of this notification
 		final Integer studentId = notification.getReceipientIds().get(0);
@@ -51,16 +49,18 @@ public class NotificationConsumerService implements NotificationConsumer {
 
 	}
 
-	@RabbitListener(queues = { "${notification.queue}" })
+	@RabbitListener(queues = { "${instant.notification.queue}" })
 	 void consumeInstantNotification(AssessmentUploadNotification notification) {
+		
+		System.out.println("consuming instant notification");
 
 //		get the receipient of this notification
-		final List<Integer> receipientIds = notification.getReceipientIds();
+		final List<Integer> recipientIds = notification.getReceipientIds();
 		
 		List<Integer> toBeRemoved = new ArrayList<>();
 
 //		 A case where the notification is meant for all users
-		if (receipientIds == null || receipientIds.size() == 0) {
+		if (recipientIds == null || recipientIds.size() == 0) {
 			
 			
 
@@ -80,9 +80,28 @@ public class NotificationConsumerService implements NotificationConsumer {
 				
 		
 
-//			removes the client that caused the exception
-			toBeRemoved.forEach(clients::remove);
+
+//				a case where notification is meant for some currently logged in students
+		}else if(recipientIds.size() > 0) {
+      recipientIds.forEach(id -> {
+				
+				if(clients.containsKey(id)) {
+					
+					try {
+						
+						notify(notification, id);
+					} catch (Exception e) {
+						
+//						id should be removed on exception
+						toBeRemoved.add(id);
+					}
+				}
+			});
+			
 		}
+		
+//		removes all IDs that caused exception 
+      toBeRemoved.forEach(clients::remove);
 
 	}
 
@@ -129,17 +148,17 @@ public class NotificationConsumerService implements NotificationConsumer {
 		return null;
 	}
 	
-	 private void startHeartbeat(SseEmitter emitter, Integer studentId) {  
-	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
-	        executorService.scheduleAtFixedRate(() -> {  
-	            try {  
-	                emitter.send(SseEmitter.event().data("heartbeat").name("heartbeat"));  
-	            } catch (IOException e) {  
-	                LOGGER.error("Error sending heartbeat: " + e.getMessage());  
-	                clients.remove(studentId); // Remove the emitter if it fails  
-	                executorService.shutdown(); // Stop the heartbeat task if emitter is no longer valid  
-	            }  
-	        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);  
-	    }
+//	 private void startHeartbeat(SseEmitter emitter, Integer studentId) {  
+//	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
+//	        executorService.scheduleAtFixedRate(() -> {  
+//	            try {  
+//	                emitter.send(SseEmitter.event().data("heartbeat").name("heartbeat"));  
+//	            } catch (IOException e) {  
+//	                LOGGER.error("Error sending heartbeat: " + e.getMessage());  
+//	                clients.remove(studentId); // Remove the emitter if it fails  
+//	                executorService.shutdown(); // Stop the heartbeat task if emitter is no longer valid  
+//	            }  
+//	        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);  
+//	    }
 
 }

@@ -55,14 +55,11 @@ public class Notification {
 		this.type = type;
 		this.metadata = metadata;
 		this.message = message;
+		
+		createdAt = LocalDateTime.now();
 	}
 
-	// Method that must be called before the entity is persisted for the first time
-	// Here it is used to set the notification time to the current time
-	@PrePersist
-	protected void onCreate() {
-		this.createdAt = LocalDateTime.now();
-	}
+	
 
 	public Notification(String type) {
 		this.type = type;

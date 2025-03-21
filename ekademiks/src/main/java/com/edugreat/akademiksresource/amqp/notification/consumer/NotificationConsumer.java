@@ -1,4 +1,4 @@
-package com.edugreat.akademiksresource.amqp.notification.broadcast;
+package com.edugreat.akademiksresource.amqp.notification.consumer;
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 

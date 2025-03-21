@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.edugreat.akademiksresource.amqp.notification.broadcast.NotificationConsumer;
-import com.edugreat.akademiksresource.amqp.notification.consumer.NotificationBroadcast;
+import com.edugreat.akademiksresource.amqp.notification.broadcast.NotificationBroadcast;
+import com.edugreat.akademiksresource.amqp.notification.consumer.NotificationConsumer;
 import com.edugreat.akademiksresource.contract.NotificationInterface;
 import com.edugreat.akademiksresource.dao.AssessmentNotificationDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
@@ -47,6 +47,7 @@ public class NotificationManagementController {
 	@GetMapping("/notice/notify_me")
 	public SseEmitter streamNotificaions(@RequestParam Integer studentId) throws IOException {
 
+		
 		// Get the authentication object, just to ensure only authenticated students get
 		// the notifications
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -67,7 +68,7 @@ public class NotificationManagementController {
 
 				notifications.forEach(notification -> notification.setReceipientIds(List.of(studentId)));
 
-				notificationBroadcast.previousNotification(notifications);
+				notificationBroadcast.getPreviousNotifications(notifications);
 			}
 
 			return emitter;

@@ -83,8 +83,8 @@ public class Student extends AppUser {
 	private Set<AssessmentUploadNotification> assessmentNotifications = new HashSet<>();
 	
 	@JsonIgnore
-	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE})
-	@JoinTable(name = "miscellaneous_notice", joinColumns = @JoinColumn(name = "_student_id"), inverseJoinColumns= @JoinColumn(name = "_notice_id"))
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+	@JoinTable(name = "student_miscellaneous_notification", joinColumns = @JoinColumn(name = "student_id"), inverseJoinColumns= @JoinColumn(name = "notification_id"))
 	private Set<MiscellaneousNotifications> miscellaneousNotices = new HashSet<>();
 	
 	

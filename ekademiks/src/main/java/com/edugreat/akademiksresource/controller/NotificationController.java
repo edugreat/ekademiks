@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.edugreat.akademiksresource.amqp.notification.consumer.NotificationBroadcast;
+import com.edugreat.akademiksresource.amqp.notification.broadcast.NotificationBroadcast;
 import com.edugreat.akademiksresource.contract.NotificationInterface;
 import com.edugreat.akademiksresource.dto.NotificationRequestDTO;
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
@@ -29,7 +29,7 @@ public class NotificationController {
 	private NotificationBroadcast notificationBroadcast;
 
 	@PostMapping
-	public ResponseEntity<Object> postAssessmentNotiification(@RequestBody NotificationRequestDTO notificationDTO, @RequestHeader String institutionId) {
+	public ResponseEntity<Object> postAssessmentNotification(@RequestBody NotificationRequestDTO notificationDTO, @RequestHeader String institutionId) {
 
 		if (notificationDTO != null) {
 			
@@ -40,7 +40,7 @@ public class NotificationController {
 			AssessmentUploadNotification instantNotification = notificationInterface
 					.postAssessmentNotification(notificationDTO, receipientInstitutionId);
 
-			notificationBroadcast.instantNotification(instantNotification);
+			notificationBroadcast.sendInstantNotification(instantNotification);
 
 			return new ResponseEntity<>(HttpStatus.OK);
 

@@ -3,7 +3,7 @@ package com.edugreat.akademiksresource.assignment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import lombok.Builder.Default;
+import com.edugreat.akademiksresource.model.Institution;
 
 public interface AssignmentDetailsDao extends JpaRepository<AssignmentDetails, Integer> {
 
@@ -22,6 +22,11 @@ public interface AssignmentDetailsDao extends JpaRepository<AssignmentDetails, I
 		
 		
 	}
+
+	@Query("SELECT d.institution FROM AssignmentDetails d WHERE d.id =:assignmentId")
+	Institution getInstitution(Integer assignmentId);
+
+	
 	
 	
 

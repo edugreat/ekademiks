@@ -17,11 +17,17 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 	
 	
-	@Value("${notification.queue}")
-	private String notificationQueue;
+	@Value("${previous.notification.queue}")
+	private String previousNotificationQueue;
 	
-	@Value("${notification.routing.key}")
-	private String notificationRoutingKey;
+	@Value("${previous.notification.routing.key}")
+	private String previousNotificationRoutingKey;
+	
+	@Value("${instant.notification.queue}")
+	private String instantNotificationQueue;
+	
+	@Value("${instant.notification.routing.key}")
+	private String instantNotificationRoutingKey;
 	
 	@Value("${instant.chat.queue}")
 	private String instantChatQueue;
@@ -39,20 +45,28 @@ public class RabbitMQConfig {
 	@Value("${ekademiks.exchange.name}")
 	private String exchange; 
 	
+//	for miscellaneous notifications like new member joining the group chat
 	@Value("${chat.notifications.queue}")
 	private String chatNotificationsQueue;
 	
+//	for miscellaneous notifications like new member joining the group chat
 	@Value("${chat.notifications.routing.key}")
 	private String chatNotificationsRoutingKey;
 	
 	
-//	spring bean for rabbitmq queue
-    @Bean
-    Queue notificationQueue() {
-		
-		return new Queue(notificationQueue);
-	}
 
+    @Bean
+    Queue previousNotificationQueue() {
+		
+		return new Queue(previousNotificationQueue);
+	}
+    
+    
+    @Bean
+    Queue instantNotificationQueue() {
+    	
+    	return new Queue(instantNotificationQueue);
+    }
     @Bean
     Queue instantChatQueue() {
 		
@@ -101,9 +115,15 @@ public class RabbitMQConfig {
    
     
     @Bean
-    Binding notificationBinding() {
+    Binding previousNotificationBinding() {
     	
-    	return BindingBuilder.bind(notificationQueue()).to(exchange()).with(notificationRoutingKey);
+    	return BindingBuilder.bind(previousNotificationQueue()).to(exchange()).with(previousNotificationRoutingKey);
+    }
+    
+    @Bean
+    Binding instantNotificationBinding() {
+    	
+    	return BindingBuilder.bind(instantNotificationQueue()).to(exchange()).with(instantNotificationRoutingKey);
     }
     
     @Bean

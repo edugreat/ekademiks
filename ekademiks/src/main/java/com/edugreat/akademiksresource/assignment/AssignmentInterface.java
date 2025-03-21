@@ -10,6 +10,9 @@ public interface AssignmentInterface {
 //	sets assignment without PDF files
 	Integer setAssignment(AssignmentDetailsDTO details);
 
+
+	AssignmentDetailsDTO getAssignmentDetails(Integer assignmentId);
+
 	
 
 }

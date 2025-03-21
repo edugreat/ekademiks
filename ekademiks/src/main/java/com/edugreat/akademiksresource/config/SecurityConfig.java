@@ -31,6 +31,7 @@ public class SecurityConfig {
 
 	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**", "/notice/**",
 			"/learning/**","/chats/messages"};
+	private static final String[] STUDENT_URL = {"/chats/**","/assignments/details"}; 
 
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
@@ -57,7 +58,7 @@ public class SecurityConfig {
 			configuration.setExposedHeaders(List.of(EXPOSED_HEADERS));
 			return configuration;
 		})).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_API)
-				.permitAll().requestMatchers(ADMINS_URL).hasAnyAuthority("Admin").requestMatchers("/chats/**").hasAnyAuthority("Student")
+				.permitAll().requestMatchers(ADMINS_URL).hasAnyAuthority("Admin").requestMatchers(STUDENT_URL).hasAnyAuthority("Student")
 
 		)
 

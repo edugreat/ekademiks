@@ -49,7 +49,7 @@ public class ObjectiveAssignmentDTO extends AssignmentResourceDTO {
 	@Override
 	public String getType() {
 		
-		return "obj";
+		return "objectives";
 	}
 	
 	

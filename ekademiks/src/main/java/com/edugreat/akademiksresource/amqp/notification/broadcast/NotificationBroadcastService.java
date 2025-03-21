@@ -1,4 +1,4 @@
-package com.edugreat.akademiksresource.amqp.notification.consumer;
+package com.edugreat.akademiksresource.amqp.notification.broadcast;
 
 import java.util.List;
 
@@ -15,26 +15,33 @@ public class NotificationBroadcastService implements NotificationBroadcast {
 	@Autowired
 	private RabbitTemplate rabbitTemplate;
 
-	@Value("${notification.routing.key}")
-	private String notificationRoutingKey;
+	@Value("${previous.notification.routing.key}")
+	private String previousNotificationRoutingKey;
+	
+
+	@Value("${instant.notification.routing.key}")
+	private String instantNotificationRoutingKey;
 
 	@Value("${ekademiks.exchange.name}")
 	private String exchange;
+	
 
 	@Override
-	public void previousNotification(List<AssessmentUploadNotification> notifications) {
+	public void getPreviousNotifications(List<AssessmentUploadNotification> notifications) {
 
 		for (AssessmentUploadNotification notification : notifications) {
 
-			rabbitTemplate.convertAndSend(exchange, notificationRoutingKey, notification);
+			rabbitTemplate.convertAndSend(exchange, previousNotificationRoutingKey, notification);
 		}
 
 	}
 
 	@Override
-	public void instantNotification(AssessmentUploadNotification notification) {
+	public void sendInstantNotification(AssessmentUploadNotification notification) {
+		
+		
 
-		rabbitTemplate.convertAndSend(exchange, notificationRoutingKey, notification);
+		rabbitTemplate.convertAndSend(exchange, instantNotificationRoutingKey, notification);
 
 	}
 
