@@ -27,7 +27,7 @@ public class AssignmentPDF extends AssignmentResource {
 	@Override
 	public String getType() {
 		
-		return "application/pdf";
+		return "pdf";
 	}
 	
 	

@@ -27,160 +27,123 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-
-
-
 @RestController
 @RequestMapping("/assignments")
 public class AssignmentController {
-	
+
 	@Autowired
 	private AssignmentInterface _interface;
-	
+
 	@Autowired
 	private AssignmentDetailsDao assignmentDetailsDao;
-	
+
 	@Autowired
 	NotificationBroadcast notification;
-	
+
 	@Autowired
 	private NotificationInterface notificationInterface;
-	
-	
-	
+
 //	post assignment details along with pdf 
-	@PostMapping(path = "/file", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-	public ResponseEntity<Object> postAssignment(@RequestPart("details") AssignmentDetailsDTO details, 
+	@PostMapping(path = "/file", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+	public ResponseEntity<Object> postAssignment(@RequestPart("details") AssignmentDetailsDTO details,
 			@RequestPart("pdf") MultipartFile[] files) {
-		
-		
-		
-		
-		Integer detailsId  = null;
-		
-		
-		
+
+		Integer detailsId = null;
+
 		try {
-			
-			
-			
+
 			detailsId = _interface.setAssignment(details, processFiles(files));
+
+			sendInstantNotification(assignmentCandidates(detailsId, details.getCategory()), detailsId);
 		} catch (Exception e2) {
-			
+
+			System.out.println(e2.getMessage());
 			return new ResponseEntity<Object>(e2.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
 		}
-		
-		
+
 		return new ResponseEntity<Object>(detailsId, HttpStatus.OK);
 	}
-	
+
 //	helper method that processes the assignment files
-	private Set<AssignmentPdfDTO> processFiles(MultipartFile[] files) throws IOException{
-		
+	private Set<AssignmentPdfDTO> processFiles(MultipartFile[] files) throws IOException {
+
 		Set<AssignmentPdfDTO> pdfs = new HashSet<>();
-		
-		for(MultipartFile file: files) {
-			
-			AssignmentPdfDTO pdf = new AssignmentPdfDTO(
-					file.getOriginalFilename(),
-					file.getContentType(),
-					file.getBytes()
-					);
-			
+
+		for (MultipartFile file : files) {
+
+			AssignmentPdfDTO pdf = new AssignmentPdfDTO(file.getOriginalFilename(), file.getContentType(),
+					file.getBytes());
+
 			pdfs.add(pdf);
-			
+
 		}
-		
-		
+
 		return pdfs;
-		
-		
+
 	}
-	
+
 //	post assignment with no pdf
 	@PostMapping
 	public ResponseEntity<Object> postAssignment(@RequestBody @Valid AssignmentDetailsDTO assignmentDetails) {
-		
-		System.out.println("controller method");
-		
+
 		Integer detailsId = null;
-		
+
 		try {
-			
+
 //			returns assignment ID
 			detailsId = _interface.setAssignment(assignmentDetails);
-			
-			System.out.println("details ID at the controller: ");
-			System.out.println(detailsId);
-			
 
 //		send instant notifications to the concerned students
 			sendInstantNotification(assignmentCandidates(detailsId, assignmentDetails.getCategory()), detailsId);
-		
+
 		} catch (Exception e) {
-			
-			System.out.println("exception: ");
-			System.out.println(e);
-			
+
 			return new ResponseEntity<Object>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
 		}
-		
-		
+
 		return new ResponseEntity<Object>(detailsId, HttpStatus.OK);
 	}
-	
-	
+
 //	retrieve details for a give assignment
 	@GetMapping("/details")
 	public ResponseEntity<Object> getAssignmentDetails(@RequestParam String id) {
-		
+
 		try {
-			
+
 		} catch (Exception e) {
-			
+
 			return ResponseEntity.ok(_interface.getAssignmentDetails(Integer.parseInt(id)));
 		}
-		
+
 		return ResponseEntity.badRequest().build();
 	}
-	
-	
-	
+
 //	returns a list of student's ID for who should take the assignment referenced by the given assignmentId
-	private List<String> assignmentCandidates(Integer assignmentId, String category){
-		
-		System.out.println("category of students to notify: "+category);
-		
+	private List<String> assignmentCandidates(Integer assignmentId, String category) {
+
 //		get institution
-		Institution institution  = assignmentDetailsDao.getInstitution(assignmentId);
-		
-	
+		Institution institution = assignmentDetailsDao.getInstitution(assignmentId);
+
 //		filter the concerned students
-		List<String> candidateIds = institution.getStudentList()
-				                     .stream().filter(student -> student.getStatus().equalsIgnoreCase(category))
-				                     .map(x-> x.getId().toString()).collect(Collectors.toList());
-	
-		System.out.println("filtered IDs:");
-		System.out.println(candidateIds.toString());
-		
+		List<String> candidateIds = institution.getStudentList().stream()
+				.filter(student -> student.getStatus().equalsIgnoreCase(category)).map(x -> x.getId().toString())
+				.collect(Collectors.toList());
+
 		return candidateIds;
 	}
-	
-	
+
 	private void sendInstantNotification(List<String> candidateIds, Integer assignmentId) {
-		
-		System.out.println("calling sendInstantNotification");
-		
-		NotificationRequestDTO dto = new NotificationRequestDTO("assignment", "Uploaded Assignment", assignmentId, candidateIds);
-		
+
+		NotificationRequestDTO dto = new NotificationRequestDTO("assignment", "Uploaded Assignment", assignmentId,
+				candidateIds);
+
 //		create a new AssessmentUpload object.
 //		second method argument is of no importance here
-		AssessmentUploadNotification assignmentNotification = notificationInterface.postAssessmentNotification(dto, null);
-		
+		AssessmentUploadNotification assignmentNotification = notificationInterface.postAssessmentNotification(dto,
+				null);
 
 		notification.sendInstantNotification(assignmentNotification);
-		
+
 	}
-	
 
 }

@@ -79,7 +79,7 @@ public class AssignmentDetails {
 	private String category; 
 	
 //	Whether it's theory or objective based assignment
-	@Column(nullable = true)
+	@Column(nullable = false)
 	private String type;
 	
 //	number of questions contained in the assignment

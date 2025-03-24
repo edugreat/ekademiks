@@ -126,8 +126,6 @@ public class AssignmentService implements AssignmentInterface {
 			
 			assignmentId = assignmentDetailsDao.saveAndFlush(assignmentDetails).getId();
 			
-			System.out.println("ID returned: ");
-			System.out.println(assignmentId);
 		}else if(details.getType().equalsIgnoreCase("theory")) {
 			
 			
@@ -145,8 +143,7 @@ public class AssignmentService implements AssignmentInterface {
 			
 			assignmentId = assignmentDetailsDao.saveAndFlush(assignmentDetails).getId();
 			
-			System.out.println("ID returned: ");
-			System.out.println(assignmentId);
+			
 		}
 		
 		
