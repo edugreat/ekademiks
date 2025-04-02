@@ -12,6 +12,9 @@ public interface AssignmentInterface {
 
 
 	AssignmentDetailsDTO getAssignmentDetails(Integer assignmentId);
+	
+//	fetches assignment resource using the assignment details ID and the assignment type
+	 <T extends AssignmentResourceDTO> Set<T> getAssignmentResource(Integer assignmentDetailsId);
 
 	
 

@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.edugreat.akademiksresource.views.UserView;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import jakarta.validation.constraints.Min;
@@ -13,8 +15,17 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
+@JsonTypeInfo(
+		 use = JsonTypeInfo.Id.NAME,
+		 include = JsonTypeInfo.As.PROPERTY,
+		 property = "type",
+		 visible = true
+		 
+		)
+@JsonSubTypes({
+	@JsonSubTypes.Type(value = StudentDTO.class, name = "student"),
+	@JsonSubTypes.Type(value = AdminsDTO.class, name = "admin")})
 public class AppUserDTO {
-
 	public AppUserDTO() {
 	}
 

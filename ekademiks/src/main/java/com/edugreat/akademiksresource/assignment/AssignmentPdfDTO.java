@@ -15,10 +15,12 @@ public class AssignmentPdfDTO extends AssignmentResourceDTO {
 	@NotNull
 	private String fileType;
 	
+	private String type = "pdf";
+	
 	@Override
 	public String getType() {
 		
-		return "pdf";
+		return  type;
 	}
 
 
@@ -62,6 +64,11 @@ public class AssignmentPdfDTO extends AssignmentResourceDTO {
 
 	public void setFileByte(byte[] fileByte) {
 		this.fileByte = fileByte;
+	}
+
+
+	public void setType(String type) {
+		this.type = type;
 	}
 	
 	

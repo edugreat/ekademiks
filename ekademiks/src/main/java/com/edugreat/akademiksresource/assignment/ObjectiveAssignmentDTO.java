@@ -3,9 +3,12 @@ package com.edugreat.akademiksresource.assignment;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ObjectiveAssignmentDTO extends AssignmentResourceDTO {
 	
 
+	private String type = "objectives";
 	private int _index;
 	
 	private String problem;
@@ -13,6 +16,22 @@ public class ObjectiveAssignmentDTO extends AssignmentResourceDTO {
 	private String answer;
 	
 	private Set<String> options = new HashSet<>();
+	
+	
+	
+	
+	public ObjectiveAssignmentDTO() {
+	}
+
+
+
+	public ObjectiveAssignmentDTO(String problem, String answer, Set<String> options) {
+		this.problem = problem;
+		this.answer = answer;
+		this.options = options;
+	}
+
+	
 
 	public Set<String> getOptions() {
 		return options;
@@ -49,10 +68,13 @@ public class ObjectiveAssignmentDTO extends AssignmentResourceDTO {
 	@Override
 	public String getType() {
 		
-		return "objectives";
+		return type;
 	}
 	
-	
+	public void setType(String type) {
+		
+		this.type = type;
+	}
 	
 
 

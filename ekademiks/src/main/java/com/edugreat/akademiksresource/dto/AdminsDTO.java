@@ -2,6 +2,9 @@ package com.edugreat.akademiksresource.dto;
 
 public class AdminsDTO extends AppUserDTO {
 
+//	property specifically used to enable json de-serialize logged in user properly
+	private String type = "admin";
+	
 	public AdminsDTO() {
 		super();
 	}
@@ -16,22 +19,14 @@ public class AdminsDTO extends AppUserDTO {
 
 	}
 
-	
-//	@Override
-//	public Set<Roles> getUserRoles() {
-//		
-//		Set<Roles> roles = null;
-//		try {
-//			roles = new HashSet<>();
-//			for(String role: super.getRoles()) {
-//				roles.add(Roles.valueOf(role));
-//			}
-//		} catch (Exception e) {
-//			throw new AcademicException("Unsupported role", Exceptions.BAD_REQUEST.name());
-//		}
-//		
-//		
-//		return roles;
-//	}
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+
 
 }

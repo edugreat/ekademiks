@@ -8,13 +8,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 
 @Entity
 @DiscriminatorValue("objectives")
 public class Objectives extends AssignmentResource {
 
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "obj_options")
 	@Column(name = "obj_option")
 	private Set<String> options = new HashSet<>();
@@ -23,11 +24,21 @@ public class Objectives extends AssignmentResource {
 		super(answer, _index, problem);
 
 	}
+	
+	
+
+	public Objectives() {}
+
+
 
 	@Override
 	public String getType() {
 
 		return "objectives";
+	}
+
+	public Set<String> getOptions() {
+		return options;
 	}
 
 	@Override

@@ -13,6 +13,9 @@ public class StudentDTO extends AppUserDTO {
 //	depicts SENIOR or JUNIOR status for the given student
 	@JsonView(UserView.class)
 	private String status;
+	
+//	property specifically used to enable json de-serialize logged in user properly
+	private String type = "student";
 
 	public StudentDTO() {
 		super();
@@ -40,6 +43,14 @@ public class StudentDTO extends AppUserDTO {
 
 	public void setStatus(String  category) {
 		this.status = category;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 	
 	

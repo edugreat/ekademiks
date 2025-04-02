@@ -107,16 +107,40 @@ public class AssignmentController {
 //	retrieve details for a give assignment
 	@GetMapping("/details")
 	public ResponseEntity<Object> getAssignmentDetails(@RequestParam String id) {
+		
+		
+		
 
 		try {
 
+			return ResponseEntity.ok(_interface.getAssignmentDetails(Integer.parseInt(id)));
 		} catch (Exception e) {
 
-			return ResponseEntity.ok(_interface.getAssignmentDetails(Integer.parseInt(id)));
+			System.out.println("error fetching assignment details: ");
+			System.out.println(e);
+			return ResponseEntity.badRequest().build();
+			
 		}
 
-		return ResponseEntity.badRequest().build();
+		
 	}
+	
+//	fetches an assignment resource using the assignment details id
+	@GetMapping("/resource")
+	public ResponseEntity<Object> getAssignmentResource(@RequestParam ("assId") String id) {
+
+		try {
+			
+			return ResponseEntity.ok(_interface.getAssignmentResource(Integer.parseInt(id)));
+		} catch (Exception e) {
+			
+			System.out.println("error: "+e);
+			
+			return ResponseEntity.badRequest().build();
+		}
+		
+	}
+	
 
 //	returns a list of student's ID for who should take the assignment referenced by the given assignmentId
 	private List<String> assignmentCandidates(Integer assignmentId, String category) {

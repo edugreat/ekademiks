@@ -10,7 +10,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
 
 		@JsonSubTypes.Type(value = ObjectiveAssignmentDTO.class, name = "objectives"),
-		@JsonSubTypes.Type(value = TheoreticalAssigDTO.class, name = "theory")
+		@JsonSubTypes.Type(value = TheoreticalAssigDTO.class, name = "theory"),
+		@JsonSubTypes.Type(value = AssignmentPdfDTO.class, name = "pdf"),
+		
 
 })
 public abstract class AssignmentResourceDTO  {

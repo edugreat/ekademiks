@@ -4,6 +4,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,6 +35,7 @@ public class Institution {
 	private String name; //name of institution
 	
 	@Column(updatable = false)
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
 	private LocalDateTime createdOn;
 	
 	@Column
@@ -46,6 +51,7 @@ public class Institution {
 	private Integer studentPopulation;
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "institution")
+	@JsonManagedReference
 	private List<Student> studentList = new ArrayList<>();
 	
 	public Institution() {

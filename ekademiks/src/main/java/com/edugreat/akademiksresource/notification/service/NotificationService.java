@@ -38,7 +38,6 @@ public class NotificationService implements NotificationInterface {
 	public AssessmentUploadNotification postAssessmentNotification(NotificationRequestDTO dto,
 			Integer receipientInstitutitonId) {
 		
-		System.out.println("calling notification service");
 
 		AssessmentUploadNotification newNotification = mapToNotification(dto);
 

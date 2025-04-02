@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -14,104 +15,71 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 @Configuration
 public class RedisConfig {
 	
 	
 	@Bean
-	RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-	    // Default cache configuration with a TTL of 10 minutes
-	    RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-	            .entryTtl(Duration.ofMinutes(10)) // Set TTL to 10 minutes
-	            .serializeValuesWith(RedisSerializationContext.SerializationPair
-	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()));
+    public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
+        var jacksonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
 
-	    // Custom cache configuration for specific cache names
-	    Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-
-	    // Example: Set TTL to 30 minutes for the "USER_CACHE"
-	    cacheConfigurations.put(RedisValues.USER_CACHE, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofMinutes(Integer.MAX_VALUE))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-
-//	    configures caching for subject names
-	    cacheConfigurations.put(RedisValues.SUBJECT_NAMES, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(24))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-	    
-//	    configures caching for student's recent performance
-//	    configures caching for subject names
-	    cacheConfigurations.put(RedisValues.RECENT_PERFORMANCE, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(1))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 1 hour
-	                    .disableCachingNullValues());
-	    
-//	    configures caching for assessment topics and durations
-	    cacheConfigurations.put(RedisValues.TOPICS_AND_DURATIONS, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(1))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 24 hours
-	                    .disableCachingNullValues());
-//	    configures caching for assessment topic and duration(a particular assessment and its duration
-	    cacheConfigurations.put(RedisValues.TOPIC_AND_DURATION, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(1))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-	    
-//	    configures caching for assessment test(an object of TestWrapper)
-	    cacheConfigurations.put(RedisValues.ASSESSMENT_TEST, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(1))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-	    
-//	    configures caching for when a user joins a group chat
-	    cacheConfigurations.put(RedisValues.JOIN_DATE, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(24))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-	    
-//	    configures caching for welcome messages
-
-	    cacheConfigurations.put(RedisValues.WELCOME_MSG, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(24))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-	    
-	    
-//	    configures caching for all assessment topics
-	    cacheConfigurations.put(RedisValues.ASSESSMENT_TOPICS, 
-	            RedisCacheConfiguration.defaultCacheConfig()
-	                    .entryTtl(Duration.ofHours(24))
-	                    .serializeValuesWith(RedisSerializationContext.SerializationPair
-	    	                    .fromSerializer(new GenericJackson2JsonRedisSerializer()))// Set TTL to 30 minutes
-	                    .disableCachingNullValues());
-	    
-	    
-
-
-	    // Create and return the RedisCacheManager
-	    return RedisCacheManager.builder(connectionFactory)
-	            .cacheDefaults(defaultCacheConfig) // Apply default configuration
-	            .withInitialCacheConfigurations(cacheConfigurations) // Apply custom configurations
-	            .build();
-	}
+        var valueSerializer = RedisSerializationContext.SerializationPair.fromSerializer(jacksonSerializer);
+        return (builder) -> builder
+                .withCacheConfiguration(RedisValues.ASSESSMENT_TEST,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(200)))
+                .withCacheConfiguration(RedisValues.ASSESSMENT_TOPICS,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60)))
+                .withCacheConfiguration(RedisValues.ASSIGNMENT_DETAILS,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60 * 24)))
+                
+                .withCacheConfiguration(RedisValues.JOIN_DATE,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(200)))
+                .withCacheConfiguration(RedisValues.MY_INSTITUTIONS,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60)))
+                .withCacheConfiguration(RedisValues.RECENT_PERFORMANCE,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60 * 24)))
+                
+                .withCacheConfiguration(RedisValues.SUBJECT_NAMES,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(200)))
+                .withCacheConfiguration(RedisValues.TOPIC_AND_DURATION,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60)))
+                .withCacheConfiguration(RedisValues.TOPICS_AND_DURATIONS,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60 * 24)))
+                
+                .withCacheConfiguration(RedisValues.USER_CACHE,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(200)))
+                .withCacheConfiguration(RedisValues.WELCOME_MSG,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60)));
+    }
 	
 	@Bean
      RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
@@ -127,4 +95,16 @@ public class RedisConfig {
         return redisTemplate;
     }
 
+	@Bean
+	ObjectMapper objectMapper() {
+		
+		return JsonMapper.builder()
+				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
+				.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
+				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+				.configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+				.addModule(new JavaTimeModule())
+				.findAndAddModules()
+				.build();
+	}
 }

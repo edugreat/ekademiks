@@ -1,7 +1,9 @@
 package com.edugreat.akademiksresource.auth;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -25,6 +27,7 @@ import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.AppUser;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.util.CachingKeysUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -45,6 +48,9 @@ public class AppAuthService implements AppAuthInterface {
 
 	@Autowired
 	private CachingKeysUtil cachingKeysUtil;
+	
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@Transactional
 	@Override
@@ -130,6 +136,8 @@ public class AppAuthService implements AppAuthInterface {
 	// @Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 
+		cacheManager.getCache(RedisValues.USER_CACHE).clear();
+		
 		String username = request.getEmail();
 		String password = request.getPassword();
 
@@ -254,7 +262,7 @@ public class AppAuthService implements AppAuthInterface {
 
 			Student student = optional.get();
 			String token = jwtUtil.generateToken(student);
-			var dto = mapper.map(student, StudentDTO.class);
+			StudentDTO dto = mapper.map(student, StudentDTO.class);
 
 			dto.setAccessToken(token);
 
@@ -282,16 +290,37 @@ public class AppAuthService implements AppAuthInterface {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AppUserDTO> T getCachedUser(String cachingKey) {
-
-		Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
-
-		Cache.ValueWrapper valueWrapper = cache.get(cachingKey);
-
-		if (valueWrapper != null)
-			return (T) valueWrapper.get();
-
-		return null;
-
+	    Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
+	    
+	    if (cache != null) {
+	        try {
+	            // Use Object.class as the type to get the raw value
+	            Object cachedValue = cache.get(cachingKey, Object.class);
+	            
+	            if (cachedValue != null) {
+	                
+	                if (cachedValue instanceof AppUserDTO) {
+	                    return (T) cachedValue;
+	                }
+	               
+	                else if (cachedValue instanceof Map) {
+	                	
+	                    Map<String, Object> map = (Map<String, Object>) cachedValue;
+	                    String type = (String) map.get("type");
+	                    
+	                    if ("student".equals(type)) {
+	                        return (T) objectMapper.convertValue(map, StudentDTO.class);
+	                    } else if ("admin".equals(type)) {
+	                        return (T) objectMapper.convertValue(map, AdminsDTO.class);
+	                    }
+	                }
+	            }
+	        } catch (Exception e) {
+	           
+	            e.printStackTrace();
+	        }
+	    }
+	    return null;
 	}
 
 }

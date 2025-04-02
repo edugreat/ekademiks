@@ -16,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.edugreat.akademiksresource.chat.model.GroupMember;
 import com.edugreat.akademiksresource.enums.Roles;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -52,6 +53,7 @@ public class Student extends AppUser {
 	
 	@ManyToOne
 	@JoinColumn(name = "institution_id", nullable = true)
+	@JsonBackReference
 	private Institution institution;
 	
 //	status depicts student's academic status such as SENIOR or JUNIOR

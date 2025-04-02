@@ -23,4 +23,7 @@ public class RedisValues {
 	public static final String WELCOME_MSG = "welcome_msg";
 
 	public static final String ASSESSMENT_TOPICS = "assessment_topics";
+	
+	public static final String ASSIGNMENT_DETAILS = "assignment_details";
+	
 }

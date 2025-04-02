@@ -8,6 +8,19 @@ public class TheoreticalAssigDTO extends AssignmentResourceDTO {
 	private String problem;
 	
 	private String answer;
+	
+	private String type = "theory";
+
+	
+	
+	
+	public TheoreticalAssigDTO() {
+	}
+
+	public TheoreticalAssigDTO(String problem, String answer) {
+		this.problem = problem;
+		this.answer = answer;
+	}
 
 	public int get_index() {
 		return _index;
@@ -36,7 +49,7 @@ public class TheoreticalAssigDTO extends AssignmentResourceDTO {
 	@Override
 	public String getType() {
 		
-		return "theory";
+		return type;
 	}
 
 	

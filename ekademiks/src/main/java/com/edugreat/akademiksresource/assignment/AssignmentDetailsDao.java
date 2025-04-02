@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.assignment;
 
+import java.util.Set;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -26,7 +28,8 @@ public interface AssignmentDetailsDao extends JpaRepository<AssignmentDetails, I
 	@Query("SELECT d.institution FROM AssignmentDetails d WHERE d.id =:assignmentId")
 	Institution getInstitution(Integer assignmentId);
 
-	
+	@Query("SELECT d.assignmentResources FROM AssignmentDetails d WHERE d.id =:assignmentDetailsId")
+	<T extends AssignmentResource> Set<T> getAssignment(Integer assignmentDetailsId);
 	
 	
 

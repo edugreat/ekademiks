@@ -57,7 +57,7 @@ public class MessageController {
 		
 		final boolean isValid = userDetailsService.isValidRequest(jwtToken);
 		
-		System.out.println("group "+groupId+" student "+studentId);		
+			
 		
 		
 		SseEmitter emitter = chatConsumer.establishConnection(Integer.parseInt(studentId), Integer.parseInt(groupId));
@@ -122,7 +122,6 @@ public class MessageController {
 	@PostMapping("/new_chat")
 	public ResponseEntity<Object> postChat(@RequestBody @Valid ChatDTO dto) {
 		
-		System.out.println("new message");
 		
 		
 
@@ -134,7 +133,6 @@ public class MessageController {
 			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 
-			System.out.println(e);
 
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}

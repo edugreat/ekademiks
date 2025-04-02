@@ -52,7 +52,7 @@ public class NotificationConsumerService implements NotificationConsumer {
 	@RabbitListener(queues = { "${instant.notification.queue}" })
 	 void consumeInstantNotification(AssessmentUploadNotification notification) {
 		
-		System.out.println("consuming instant notification");
+		
 
 //		get the receipient of this notification
 		final List<Integer> recipientIds = notification.getReceipientIds();

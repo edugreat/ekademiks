@@ -11,7 +11,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Lob;
 import lombok.Data;
 
-// Base class of theory and PDF based assignments
+// Base class of theory, objective and PDF based assignments
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
