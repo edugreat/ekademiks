@@ -90,6 +90,8 @@ public class Student extends AppUser {
 	private Set<MiscellaneousNotifications> miscellaneousNotices = new HashSet<>();
 	
 	
+	
+	
 	public Set<MiscellaneousNotifications> getMiscellaneousNotices() {
 		return miscellaneousNotices;
 	}
@@ -115,6 +117,14 @@ public class Student extends AppUser {
 	public SortedMap<Integer, Integer> getUnreadChats() {
 		return unreadChats;
 	}
+	
+	
+
+	@ElementCollection(fetch = FetchType.LAZY)
+	@CollectionTable(name  = "assignment_response",
+	joinColumns = @JoinColumn(name = "student_id"))
+	private List<AssignmentResponse> assignmentResponses = new ArrayList<>();
+
 
 	// convenience method
 	public void addStudentTest(StudentTest studentTest) {
@@ -239,7 +249,13 @@ public class Student extends AppUser {
 	public void setStatus(String status) {
 		this.status = status;
 	}
+
+	public List<AssignmentResponse> getAssignmentResponses() {
+		return assignmentResponses;
+	}
 	
 	
 
 }
+
+

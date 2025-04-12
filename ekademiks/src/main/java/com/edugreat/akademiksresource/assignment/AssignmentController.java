@@ -116,7 +116,7 @@ public class AssignmentController {
 			return ResponseEntity.ok(_interface.getAssignmentDetails(Integer.parseInt(id)));
 		} catch (Exception e) {
 
-			System.out.println("error fetching assignment details: ");
+			
 			System.out.println(e);
 			return ResponseEntity.badRequest().build();
 			

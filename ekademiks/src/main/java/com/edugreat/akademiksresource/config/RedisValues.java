@@ -26,4 +26,7 @@ public class RedisValues {
 	
 	public static final String ASSIGNMENT_DETAILS = "assignment_details";
 	
+//	caches the records of responses to assignment/assessment for easy notifications to instructors
+	public static final String ASSESSMENT_RESPONSE_NOTIFICATION = "assessment_response_cache";
+	
 }

@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.auth;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,8 +136,7 @@ public class AppAuthService implements AppAuthInterface {
 	@Override
 	// @Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
-
-		cacheManager.getCache(RedisValues.USER_CACHE).clear();
+		
 		
 		String username = request.getEmail();
 		String password = request.getPassword();
@@ -153,14 +153,19 @@ public class AppAuthService implements AppAuthInterface {
 				var dto = mapper.map(admin, AdminsDTO.class);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
+				
+				
+//				clear previous cache of the current user
+                 clearPreviousCache(dto.getId(), cacheManager);
 
 //				generate new cache key;
 
 				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
 
-				dto.setCachingKey(cacheKey);
+				dto.setCachingKey(cacheKey+">");
 
-				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T) dto);
+				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey+">", (T) dto);
+				
 
 				return (T) dto;
 			}
@@ -188,12 +193,15 @@ public class AppAuthService implements AppAuthInterface {
 
 				dto.setStatus(student.getStatus());
 
+//				clear previous cache of the current user
+                clearPreviousCache(dto.getId(), cacheManager);
+				
 //				generate new caching key;
 				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
 
-				dto.setCachingKey(cacheKey);
+				dto.setCachingKey(cacheKey+">");
 
-				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey, (T) dto);
+				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey+">", (T) dto);
 
 				return (T) dto;
 			}
@@ -208,17 +216,54 @@ public class AppAuthService implements AppAuthInterface {
 
 	}
 
+//	Upon login, tends to remove current user from previous cache before caching again
+private void clearPreviousCache(Integer id, CacheManager cacheManager) {
+	
+	
+	Set<String> keys = cachingKeysUtil.getAllCacheKeys(RedisValues.USER_CACHE);
+	
+	String lookupKey = null;
+	
+	final String stringValue = String.valueOf(id);
+	
+	for(String k : keys) {
+		
+//		get substring characters of the key for use to check if the user has previously been cached
+		final String substr = k.substring(0, 1+stringValue.length());
+		
+		if(substr.equals(stringValue+">")) {
+			
+			lookupKey = k;
+			break;
+		}
+		
+		
+		if(lookupKey != null) {
+			cacheManager.getCache(RedisValues.USER_CACHE).evict(lookupKey);
+		}
+	}
+	
+		
+	
+	
+		
+	}
+
 //	Implementation that generates new token using the refresh token (for user validation) after the expiration of the existing token
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AppUserDTO> T generateNewToken(String refreshToken, HttpServletResponse response)
 			throws IOException {
+		
+		
 
 //		extract username from the token
 		var email = jwtUtil.extractUsername(refreshToken);
 		var roles = jwtUtil.extractRoles(refreshToken);
 
 		String role = roles.get(0);
+		
+		
 		switch (role.toLowerCase()) {
 		case "admin": {
 
@@ -293,13 +338,16 @@ public class AppAuthService implements AppAuthInterface {
 	    Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
 	    
 	    if (cache != null) {
+	    	
 	        try {
 	            // Use Object.class as the type to get the raw value
 	            Object cachedValue = cache.get(cachingKey, Object.class);
+	           
 	            
 	            if (cachedValue != null) {
-	                
+	            	
 	                if (cachedValue instanceof AppUserDTO) {
+	                	
 	                    return (T) cachedValue;
 	                }
 	               
@@ -309,8 +357,11 @@ public class AppAuthService implements AppAuthInterface {
 	                    String type = (String) map.get("type");
 	                    
 	                    if ("student".equals(type)) {
+	                    	
+	                    	
 	                        return (T) objectMapper.convertValue(map, StudentDTO.class);
 	                    } else if ("admin".equals(type)) {
+	                    	
 	                        return (T) objectMapper.convertValue(map, AdminsDTO.class);
 	                    }
 	                }

@@ -50,7 +50,7 @@ public class CachingKeysUtil {
 		
 		throw new RuntimeException("Something went wrong");
 	}
-	 private  Set<String> getAllCacheKeys(String cacheName) {
+	 public  Set<String> getAllCacheKeys(String cacheName) {
 	        // Default pattern for keys in the cache(example: "cacheName::*1237594)
 	        final String pattern = cacheName + "::*";
 

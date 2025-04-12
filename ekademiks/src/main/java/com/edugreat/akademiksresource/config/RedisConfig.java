@@ -27,7 +27,7 @@ public class RedisConfig {
 	
 	
 	@Bean
-    public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
+    RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
         var jacksonSerializer = new GenericJackson2JsonRedisSerializer(objectMapper());
 
         var valueSerializer = RedisSerializationContext.SerializationPair.fromSerializer(jacksonSerializer);
@@ -78,7 +78,10 @@ public class RedisConfig {
                 .withCacheConfiguration(RedisValues.WELCOME_MSG,
                         RedisCacheConfiguration.defaultCacheConfig()
                                 .serializeValuesWith(valueSerializer)
-                                .entryTtl(Duration.ofMinutes(60)));
+                                .entryTtl(Duration.ofMinutes(60)))
+                .withCacheConfiguration(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION, 
+                		RedisCacheConfiguration.defaultCacheConfig()
+                		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMillis(60 * 2)));
     }
 	
 	@Bean

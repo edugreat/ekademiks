@@ -45,6 +45,20 @@ public class RabbitMQConfig {
 	@Value("${ekademiks.exchange.name}")
 	private String exchange; 
 	
+	@Value("${previous.assessment.response.notification.queue}")
+	private String previousAssessmentResponseNotificationQueue;
+	
+	@Value("${previous.assessment.response.notification.routing.key}")
+	private String previousAssessmentResponseNotificationRoutingKey;
+	
+	
+	@Value("${instant.assessment.response.notification.queue}")
+	private String instantAssessmentResponseNotificationQueue;
+	
+	@Value("${instant.assessment.response.notification.routing.key}")
+	private String instantAssessmentResponseNotificationRoutingKey;
+	
+	
 //	for miscellaneous notifications like new member joining the group chat
 	@Value("${chat.notifications.queue}")
 	private String chatNotificationsQueue;
@@ -85,8 +99,19 @@ public class RabbitMQConfig {
 		return new Queue(chatNotificationsQueue);
 	}
     
-   
+   @Bean
+   Queue previousAssessmentResponseNotificationQueue() {
+	   
+	   return new Queue(previousAssessmentResponseNotificationQueue);
+   }
     
+   
+   
+   @Bean
+   Queue instantAssessmentResponseNotificationQueue() {
+	   
+	   return new Queue(instantAssessmentResponseNotificationQueue);
+   }
     
     @Bean
 	 TopicExchange exchange() {
@@ -124,6 +149,19 @@ public class RabbitMQConfig {
     Binding instantNotificationBinding() {
     	
     	return BindingBuilder.bind(instantNotificationQueue()).to(exchange()).with(instantNotificationRoutingKey);
+    }
+    
+    @Bean
+    Binding previousAssessmentResponseNotificationBinding() {
+    	
+    	return BindingBuilder.bind(previousAssessmentResponseNotificationQueue()).to(exchange()).with(previousAssessmentResponseNotificationRoutingKey);
+    }
+    
+    
+    @Bean
+    Binding instantAssessmentResponseNotificationBinding() {
+    	
+    	return BindingBuilder.bind(instantAssessmentResponseNotificationQueue()).to(exchange()).with(instantAssessmentResponseNotificationRoutingKey);
     }
     
     @Bean

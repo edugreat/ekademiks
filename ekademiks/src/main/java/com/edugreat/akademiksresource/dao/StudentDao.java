@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.edugreat.akademiksresource.model.AssignmentResponse;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 import com.edugreat.akademiksresource.model.Student;
 
@@ -74,6 +75,9 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 //	retrieves a student's institution id
 	@Query("SELECT s.institution.id FROM Student s WHERE s.id =:studentId")
 	Integer getMyInstitutionId(Integer studentId);
+
+	@Query("SELECT s FROM Student s JOIN s.assignmentResponses ar ON ar.instructorId =:instructorId")
+	List<Student> getAssessmentResponses(Integer instructorId);
 	
 
 	

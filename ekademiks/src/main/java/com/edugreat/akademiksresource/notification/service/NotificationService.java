@@ -2,7 +2,6 @@ package com.edugreat.akademiksresource.notification.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -126,7 +125,7 @@ public class NotificationService implements NotificationInterface {
 			return currentNotification;
 		} else {
 
-//			the notification targets a particular institution
+
 
 //			get the institution
 			final Institution targetInstitution = institutionDao.findById(receipientInstitutitonId)

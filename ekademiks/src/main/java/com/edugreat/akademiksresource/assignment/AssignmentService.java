@@ -134,7 +134,7 @@ public class AssignmentService implements AssignmentInterface {
 	@Override
 	public AssignmentDetailsDTO getAssignmentDetails(Integer assignmentId) {
 
-		cacheManager.getCache(RedisValues.ASSIGNMENT_DETAILS).clear();
+		
 		Cache cache = cacheManager.getCache(RedisValues.ASSIGNMENT_DETAILS);
 		if (cache != null && cache.get(assignmentId) != null) {
 

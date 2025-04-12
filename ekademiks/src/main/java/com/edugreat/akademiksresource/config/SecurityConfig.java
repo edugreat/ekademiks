@@ -30,7 +30,7 @@ import lombok.AllArgsConstructor;
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**", "/notice/**",
-			"/learning/**","/chats/messages"};
+			"/learning/**","/chats/messages","/allow/**"};
 	private static final String[] STUDENT_URL = {"/chats/**","/assignments/details","/assignments/resource"}; 
 
 	private final AppUserDetailsService userDetailsService;
@@ -39,9 +39,10 @@ public class SecurityConfig {
 
 	private static final String[] ALLOWED_HEADERS = { "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",
 			"Authorization", "X-Request-With", "Access-Control-Request-Method", 
-			"Access-Control-Request-Headers","adminid", "institutionId","studentId"};
+			"Access-Control-Request-Headers","adminid", "institutionId","studentId", "Connection","Cache-Control"};
 	private static final String[] EXPOSED_HEADERS = { "Origin", "Content-Type", "Accept", "Authorization",
-			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials","adminid","institutionId","studentId" };
+			"Access-Control-Allow-Origin", "Access-Control-Allow-Credentials","adminid","institutionId",
+			"studentId", "type","detailsId", "Connection","Cache-Control" };
 	
 	private static final String[] ADMINS_URL = {"/admins/**","/assignments/**"};
 

@@ -6,6 +6,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.edugreat.akademiksresource.embeddable.Options;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -17,11 +20,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-
-
-import com.edugreat.akademiksresource.embeddable.Options;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
@@ -61,7 +59,8 @@ public class Question implements Comparable<Question> {
 	@CollectionTable(name = "options", joinColumns = @JoinColumn(name = "question_id"))
 	@Getter(AccessLevel.NONE)
 	private Set<Options> options = new TreeSet<>();
-
+	
+	
 	public Question(int questionNumber, String text, String answer) {
 		this.questionNumber = questionNumber;
 		this.question = text;

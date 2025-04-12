@@ -95,7 +95,7 @@ public class AuthenticateController {
 	@GetMapping("/cached/user")
 	public ResponseEntity<Object> cachedUser(@RequestParam ("cache")String key){
 		
-		
+	
 		
 		try {
 			
