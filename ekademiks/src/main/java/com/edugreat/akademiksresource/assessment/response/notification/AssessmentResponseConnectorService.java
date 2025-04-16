@@ -59,9 +59,11 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 		
 		if(connectors.containsKey(notification.instructorId())) {
 			
-			System.out.println("notification sent successfully");
+			
 			
 			connectors.get(notification.instructorId()).send(SseEmitter.event().data(notification).name("responseUpdate"));
+		
+			System.out.println("notification sent successfully");
 		}
 		
 		
