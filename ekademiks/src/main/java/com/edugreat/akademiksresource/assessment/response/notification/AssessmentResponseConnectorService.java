@@ -39,14 +39,14 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 	
 //	publish previous notifications to the instructor whose ID is referenced, if connected. The key of the map is the total number of respondent to the assignment so far
 	@RabbitListener(queues = {"${previous.assessment.response.notification.queue}"})
-	void publishReviousNotifications(List<AssessmentResponseRecord> notifications) throws IOException {
+	void publishReviousNotifications(AssessmentResponseRecord notification) throws IOException {
 		
 		System.out.println("publishing previous notifications");
-		final Integer recipientId = notifications.get(0).instructorId();
+		final Integer recipientId = notification.instructorId();
 		if(connectors.containsKey(recipientId)) {
+			System.out.println("contains ID");
 			
-			
-			connectors.get(recipientId).send(SseEmitter.event().data(notifications).name("responseUpdate"));
+			connectors.get(recipientId).send(SseEmitter.event().data(notification).name("responseUpdate"));
 			
 		}
 	}
@@ -55,7 +55,8 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 	@RabbitListener(queues = {"${instant.assessment.response.notification.queue}"})
 	void publishInstantNotification(AssessmentResponseRecord notification) throws IOException {
 		
-		System.out.println("publishing instant notification");
+		System.out.println("id: "+notification.instructorId());
+		System.out.println("publishing instant notification---");
 		
 		if(connectors.containsKey(notification.instructorId())) {
 			

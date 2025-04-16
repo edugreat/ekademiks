@@ -27,6 +27,8 @@ import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.model.AssignmentResponse;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.util.CachingKeysUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
@@ -43,16 +45,19 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 	private final StudentDao studentDao;
 	private final CachingKeysUtil cachingKeyUtils;
 	private final RedissonClient redissonClient;
+	private final ObjectMapper mapper;
 
 	public AssignmentResponseService(AssignmentResponseBroadcaster broadcaster,
 			AssignmentDetailsDao assignmentDetailsDao, CacheManager cacheManager, 
-			StudentDao studentDao, CachingKeysUtil cachingKeyUtils, RedissonClient redissonClient) {
+			StudentDao studentDao, CachingKeysUtil cachingKeyUtils,
+			RedissonClient redissonClient, ObjectMapper mapper) {
 		this.broadcaster = broadcaster;
 		this.assignmentDetailsDao = assignmentDetailsDao;
 		this.cacheManager = cacheManager;
 		this.studentDao = studentDao;
 		this.cachingKeyUtils = cachingKeyUtils;
 		this.redissonClient = redissonClient;
+		this.mapper = mapper;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -215,57 +220,49 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 		return notifications;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Scheduled(fixedRate = 100000) //schedule notifications at 20sec interval
 	public void scheduleFixedTimeNotification() {
 		
-		System.out.println("preparing to notify");
+	
 		
 		RLock rlock = redissonClient.getLock("notification:lock");
 		try {
 			
 			if(rlock.tryLock(5, 15, TimeUnit.SECONDS)) {
 				
-				System.out.println("preparing to notify");
+				
 				
 				try {
 					Set<String> keys = cachingKeyUtils.getAllCacheKeys(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION);
-					System.out.println("preparing to notify");
+					
 					Cache cache = cacheManager.getCache(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION);
 					
-					System.out.println("returned key:");
+					
 					
 					for(String key: keys) {
 						
-						System.out.println("<<< "+key);						
 						
 						try {
 							
 							
-							ValueWrapper valueWrapper = cache.get(key);
+							Cache.ValueWrapper wrapper = cache.get(key);
 							
-							if(valueWrapper != null) {
+							if(wrapper != null) {
 								
-								List<AssessmentResponseRecord> notifications = (List<AssessmentResponseRecord>)valueWrapper.get();
+//								
+								List<AssessmentResponseRecord> notifications = mapper.convertValue(wrapper.get(),
+										
+										new TypeReference<List<AssessmentResponseRecord>>() {}
+										);
+								
+								broadcaster.broadcastPreviousNotifications(notifications);
+								
+								
+								
+							
 							}
 							
-							
-//							List<?> rawList = cache.get(key, List.class);
-//							
-//							
-//							
-//							if(rawList != null) {
-//								
-//								ObjectMapper mapper = new ObjectMapper();
-//								List<AssessmentResponseRecord> notifications = rawList.stream()
-//										                                              .map(item -> mapper.convertValue(item, AssessmentResponseRecord.class))
-//										                                              .collect(Collectors.toList());										                                              		       
-//             				
-//								broadcaster.broadcastPreviousNotifications(notifications);
-//								System.out.println("sent notifications");
-//							
-//							}
-//							
+		
 						
 						} catch (Exception e) {
 							System.err.println(e);
