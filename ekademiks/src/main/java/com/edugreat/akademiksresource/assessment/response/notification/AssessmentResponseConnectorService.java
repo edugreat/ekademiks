@@ -41,6 +41,7 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 	@RabbitListener(queues = {"${previous.assessment.response.notification.queue}"})
 	void publishReviousNotifications(List<AssessmentResponseRecord> notifications) throws IOException {
 		
+		System.out.println("publishing previous notifications");
 		final Integer recipientId = notifications.get(0).instructorId();
 		if(connectors.containsKey(recipientId)) {
 			

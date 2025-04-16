@@ -1,25 +1,26 @@
 package com.edugreat.akademiksresource.config;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Configuration
@@ -81,33 +82,60 @@ public class RedisConfig {
                                 .entryTtl(Duration.ofMinutes(60)))
                 .withCacheConfiguration(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION, 
                 		RedisCacheConfiguration.defaultCacheConfig()
-                		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMillis(60 * 2)));
+                		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)));
     }
 	
 	@Bean
-     RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(connectionFactory);
-
-        // Use StringRedisSerializer for keys
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-
-        // Use GenericJackson2JsonRedisSerializer for values
-        redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());
-
-        return redisTemplate;
-    }
-
+	RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+	    RedisTemplate<String, Object> template = new RedisTemplate<>();
+	    template.setConnectionFactory(connectionFactory);
+	    
+	    
+	    GenericJackson2JsonRedisSerializer serializer = 
+	        new GenericJackson2JsonRedisSerializer(objectMapper());
+	    
+	    template.setKeySerializer(new StringRedisSerializer());
+	    template.setValueSerializer(serializer);
+	    template.setHashKeySerializer(new StringRedisSerializer());
+	    template.setHashValueSerializer(serializer);
+	    
+	    return template;
+	}
+	
+	
 	@Bean
 	ObjectMapper objectMapper() {
+	    return JsonMapper.builder()
+	        .addModule(new JavaTimeModule())
+	        .addModule(new Jdk8Module())
+	        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+	        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+	        .build();
+	}
+	
+	@Bean(destroyMethod = "shutdown")
+	RedissonClient redissonClient() {
 		
-		return JsonMapper.builder()
-				.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
-				.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
-				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-				.configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
-				.addModule(new JavaTimeModule())
-				.findAndAddModules()
-				.build();
+		Config config = new Config();
+		config.useSingleServer()
+		      .setAddress("redis://localhost:6379")
+		      .setConnectionPoolSize(5)
+		      .setConnectionMinimumIdleSize(5);
+		
+		return Redisson.create(config);
+		
+		
+	}
+	
+	@Bean
+	GenericJackson2JsonRedisSerializer jacksonRedisSerializer(ObjectMapper mapper) {
+	    ObjectMapper redisMapper = mapper.copy();
+	    // Enable polymorphic type handling safely
+	    redisMapper.activateDefaultTyping(
+	        redisMapper.getPolymorphicTypeValidator(),
+	        ObjectMapper.DefaultTyping.NON_FINAL,
+	        JsonTypeInfo.As.PROPERTY
+	    );
+	    return new GenericJackson2JsonRedisSerializer(redisMapper);
 	}
 }

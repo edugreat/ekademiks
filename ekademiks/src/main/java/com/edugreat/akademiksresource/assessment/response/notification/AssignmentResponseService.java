@@ -6,11 +6,16 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.cache.Cache;
+import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.edugreat.akademiksresource.assignment.AssignmentDetails;
@@ -21,6 +26,8 @@ import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.model.AssignmentResponse;
 import com.edugreat.akademiksresource.model.Student;
+import com.edugreat.akademiksresource.util.CachingKeysUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 
@@ -34,13 +41,18 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 	private final CacheManager cacheManager;
 
 	private final StudentDao studentDao;
+	private final CachingKeysUtil cachingKeyUtils;
+	private final RedissonClient redissonClient;
 
 	public AssignmentResponseService(AssignmentResponseBroadcaster broadcaster,
-			AssignmentDetailsDao assignmentDetailsDao, CacheManager cacheManager, StudentDao studentDao) {
+			AssignmentDetailsDao assignmentDetailsDao, CacheManager cacheManager, 
+			StudentDao studentDao, CachingKeysUtil cachingKeyUtils, RedissonClient redissonClient) {
 		this.broadcaster = broadcaster;
 		this.assignmentDetailsDao = assignmentDetailsDao;
 		this.cacheManager = cacheManager;
 		this.studentDao = studentDao;
+		this.cachingKeyUtils = cachingKeyUtils;
+		this.redissonClient = redissonClient;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -48,6 +60,8 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 	@Transactional
 	public void processAssignmentResponse(AssignmentResponseObj response, String type, Integer detailsId) {
 
+		cacheManager.getCache(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION).clear();
+		
 //		confirm the existence of the assignment in the database
 		AssignmentDetails assignmentDetails = assignmentDetailsDao.findById(detailsId)
 				.orElseThrow(() -> new IllegalArgumentException("No such assignment found"));
@@ -121,7 +135,9 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 			 _record = new AssessmentResponseRecord(assignmentDetails.getName(),
 					assignmentDetails.getCreationDate().toLocalDate(), LocalDate.now(), response.getStudentId(), instructorId);
 
-			cache.put(instructorId, new ArrayList<AssessmentResponseRecord>().add(_record));
+			 List<AssessmentResponseRecord> notifications = new ArrayList<>();
+			 notifications.add(_record);		 
+			cache.put(instructorId,notifications);
 
 		} else {
 
@@ -198,5 +214,76 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 		
 		return notifications;
 	}
+	
+	@SuppressWarnings("unchecked")
+	@Scheduled(fixedRate = 100000) //schedule notifications at 20sec interval
+	public void scheduleFixedTimeNotification() {
+		
+		System.out.println("preparing to notify");
+		
+		RLock rlock = redissonClient.getLock("notification:lock");
+		try {
+			
+			if(rlock.tryLock(5, 15, TimeUnit.SECONDS)) {
+				
+				System.out.println("preparing to notify");
+				
+				try {
+					Set<String> keys = cachingKeyUtils.getAllCacheKeys(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION);
+					System.out.println("preparing to notify");
+					Cache cache = cacheManager.getCache(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION);
+					
+					System.out.println("returned key:");
+					
+					for(String key: keys) {
+						
+						System.out.println("<<< "+key);						
+						
+						try {
+							
+							
+							ValueWrapper valueWrapper = cache.get(key);
+							
+							if(valueWrapper != null) {
+								
+								List<AssessmentResponseRecord> notifications = (List<AssessmentResponseRecord>)valueWrapper.get();
+							}
+							
+							
+//							List<?> rawList = cache.get(key, List.class);
+//							
+//							
+//							
+//							if(rawList != null) {
+//								
+//								ObjectMapper mapper = new ObjectMapper();
+//								List<AssessmentResponseRecord> notifications = rawList.stream()
+//										                                              .map(item -> mapper.convertValue(item, AssessmentResponseRecord.class))
+//										                                              .collect(Collectors.toList());										                                              		       
+//             				
+//								broadcaster.broadcastPreviousNotifications(notifications);
+//								System.out.println("sent notifications");
+//							
+//							}
+//							
+						
+						} catch (Exception e) {
+							System.err.println(e);
+						}
+					}
+				} finally  {
+					rlock.unlock();
+				}
+			}
+		} catch (Exception e) {
+			Thread.currentThread().interrupt();
+			System.err.println(e);
+		}
+		
+		
+		}
+		
+		
+	
+	}
 
-}

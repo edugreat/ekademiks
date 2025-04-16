@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.util;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -51,22 +52,20 @@ public class CachingKeysUtil {
 		throw new RuntimeException("Something went wrong");
 	}
 	 public  Set<String> getAllCacheKeys(String cacheName) {
-	        // Default pattern for keys in the cache(example: "cacheName::*1237594)
-	        final String pattern = cacheName + "::*";
-
-	        Set<String> keys = new HashSet<>();
-
-	        redisTemplate.keys(pattern)
-	        .parallelStream().forEach((key) -> {
-	        	
-	        	String cachingKey = key.substring(cacheName.length()+2);
+	        // matches all keys stored via @Cacheable(eg cacheName::123) and those stored via cacheManager.put(cacheName123)
+	        final Set<String> redisKeys = redisTemplate.keys("*");
 	        
-	        	keys.add(cachingKey);
-	        	
-	        	
-	        });
+	        System.out.println(redisKeys.toString());
 	        
-	        return keys;
+	        
+	        return redisKeys.stream()
+	        		        .filter(key -> key.startsWith(cacheName+"::"))
+	        		        .map(k -> k.substring(2+cacheName.length()))
+	        		        .collect(Collectors.toSet());
+
+	       
+	        
+	        
 	    }
 
 
