@@ -65,7 +65,7 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 	@Transactional
 	public void processAssignmentResponse(AssignmentResponseObj response, String type, Integer detailsId) {
 
-		cacheManager.getCache(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION).clear();
+		//cacheManager.getCache(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION).clear();
 		
 //		confirm the existence of the assignment in the database
 		AssignmentDetails assignmentDetails = assignmentDetailsDao.findById(detailsId)
