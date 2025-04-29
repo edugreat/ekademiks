@@ -138,6 +138,7 @@ public class AppAuthService implements AppAuthInterface {
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 		
 		
+		
 		String username = request.getEmail();
 		String password = request.getPassword();
 

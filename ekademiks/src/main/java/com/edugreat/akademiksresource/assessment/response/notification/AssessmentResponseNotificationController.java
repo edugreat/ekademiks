@@ -40,14 +40,14 @@ public class AssessmentResponseNotificationController {
 	
 //		establish first connection
 		SseEmitter emitter = connector.establishConnection(Integer.parseInt(instructorId));
-		
-//		publish previous notifications
-		if(emitter != null) {
-			
-			
-			
-			broadcaster.broadcastPreviousNotifications(responseInterface.getPreviousResponses(Integer.parseInt(instructorId)));
-		}
+//		
+////		publish previous notifications
+//		if(emitter != null) {
+//			
+//			
+//			
+//			broadcaster.broadcastPreviousNotifications(responseInterface.getPreviousResponses(Integer.parseInt(instructorId)));
+//		}
 		
 		return emitter;
 	}

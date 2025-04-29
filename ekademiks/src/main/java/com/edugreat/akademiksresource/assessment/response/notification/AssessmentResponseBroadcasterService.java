@@ -1,6 +1,6 @@
 package com.edugreat.akademiksresource.assessment.response.notification;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +26,14 @@ public class AssessmentResponseBroadcasterService implements AssignmentResponseB
 	private RabbitTemplate rabbitTemplate;
 	
 	@Override
-	public void broadcastPreviousNotifications(List<AssessmentResponseRecord> notifications) {
+	public void broadcastPreviousNotifications(Collection<AssessmentResponseRecord> notifications) {
+		
 		
 		for(var notification: notifications) {
 			
-			rabbitTemplate.convertAndSend(exchange, instantAssessmentResponseRoutingKey, notification);
+			
+			
+			rabbitTemplate.convertAndSend(exchange, previousAssessmentResponseRoutingKey, notification);
 		}
 	}
 
