@@ -1,9 +1,11 @@
 package com.edugreat.akademiksresource.assessment.response.notification;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
@@ -16,17 +18,23 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 //	thread-safe map of connectors whose keys are instructo's ID and values are their connection to notifications
 	private Map<Integer, SseEmitter> connectors = new ConcurrentHashMap<>();
 	
+	ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+	
 	
 	@Override
 	public SseEmitter establishConnection(Integer instructorId) {
 		
 		
 		
-		final SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+		final SseEmitter emitter = new SseEmitter(0L);
 		
-		connectors.putIfAbsent(instructorId, emitter);
 		
-		emitter.onError(e -> connectors.remove(instructorId));
+		
+		connectors.put(instructorId, emitter);
+		
+		scheduleHeartbeat(emitter);
+		
+		emitter.onError(e ->System.out.println("emitter error: "+e));
 		emitter.onCompletion(() -> connectors.remove(instructorId));
 		
 		emitter.onTimeout(() -> emitter.complete());
@@ -42,7 +50,7 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 	void publishReviousNotifications(AssessmentResponseRecord notification) throws IOException {
 		
 		System.out.println("publishing previous notifications");
-		final Integer recipientId = notification.instructorId();
+		final Integer recipientId = notification.getInstructorId();
 		if(connectors.containsKey(recipientId)) {
 			System.out.println("contains ID");
 			
@@ -55,19 +63,36 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 	@RabbitListener(queues = {"${instant.assessment.response.notification.queue}"})
 	void publishInstantNotification(AssessmentResponseRecord notification) throws IOException {
 		
-		System.out.println("id: "+notification.instructorId());
+		System.out.println("id: "+notification.getInstructorId());
 		System.out.println("publishing instant notification---");
 		
-		if(connectors.containsKey(notification.instructorId())) {
+		if(connectors.containsKey(notification.getInstructorId())) {
 			
 			System.out.println("notification sent successfully");
 			
-			connectors.get(notification.instructorId()).send(SseEmitter.event().data(notification).name("responseUpdate"));
+			connectors.get(notification.getInstructorId()).send(SseEmitter.event().data(notification).name("responseUpdate"));
 		}
 		
 		
 		
 		
+		
+	}
+	
+	private void scheduleHeartbeat(SseEmitter emitter) {
+		
+		
+		
+		executorService.scheduleAtFixedRate(() -> {
+			
+			try {
+				emitter.send(SseEmitter.event().comment("").name("heartbeat"));
+			} catch (IOException e) {
+				System.out.println("error sending heartbeat: "+e);
+			}
+			
+			
+		}, 30, 30, TimeUnit.SECONDS);
 		
 	}
 	

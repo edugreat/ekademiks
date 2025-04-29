@@ -1,8 +1,7 @@
 package com.edugreat.akademiksresource.assessment.response.notification;
 
-import java.util.List;
+import java.util.Collection;
 
-import org.aspectj.weaver.ast.Instanceof;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,13 +26,12 @@ public class AssessmentResponseBroadcasterService implements AssignmentResponseB
 	private RabbitTemplate rabbitTemplate;
 	
 	@Override
-	public void broadcastPreviousNotifications(List<AssessmentResponseRecord> notifications) {
-		System.out.println("--------");
-		//System.out.println(notifications.toString());
+	public void broadcastPreviousNotifications(Collection<AssessmentResponseRecord> notifications) {
+		
 		
 		for(var notification: notifications) {
 			
-			System.out.println(notification.toString());
+			
 			
 			rabbitTemplate.convertAndSend(exchange, previousAssessmentResponseRoutingKey, notification);
 		}
