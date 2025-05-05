@@ -157,7 +157,7 @@ public class AdminService implements AdminInterface {
 	@Transactional
 	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
 			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
-	public void setSubject(List<SubjectDTO> subjectDTOs) {
+	public void setSubjects(List<SubjectDTO> subjectDTOs) {
 
 		List<Subject> subjects = new ArrayList<>();
 		// get the academic level for the subject, check if any of the subjects already

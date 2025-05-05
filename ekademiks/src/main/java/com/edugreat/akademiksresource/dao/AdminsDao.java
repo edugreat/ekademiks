@@ -8,7 +8,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.edugreat.akademiksresource.model.Admins;
 
-@RepositoryRestResource(collectionResourceRel = "admins",path = "admins")
+@RepositoryRestResource(collectionResourceRel = "admins",path = "admins", exported = false)
 public interface AdminsDao extends JpaRepository<Admins, Integer> {
 
 	// checks if an admin exists.Returns true if exists, otherwise, false

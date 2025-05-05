@@ -17,15 +17,20 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class NotificationConsumerService implements NotificationConsumer {
 
-	//private static final long HEARTBEAT_INTERVAL = 30000;//30 seconds heart-beat interval
+	private static final long HEARTBEAT_INTERVAL = 30000;//30 seconds heart-beat interval
 
 	private Map<Integer, SseEmitter> clients = new ConcurrentHashMap<>();
 	
-	private final Logger LOGGER = LoggerFactory.getLogger(NotificationConsumerService.class);
-
+//	thread-safe heart-beat executor service
+	private Map<Integer, ScheduledExecutorService> heartbeatExecutors = new ConcurrentHashMap<>();
+	
+	
 	@RabbitListener(queues = { "${previous.notification.queue}" })
 	 void consumePreviousNotification(AssessmentUploadNotification notification) {
 		
@@ -38,9 +43,8 @@ public class NotificationConsumerService implements NotificationConsumer {
 				notify(notification, studentId);
 			} catch (IOException e) {
 				
-				clients.remove(studentId);
 				
-				LOGGER.info(String.format("Error notifying %s", studentId));
+				log.info("error notifying: {}", studentId);
 				
 				
 			}
@@ -57,7 +61,7 @@ public class NotificationConsumerService implements NotificationConsumer {
 //		get the receipient of this notification
 		final List<Integer> recipientIds = notification.getReceipientIds();
 		
-		List<Integer> toBeRemoved = new ArrayList<>();
+		
 
 //		 A case where the notification is meant for all users
 		if (recipientIds == null || recipientIds.size() == 0) {
@@ -70,8 +74,8 @@ public class NotificationConsumerService implements NotificationConsumer {
 						notify(notification, studentId);
 					} catch (IOException e) {
 						
-						LOGGER.info(String.format("Error notifying %s", studentId));
-						toBeRemoved.add(studentId);
+						log.info(String.format("Error notifying %s", studentId));
+						
 						
 					}
 					
@@ -92,42 +96,48 @@ public class NotificationConsumerService implements NotificationConsumer {
 						notify(notification, id);
 					} catch (Exception e) {
 						
-//						id should be removed on exception
-						toBeRemoved.add(id);
+
 					}
 				}
 			});
 			
 		}
 		
-//		removes all IDs that caused exception 
-      toBeRemoved.forEach(clients::remove);
 
 	}
 
 	@Override
-	public SseEmitter establishConnection(Integer studentId) {
-
-		SseEmitter emitter = new SseEmitter(1000L * 20 * 60);
-
-		clients.putIfAbsent(studentId, emitter);
-
-		emitter.onCompletion(() -> {
-
-			clients.remove(studentId);
-		});
-
-		emitter.onTimeout(() -> emitter.complete());
-
+public SseEmitter establishConnection(Integer studentId) {
+		
+		
+		
+		final SseEmitter emitter = new SseEmitter(0L);
+		
+		
+		
+		clients.put(studentId, emitter);
+		
+		
+	ScheduledExecutorService executorService = 	startHeartbeat(emitter);
+	
+	heartbeatExecutors.put(studentId, executorService);
+		
 		emitter.onError(e -> {
-
-			clients.remove(studentId);
-			LOGGER.info(String.format("Error establishing connection %s", e.getMessage()));
+			cleanup(studentId);
+			log.info("emitter error: {},", e.getMessage());
+		});
+		emitter.onCompletion(() -> {
+			cleanup(studentId);
+			log.info("emitter completed for: {}", studentId);
 		});
 		
-		//startHeartbeat(emitter, studentId);
+		emitter.onTimeout(() -> {
+			cleanup(studentId);
+			log.info("emitter timedout for: {}", studentId);
+		});
 		
-
+		
+		
 		return emitter;
 	}
 
@@ -148,17 +158,32 @@ public class NotificationConsumerService implements NotificationConsumer {
 		return null;
 	}
 	
-//	 private void startHeartbeat(SseEmitter emitter, Integer studentId) {  
-//	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
-//	        executorService.scheduleAtFixedRate(() -> {  
-//	            try {  
-//	                emitter.send(SseEmitter.event().data("heartbeat").name("heartbeat"));  
-//	            } catch (IOException e) {  
-//	                LOGGER.error("Error sending heartbeat: " + e.getMessage());  
-//	                clients.remove(studentId); // Remove the emitter if it fails  
-//	                executorService.shutdown(); // Stop the heartbeat task if emitter is no longer valid  
-//	            }  
-//	        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);  
-//	    }
+	 private ScheduledExecutorService startHeartbeat(SseEmitter emitter) {  
+	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
+	        executorService.scheduleAtFixedRate(() -> {  
+	            try {  
+	                emitter.send(SseEmitter.event().comment("heartbeat").name("heartbeat"));  
+	            } catch (IOException e) {  
+	                log.error("Error sending heartbeat: " + e.getMessage());  
+	               
+	            }  
+	        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);  
+	        
+	        return executorService;
+	    }
+	 
+//	 cleans up tasks after encountering emitter errors, to avoid concurrency issues
+	 private void cleanup(Integer studentId) {
+		 
+		 clients.remove(studentId);
+		 
+		 ScheduledExecutorService scheduledExecutor = heartbeatExecutors.remove(studentId);
+		 if(scheduledExecutor != null) {
+			 
+			 scheduledExecutor.shutdown();
+		 }
+		 
+		 
+	 }
 
 }

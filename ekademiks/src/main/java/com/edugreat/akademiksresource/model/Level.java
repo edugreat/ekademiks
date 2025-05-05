@@ -17,6 +17,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import com.edugreat.akademiksresource.enums.Category;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table
@@ -31,6 +32,7 @@ public class Level {
 	private Category category;
 
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "level")
+	@JsonIgnore
 	private Set<Subject> subjects = new HashSet<>();
 
 	public Level() {

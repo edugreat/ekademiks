@@ -10,9 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,12 +25,15 @@ import com.edugreat.akademiksresource.dto.NotificationRequestDTO;
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 import com.edugreat.akademiksresource.model.Institution;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/assignments")
+@Tag(name =  "Assignment management", description = "Endpoints for managing assignment uploads and retrievals")
 public class AssignmentController {
 
 	@Autowired
@@ -45,6 +50,12 @@ public class AssignmentController {
 
 //	post assignment details along with pdf 
 	@PostMapping(path = "/file", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+	@Operation(summary = "post assignment", description = "Post assignment in PDF format")
+	@ApiResponses(value = {
+			
+			@ApiResponse(responseCode = "200", description = "assignment posted successfully"),
+			@ApiResponse(responseCode = "400", description = "Unable to process request")
+	})
 	public ResponseEntity<Object> postAssignment(@RequestPart("details") AssignmentDetailsDTO details,
 			@RequestPart("pdf") MultipartFile[] files) {
 
@@ -57,7 +68,7 @@ public class AssignmentController {
 			sendInstantNotification(assignmentCandidates(detailsId, details.getCategory()), detailsId);
 		} catch (Exception e2) {
 
-			System.out.println(e2.getMessage());
+			
 			return new ResponseEntity<Object>(e2.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
 		}
 
@@ -84,6 +95,11 @@ public class AssignmentController {
 
 //	post assignment with no pdf
 	@PostMapping
+	@Operation(summary = "Post assignment", description = "Create new assignment")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "200", description = "Successfully posted assignment"),
+			@ApiResponse(responseCode = "400", description = "Unable to process request")
+	})
 	public ResponseEntity<Object> postAssignment(@RequestBody @Valid AssignmentDetailsDTO assignmentDetails) {
 
 		Integer detailsId = null;
@@ -106,6 +122,10 @@ public class AssignmentController {
 
 //	retrieve details for a give assignment
 	@GetMapping("/details")
+	@Operation(summary = "Get assignmnent", description = "ge assignment's details")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "400", description = "Unable to process it" )
+	})
 	public ResponseEntity<Object> getAssignmentDetails(@RequestParam String id) {
 		
 		
@@ -117,7 +137,7 @@ public class AssignmentController {
 		} catch (Exception e) {
 
 			
-			System.out.println(e);
+			
 			return ResponseEntity.badRequest().build();
 			
 		}
@@ -127,6 +147,10 @@ public class AssignmentController {
 	
 //	fetches an assignment resource using the assignment details id
 	@GetMapping("/resource")
+	@Operation(summary = "Get assignmnent", description = "get assignment's resources")
+	@ApiResponses(value = {
+			@ApiResponse(responseCode = "400", description = "Unable to execute request" )
+	})
 	public ResponseEntity<Object> getAssignmentResource(@RequestParam ("assId") String id) {
 
 		try {
@@ -134,7 +158,6 @@ public class AssignmentController {
 			return ResponseEntity.ok(_interface.getAssignmentResource(Integer.parseInt(id)));
 		} catch (Exception e) {
 			
-			System.out.println("error: "+e);
 			
 			return ResponseEntity.badRequest().build();
 		}
@@ -142,7 +165,7 @@ public class AssignmentController {
 	}
 	
 
-//	returns a list of student's ID for who should take the assignment referenced by the given assignmentId
+
 	private List<String> assignmentCandidates(Integer assignmentId, String category) {
 
 //		get institution

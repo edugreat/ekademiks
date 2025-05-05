@@ -29,9 +29,22 @@ import lombok.AllArgsConstructor;
 @EnableGlobalAuthentication
 public class SecurityConfig {
 
-	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**", "/notice/**",
-			"/learning/**","/chats/messages","/allow/**"};
-	private static final String[] STUDENT_URL = {"/chats/**","/assignments/details","/assignments/resource"}; 
+	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**",
+			"/learning/**","/chats/messages","/allow/**",
+	         
+			"/swagger-ui/**",  
+		    "/documentation.html", 
+		    "/v3/api-docs/**",  
+		    "/api-docs/**",     
+		    "/webjars/**",      
+		    "/swagger-resources/**"
+	
+	
+	
+	
+	
+	};
+	private static final String[] STUDENT_URL = {"/chats/**","/assignments/details","/assignments/resource", "/notice/**"}; 
 
 	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
@@ -53,7 +66,8 @@ public class SecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		return http.cors(cors -> cors.configurationSource(request -> {
 			CorsConfiguration configuration = new CorsConfiguration();
-			configuration.addAllowedOrigin("http://localhost:4200");
+			//configuration.addAllowedOrigin("http://localhost:4200");
+			configuration.addAllowedOrigin("*");
 			configuration.setAllowedMethods(List.of(ALLOWED_METHODS));
 			configuration.setAllowedHeaders(List.of(ALLOWED_HEADERS));
 			configuration.setExposedHeaders(List.of(EXPOSED_HEADERS));

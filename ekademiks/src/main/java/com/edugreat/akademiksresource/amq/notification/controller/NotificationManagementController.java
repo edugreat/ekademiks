@@ -45,35 +45,29 @@ public class NotificationManagementController {
 
 //	Server notification endpoint
 	@GetMapping("/notice/notify_me")
-	public SseEmitter streamNotificaions(@RequestParam Integer studentId) throws IOException {
-
-		
-		// Get the authentication object, just to ensure only authenticated students get
-		// the notifications
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-//		AssessmentUploadNotification service is designed for authenticated users only
-		if (authentication != null) {
+	public SseEmitter streamNotificaions(@RequestParam Integer _xxid) throws IOException {
 
 //			delete all read notifications
 			notificationInterface.deleteReadNotifications();
 
 //			
-			final SseEmitter emitter = notificationConsumer.establishConnection(studentId);
+			final SseEmitter emitter = notificationConsumer.establishConnection(_xxid);
 
 			if (emitter != null) {
 
 				List<AssessmentUploadNotification> notifications = notificationInterface
-						.unreadNotificationsFor(studentId);
+						.unreadNotificationsFor(_xxid);
 
-				notifications.forEach(notification -> notification.setReceipientIds(List.of(studentId)));
+				notifications.forEach(notification -> notification.setReceipientIds(List.of(_xxid)));
 
 				notificationBroadcast.getPreviousNotifications(notifications);
+				
+				return emitter;
 			}
 
-			return emitter;
+			
 
-		}
+		
 
 		return null;
 

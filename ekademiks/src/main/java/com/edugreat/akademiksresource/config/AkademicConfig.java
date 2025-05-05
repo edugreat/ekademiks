@@ -6,8 +6,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
+import org.springframework.hateoas.LinkRelation;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+
+import com.edugreat.akademiksresource.model.Level;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Type;
@@ -33,7 +36,12 @@ public class AkademicConfig implements RepositoryRestConfigurer {
 		Class[] classes = entityManager.getMetamodel().getEntities().stream().map(Type::getJavaType)
 				.toArray(Class[]::new);
 
+		
+		
 		config.exposeIdsFor(classes);
+		
+		
+    
 
 	}
 

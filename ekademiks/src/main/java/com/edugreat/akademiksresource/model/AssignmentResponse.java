@@ -3,8 +3,10 @@ package com.edugreat.akademiksresource.model;
 import java.time.LocalDate;
 
 import jakarta.persistence.Embeddable;
+import lombok.NoArgsConstructor;
 
 @Embeddable
+@NoArgsConstructor
 public class AssignmentResponse{
 	
 	private Integer assignmentDetailsId;

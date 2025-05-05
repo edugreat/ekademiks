@@ -54,9 +54,7 @@ public class CachingKeysUtil {
 	 public  Set<String> getAllCacheKeys(String cacheName) {
 	        // matches all keys stored via @Cacheable(eg cacheName::123) and those stored via cacheManager.put(cacheName123)
 	        final Set<String> redisKeys = redisTemplate.keys("*");
-	        
-	        System.out.println(redisKeys.toString());
-	        
+	         
 	        
 	        return redisKeys.stream()
 	        		        .filter(key -> key.startsWith(cacheName+"::"))

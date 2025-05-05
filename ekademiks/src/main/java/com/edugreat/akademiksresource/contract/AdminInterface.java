@@ -34,7 +34,7 @@ public interface AdminInterface {
 
 	public void deleteUser(String email);
 
-	 void setSubject(List<SubjectDTO> dtos);
+	 void setSubjects(List<SubjectDTO> dtos);
 
 	// sets new test and return its id
 	 Integer uploadAssessment(TestDTO testDTO);
@@ -61,7 +61,7 @@ public interface AdminInterface {
 	 void deleteQuestion(Integer testId, Integer questionId);
 	
 //	provides functionality for modifying the 'assessment topic and assessment duration' for the given assessment id
-//	The key of the map is the new assessment topic and value 
+//	The key of the map is the new assessment topic and value is the new duration
 	 void modifyAssessment(Map<String, Object> modifiedAssessment, Integer assessmentId);
 	
 //	provides functionality for deleting a particular assessment from the database

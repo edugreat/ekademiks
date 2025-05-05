@@ -6,13 +6,15 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.stereotype.Repository;
 
 import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
 
-@RepositoryRestResource(collectionResourceRel = "Tests")
+@Repository
+@RepositoryRestResource(collectionResourceRel = "Tests", exported = false)
 public interface TestDao extends JpaRepository<Test, Integer> {
 
 	// Fetches from the database a list of questions using the given arguments

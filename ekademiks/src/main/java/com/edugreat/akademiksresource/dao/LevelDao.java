@@ -2,10 +2,11 @@ package com.edugreat.akademiksresource.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.model.Level;
-
+@Repository
 public interface LevelDao extends JpaRepository<Level, Integer> {
 
 	Level findByCategory(Category category);
