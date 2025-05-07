@@ -94,13 +94,13 @@ public class AuthenticateController {
 			@ApiResponse(responseCode = "200", description = "disconnection successful"),
 			@ApiResponse(responseCode = "400", description  = "Disconnection not successful")
 	})
-	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Map<Integer, Integer> mapObj) {
+	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Map.Entry<Integer, Integer> mapObj) {
 
 		try {
 
 			chatConsumer.disconnectGroup(mapObj);
 
-			Integer studentId = mapObj.get(mapObj.keySet().toArray()[0]);
+			Integer studentId = mapObj.getKey();
 
 			notificationConsumer.disconnectFromSSE(studentId);
 		}

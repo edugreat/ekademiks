@@ -23,7 +23,10 @@ import com.edugreat.akademiksresource.chat.dao.GroupMembersDao;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class ChatConsumerService implements ChatConsumer {
 
 	@Autowired
@@ -33,15 +36,15 @@ public class ChatConsumerService implements ChatConsumer {
 	private GroupChatDao groupChatDao;
 
 	private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+	
+	private final Map<String, ScheduledExecutorService> heartbeatExecutors = new ConcurrentHashMap<>();
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ChatConsumerService.class);
-
-	private static final long HEARTBEAT_INTERVAL = 40000;
+	private static final long HEARTBEAT_INTERVAL = 39000;
 
 	@RabbitListener(queues = { "${instant.chat.queue}" })
 	synchronized void consumeInstantChatMessage(ChatDTO chat) {
 //
-		LOGGER.info(String.format("received JSON  message -> %s", chat));
+		log.info(String.format("received JSON  message: {}", chat));
 
 //		get IDs of group members
 		List<Integer> memberIds = groupMembersDao.getMemberIds(chat.getGroupId());
@@ -74,7 +77,7 @@ public class ChatConsumerService implements ChatConsumer {
 //				mark the ID as fit for removal
 				toBeRemoved.add(key);
 
-				LOGGER.error("error sending message to ", key, e.getMessage());
+				log.error("error sending message to {} ", key, e.getMessage());
 			}
 
 		});
@@ -103,7 +106,7 @@ public class ChatConsumerService implements ChatConsumer {
 
 				emitters.remove(connectionId);
 
-				LOGGER.info(String.format("Error notifying group admin %s", groupAdminId+" -> group: "+targetGroupId));
+				log.info(String.format("Error notifying group admin: {}", groupAdminId+" -> group: "+targetGroupId));
 			}
 
 		}
@@ -134,7 +137,7 @@ public class ChatConsumerService implements ChatConsumer {
 			} catch (IOException e) {
 
 				emitters.remove(connectionId);
-				LOGGER.info(String.format("unable to send previous chat to %s", studentId + " -> group: " + groupId));
+				log.info(String.format("unable to send previous chat to: {}", studentId + " -> group: " + groupId));
 			}
 		}
 	}
@@ -157,7 +160,7 @@ public class ChatConsumerService implements ChatConsumer {
 				emitters.get(_key).send(SseEmitter.event().data(notification).name("chats"));
 			} catch (IOException e) {
 
-				LOGGER.info("error notifying member: ", _key, e.getMessage());
+				log.info("error notifying member:{} ", _key, e.getMessage());
 				toBeRemoved.add(_key);
 
 			}
@@ -187,7 +190,7 @@ public class ChatConsumerService implements ChatConsumer {
 
 				emitters.remove(key);
 
-				LOGGER.info(String.format("Error emitting previous notifications to", studentId+" -> groupId: "+previousNotification.getTargetGroup()));
+				log.info(String.format("Error emitting previous notifications to : {}", studentId+" -> groupId: "+previousNotification.getTargetGroup()));
 
 				return; // stop further notifications
 
@@ -203,35 +206,19 @@ public class ChatConsumerService implements ChatConsumer {
 		final String connectionId = groupId + "_" + studentId;
 	
 
+		SseEmitter emitter = new SseEmitter(0l);
+		
+		emitters.put(connectionId, emitter);
+		
+		ScheduledExecutorService heartbeatExecutor = startHeartbeat(connectionId);
+		heartbeatExecutors.put(connectionId, heartbeatExecutor);
 		
 		
-		if(emitters.get(connectionId) != null) {
-			
-			
-			return emitters.get(connectionId);			
-			
-		}else {
-			
-			SseEmitter emitter = new SseEmitter(1000L * 20 * 60);
-			
-			emitters.put(connectionId, emitter);
-			
-
-			emitter.onCompletion(() -> {
-
-				emitters.remove(connectionId);
-			});
-
-			emitter.onTimeout(() -> emitter.complete());
-
-			emitter.onError(e -> {
-
-				emitters.remove(connectionId);
-
-				LOGGER.info(String.format("just removed %s", groupId));
-			});
-
-			// startHeartbeat(emitter, connectionId);
+		emitter.onCompletion(() -> cleanup(connectionId));
+		emitter.onError(e -> cleanup(connectionId));
+		emitter.onTimeout(() -> cleanup(connectionId));
+		
+		
 
 			return emitter;
 			
@@ -239,7 +226,7 @@ public class ChatConsumerService implements ChatConsumer {
 		}
 
 		
-	}
+	
 
 	private long currentlyOnlineMembers(Integer groupId, List<Integer> memberIds) {
 
@@ -254,47 +241,44 @@ public class ChatConsumerService implements ChatConsumer {
 		return count;
 	}
 
-//	private void startHeartbeat(SseEmitter emitter, String connectionId) {
-//		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-//		executorService.scheduleAtFixedRate(() -> {
-//			try {
-//				emitters.get(connectionId).send(SseEmitter.event().data("heartbeat").name("heartbeat"));
-//			} catch (IOException e) {
-//				LOGGER.error("Error sending heartbeat: " + e.getMessage());
-//				emitters.remove(connectionId); // Remove the emitter if it fails
-//				executorService.shutdown(); // Stop the heartbeat task if emitter is no longer valid
-//			}
-//		}, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
-//	}
-
-	@Override
-	public void disconnectGroup(Map<Integer, Integer> data) {
-		
-		List<String> tobeRemoved = new ArrayList<>();
-		
-		emitters.forEach((key, val) -> {
-			
-			for (Integer groupId: data.keySet()) {
-				
-				String s = groupId+"_"+data.get(groupId);
-				if(s.equals(key)) tobeRemoved.add(s);
+	private ScheduledExecutorService startHeartbeat(String connectionId) {
+		ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+		executorService.scheduleAtFixedRate(() -> {
+			try {
+				emitters.get(connectionId).send(SseEmitter.event().comment("heartbeat").name("heartbeat"));
+			} catch (IOException e) {
+				log.error("Error sending heartbeat:{} " + e.getMessage());
 				
 			}
-			
-			
-		});
+		}, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
+	
+		return executorService;
+	}
 
-
-//		Removes and completes each of the SSEs. 
-		tobeRemoved.forEach(key -> {
-			
-			final SseEmitter staleEmitter = emitters.remove(key);
-			
-			staleEmitter.complete();
-		});
+	@Override
+	public void disconnectGroup(Map.Entry<Integer, Integer> data) {
 		
+		final String studentId = data.getKey()+"_"+data.getValue();
+		
+		cleanup(studentId);
 		
 
+	}
+	
+//	cleanup method in case of sse errors
+	private void cleanup(String studentId) {
+		
+		emitters.remove(studentId);
+		
+		ScheduledExecutorService executorService = heartbeatExecutors.get(studentId);
+		
+		if(executorService != null) {
+			
+		  heartbeatExecutors.remove(studentId);
+		  
+		  executorService.shutdown();
+		  
+		}
 	}
 
 }

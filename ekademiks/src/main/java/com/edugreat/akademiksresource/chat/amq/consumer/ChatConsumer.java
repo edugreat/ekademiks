@@ -11,5 +11,5 @@ public interface ChatConsumer {
 	
 //	disconnects the user from SSE once they log out from the client or gets disconnected due to max-size restriction
 //	The key of client map is groupId while the value is the studentId
-	public void disconnectGroup(Map<Integer, Integer> client);
+	public void disconnectGroup(Map.Entry<Integer, Integer> client);
 }
