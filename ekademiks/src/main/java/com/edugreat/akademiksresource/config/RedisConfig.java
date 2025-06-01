@@ -82,8 +82,45 @@ public class RedisConfig {
                                 .entryTtl(Duration.ofMinutes(60)))
                 .withCacheConfiguration(RedisValues.ASSESSMENT_RESPONSE_NOTIFICATION, 
                 		RedisCacheConfiguration.defaultCacheConfig()
-                		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)));
-    }
+                		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+                
+                .withCacheConfiguration(RedisValues.MY_GROUP, 
+                		RedisCacheConfiguration.defaultCacheConfig()
+                		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        
+        .withCacheConfiguration(RedisValues.IS_GROUPMEMBER, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        
+        .withCacheConfiguration(RedisValues.PREVIOUS_CHATS, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        
+        .withCacheConfiguration(RedisValues.ALL_GROUPS, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        
+        .withCacheConfiguration(RedisValues.MY_GROUP_IDs, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        
+        .withCacheConfiguration(RedisValues.MISCELLANEOUS, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        
+        .withCacheConfiguration(RedisValues.PENDING_REQUEST, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+         .withCacheConfiguration(RedisValues.GROUP_CHAT_INFO, 
+        		RedisCacheConfiguration.defaultCacheConfig()
+        		.serializeValuesWith(valueSerializer).entryTtl(Duration.ofMinutes(60 * 2)))
+        ;
+
+        
+
+  
+  
+	}
 	
 	@Bean
 	RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {

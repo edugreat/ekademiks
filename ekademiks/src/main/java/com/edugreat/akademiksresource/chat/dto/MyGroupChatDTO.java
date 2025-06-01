@@ -3,8 +3,10 @@ package com.edugreat.akademiksresource.chat.dto;
 import java.time.LocalDateTime;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class MyGroupChatDTO{
 	
 //	the number of chats yet to be read by the student. This can be zero or more chats

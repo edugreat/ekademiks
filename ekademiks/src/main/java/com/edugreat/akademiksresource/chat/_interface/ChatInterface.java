@@ -54,14 +54,14 @@ public interface ChatInterface {
 
 //  provides functionality for editing group chat's name. The key of data map is the student's ID(who wants to rename group chat name, and should be the group admin).
 //  The value of the data map is the group chat ID 
-boolean editGroupName(Map<Integer, Integer> data, String currentGroupName);
+boolean editGroupName(Map.Entry<Integer, Integer> data, String currentGroupName);
 
 // the key data map is the ID of the student who wants to delete the group chat. It is used to verify that it's actually being deleted by
 // the group admin
-boolean deleteGroupChat(Map<Integer, Integer> data);
+boolean deleteGroupChat(Map.Entry<Integer, Integer> data);
 
 //  provides functionality that allows a group member to exit or leave the group. The map's key is the group ID while the value is the ID of the member intending to leave
-void leaveGroup(Map<Integer, Integer> map);
+void leaveGroup(Map.Entry<Integer, Integer> map);
 
 
 // provides functionality to retrieve all group IDs and the joined date for the student referenced by studentId
@@ -71,18 +71,19 @@ void leaveGroup(Map<Integer, Integer> map);
 // provides functionality that checks if the currently logged in user has received chat messages from the given group chat (map's value).
  boolean hadPreviousPosts(Map<Integer, Integer> map);
  
-// gets the logged in student's previous chats
-  List<ChatDTO> getPreviousChat(Integer studentId, Integer groupId);
+// gets the logged in student's previous chats.
+// Return a map of which key is the groupId and value is a list of previous chats
+  Map<Integer, List<ChatDTO>> getPreviousChats(Integer studentId);
  
- 
- Set<MiscellaneousNotifications> streamChatNotifications(Integer studentId);
+// the key of map is group ID while the value is a list of notifications belonging to the group
+ Map<Integer, List<MiscellaneousNotifications>> streamChatNotifications(Integer studentId);
  
  ChatDTO updateChat(ChatDTO chatDTO);
  
 // the key of map is the id pointing to the GroupChat the chat belongs to while the value is the id of the Chat
- ChatDTO deleteChat(Map<Integer, Integer> map, Integer deleterId);
+ void deleteChat(Map.Entry<Integer, Integer> map, Integer deleterId);
  
 // provides functionality that locks the group chat referenced by mapObj's value.
 // The key of the map is the user who intends to lock the chat, which is expected to be the group admin
- boolean lockGroup(Map<Integer, Integer> mapObj);
+ boolean lockGroup(Map.Entry<Integer, Integer> mapObj);
 }

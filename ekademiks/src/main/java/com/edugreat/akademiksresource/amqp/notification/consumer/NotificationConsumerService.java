@@ -1,7 +1,6 @@
 package com.edugreat.akademiksresource.amqp.notification.consumer;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,8 +8,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -25,7 +22,7 @@ public class NotificationConsumerService implements NotificationConsumer {
 
 	private static final long HEARTBEAT_INTERVAL = 30000;//30 seconds heart-beat interval
 
-	private Map<Integer, SseEmitter> clients = new ConcurrentHashMap<>();
+	private static Map<Integer, SseEmitter> clients = new ConcurrentHashMap<>();
 	
 //	thread-safe heart-beat executor service
 	private Map<Integer, ScheduledExecutorService> heartbeatExecutors = new ConcurrentHashMap<>();
@@ -74,7 +71,7 @@ public class NotificationConsumerService implements NotificationConsumer {
 						notify(notification, studentId);
 					} catch (IOException e) {
 						
-						log.info(String.format("Error notifying %s", studentId));
+						log.info(String.format("Error notifying :{}", studentId));
 						
 						
 					}
@@ -118,7 +115,7 @@ public SseEmitter establishConnection(Integer studentId) {
 		clients.put(studentId, emitter);
 		
 		
-	ScheduledExecutorService executorService = 	startHeartbeat(emitter);
+	ScheduledExecutorService executorService = 	startHeartbeat(studentId);
 	
 	heartbeatExecutors.put(studentId, executorService);
 		
@@ -148,7 +145,7 @@ public SseEmitter establishConnection(Integer studentId) {
 	}
 
 	@Override
-	public synchronized  SseEmitter disconnectFromSSE(Integer studentId) {
+	public SseEmitter disconnectFromSSE(Integer studentId) {
 		
 		if(clients.containsKey(studentId)) {
 			
@@ -158,15 +155,19 @@ public SseEmitter establishConnection(Integer studentId) {
 		return null;
 	}
 	
-	 private ScheduledExecutorService startHeartbeat(SseEmitter emitter) {  
+	 private  ScheduledExecutorService startHeartbeat(Integer connectionId) {  
 	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
 	        executorService.scheduleAtFixedRate(() -> {  
-	            try {  
-	                emitter.send(SseEmitter.event().comment("heartbeat").name("heartbeat"));  
-	            } catch (IOException e) {  
-	                log.error("Error sending heartbeat: " + e.getMessage());  
-	               
-	            }  
+	        	
+	        	if(clients.containsKey(connectionId)) {
+            		
+            		try {
+						clients.get(connectionId).send(SseEmitter.event().comment("heartbeat").name("heartbeat"));
+					} catch (IOException e) {
+						log.error("Error sending heartbeat: " + e.getMessage());
+					}
+            	}
+              
 	        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);  
 	        
 	        return executorService;

@@ -29,4 +29,18 @@ public class RedisValues {
 //	caches the records of responses to assignment/assessment for easy notifications to instructors
 	public static final String ASSESSMENT_RESPONSE_NOTIFICATION = "assessment_response_cache";
 	
+	public static final String MY_GROUP = "myGroup";
+	
+	public static final String IS_GROUPMEMBER =  "isGroupMember";
+	
+	public static final String PREVIOUS_CHATS = "previousChats";
+	
+	public static final String ALL_GROUPS = "allGroups";
+	
+	public static final String MY_GROUP_IDs =  "myGroupIds";
+	
+	public static final String MISCELLANEOUS = "miscellaneous";
+	
+	public static final String PENDING_REQUEST  = "pendingRequest";
+	public static final String GROUP_CHAT_INFO = "groupChatInfo";
 }

@@ -13,7 +13,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 @Configuration
+
 public class RabbitMQConfig {
 	
 	
@@ -167,7 +171,10 @@ public class RabbitMQConfig {
     @Bean
     MessageConverter converter() {
     	
-    	return new Jackson2JsonMessageConverter();
+    	ObjectMapper mapper = new ObjectMapper();
+    	mapper.registerModule(new JavaTimeModule());
+    	
+    	return new Jackson2JsonMessageConverter(mapper);
     }
     
    
@@ -180,4 +187,6 @@ public class RabbitMQConfig {
     	
     	return rabbitTemplate;
     }
+    
+    
 }

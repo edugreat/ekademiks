@@ -7,8 +7,10 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class ChatDTO {
 	
 	@Min(value = 0)
@@ -47,11 +49,6 @@ public class ChatDTO {
 	@Transient
 	private String deleter;
 
-//	keeps tracks of those who are currently online when this chat instance was created.
-//	This is used to show and update the number of group members participating in the chat.
-	@Transient
-	//@JsonIgnore
-	private long onlineMembers;
 	
 	@NotNull(message = "chat message is missing")
 	@NotEmpty(message = "chat message is missing")

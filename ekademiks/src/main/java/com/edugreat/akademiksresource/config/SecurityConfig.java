@@ -30,7 +30,7 @@ import lombok.AllArgsConstructor;
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**",
-			"/learning/**","/chats/messages","/allow/**",
+			"/learning/**","/allow/**",
 	         
 			"/swagger-ui/**",  
 		    "/documentation.html", 

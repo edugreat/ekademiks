@@ -1,7 +1,6 @@
 package com.edugreat.akademiksresource.chat.amq.broadcast;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
@@ -21,7 +20,7 @@ public interface ChatBroadcaster {
 	public void notifyOnNewMember(MiscellaneousNotifications newJoinNotification);
 	
 	
-	void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications, Integer groupId);
+	void broadcastPreviousChatNotifications(List<MiscellaneousNotifications> chatNotifications);
 	
 	
 

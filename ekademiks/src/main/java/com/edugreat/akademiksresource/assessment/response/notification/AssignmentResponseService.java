@@ -15,6 +15,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -256,6 +257,7 @@ public class AssignmentResponseService implements AssignmentResponseInterface {
 
 	}
 
+	@Async
 	@Scheduled(fixedRate = 60000) // schedule notifications at 60sec (1 minute) interval
 	public void scheduleFixedTimeNotification() {
 

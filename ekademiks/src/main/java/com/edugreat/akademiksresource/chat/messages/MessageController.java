@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.chat.messages;
 
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -12,25 +13,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.edugreat.akademiksresource.auth.AppUserDetailsService;
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.amq.broadcast.ChatBroadcaster;
 import com.edugreat.akademiksresource.chat.amq.consumer.ChatConsumer;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
-import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/chats")
+@Slf4j
 public class MessageController {
 
 	@Autowired
@@ -42,42 +42,63 @@ public class MessageController {
 	@Autowired
 	private ChatConsumer chatConsumer;
 	
-	@Autowired
-	private AppUserDetailsService userDetailsService;
 	
 	private final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
 	@GetMapping("/messages")
-	public SseEmitter previousMessages(@RequestParam("group") String groupId,
-			@RequestParam("student") String studentId, @RequestHeader("authorization") String authHeader) {
+	public SseEmitter previousMessages(Integer studentId) {
+			
 		
-		
-		final String jwtToken = authHeader.substring(7);
-		
-		
-		final boolean isValid = userDetailsService.isValidRequest(jwtToken);
 		
 			
 		
 		
-		SseEmitter emitter = chatConsumer.establishConnection(Integer.parseInt(studentId), Integer.parseInt(groupId));
+		SseEmitter emitter = chatConsumer.establishConnection(studentId);
 		
 		
 		
-		if(isValid && emitter != null) {
-			
-//			send previous chat messages
-			broadcaster.previousChatMessages(chatInterface.getPreviousChat(Integer.parseInt(studentId), Integer.parseInt(groupId)));
-			
-//			send previous chat notifications
-			broadcaster.broadcastPreviousChatNotifications(chatInterface.streamChatNotifications(Integer.parseInt(studentId)), Integer.parseInt(groupId));
-		
-			
-			return emitter;
-		}
+		if(emitter != null) {
 
-		throw new AcademicException("Unauthorized user", HttpStatus.BAD_REQUEST.name());
+			try {
+				
+				
+//		send previous chat messages
 		
+		Map<Integer, List<ChatDTO>> previousChatsPerGroup = chatInterface.getPreviousChats(studentId);
+		
+		for(Map.Entry<Integer, List<ChatDTO>> chatEntry : previousChatsPerGroup.entrySet()) {
+			
+					
+			
+			broadcaster.previousChatMessages(chatEntry.getValue());
+		}
+	
+//		send previous chat notifications
+		
+		Map<Integer, List<MiscellaneousNotifications>> notificationsPerGroup = chatInterface.streamChatNotifications(studentId);
+		
+		for(Map.Entry<Integer, List<MiscellaneousNotifications>> notificationSet : notificationsPerGroup.entrySet()) {
+			
+			broadcaster.broadcastPreviousChatNotifications(notificationSet.getValue());
+			
+		}
+		
+		
+				
+			} catch (Exception e) {
+				
+				System.out.println(e);
+				
+				return null;
+			}
+		
+			
+			
+		}	
+		
+
+		
+		return emitter;
 		
 	}
 
@@ -167,17 +188,17 @@ public class MessageController {
 	
 	
 	@DeleteMapping("/del_msg")
-	public ResponseEntity<Object> deleteChat(@RequestBody Map<Integer, Integer> map, @RequestParam("del_id") Integer deleterId){
+	public ResponseEntity<Object> deleteChat(@RequestBody Map.Entry<Integer, Integer> map, @RequestParam("del_id") Integer deleterId){
 		
 		
 		try {
 			
-			broadcaster.sendInstantChat(chatInterface.deleteChat(map, deleterId));
+			chatInterface.deleteChat(map, deleterId);
 			
 			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 			
-        LOGGER.info("ERROR :", e);
+            LOGGER.info("ERROR :", e);
 			
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}

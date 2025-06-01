@@ -75,8 +75,6 @@ public class AssessmentResponseConnectorService implements AssessmentResponseCon
 	@RabbitListener(queues = {"${instant.assessment.response.notification.queue}"})
 	void publishInstantNotification(AssessmentResponseRecord notification) throws IOException {
 		
-		System.out.println("id: "+notification.getInstructorId());
-		System.out.println("publishing instant notification---");
 		
 		if(connectors.containsKey(notification.getInstructorId())) {
 			

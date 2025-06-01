@@ -3,7 +3,6 @@ package com.edugreat.akademiksresource.controller;
 import java.io.IOException;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,9 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.edugreat.akademiksresource.amqp.notification.consumer.NotificationConsumer;
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
-import com.edugreat.akademiksresource.chat.amq.consumer.ChatConsumer;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.views.UserView;
@@ -37,12 +34,6 @@ import lombok.AllArgsConstructor;
 @Tag(name = "Authentications", description = "Endpoints for managing user authentications")
 public class AuthenticateController {
 	private final AppAuthInterface appInterface;
-
-	@Autowired
-	private ChatConsumer chatConsumer;
-
-	@Autowired
-	private NotificationConsumer notificationConsumer;
 
 	@PostMapping("/sign-up")
 	@ResponseStatus(HttpStatus.OK)
@@ -88,34 +79,6 @@ public class AuthenticateController {
 
 	}
 
-	@PostMapping("/disconnect")
-	@Operation(summary = "disconnect from SSE", description = "Disconnect client side from SSE")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "disconnection successful"),
-			@ApiResponse(responseCode = "400", description  = "Disconnection not successful")
-	})
-	public ResponseEntity<Object> disconnectFromSSE(@RequestBody Map.Entry<Integer, Integer> mapObj) {
-
-		try {
-
-			chatConsumer.disconnectGroup(mapObj);
-
-			Integer studentId = mapObj.getKey();
-
-			notificationConsumer.disconnectFromSSE(studentId);
-		}
-
-		catch (Exception e) {
-
-			
-
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-		}
-
-		return new ResponseEntity<>(HttpStatus.OK);
-
-	}
 	
 	@GetMapping("/cached/user")
 	@Operation(summary = "Cached user", description = "Get cached user object")

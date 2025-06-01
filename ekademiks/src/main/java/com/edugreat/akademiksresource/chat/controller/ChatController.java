@@ -70,10 +70,13 @@ public class ChatController {
 	public ResponseEntity<Object> groupInfo(@RequestParam Integer studentId) {
 
 		try {
+			
+			
 
 			return new ResponseEntity<>(chatInterface.myGroupChatInfo(studentId), HttpStatus.OK);
 		} catch (Exception e) {
 
+			System.out.println(e);			
 			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -184,7 +187,7 @@ public class ChatController {
 			@ApiResponse(responseCode = "200", description = "Update successful"),
 			@ApiResponse(responseCode = "400", description = "Group not found")
 	})
-	public ResponseEntity<Object> editGroupName(@RequestBody Map<Integer, Integer> data,
+	public ResponseEntity<Object> editGroupName(@RequestBody Map.Entry<Integer, Integer> data,
 			@RequestParam("_new") String currentGroupName) {
 
 		try {
@@ -208,7 +211,7 @@ public class ChatController {
 			@ApiResponse(responseCode = "200", description = "Request successful"),
 			@ApiResponse(responseCode = "400", description = "Admin or group chat not found")
 	})
-	public ResponseEntity<Object> deleteGroupChat(@RequestBody Map<Integer, Integer> data) {
+	public ResponseEntity<Object> deleteGroupChat(@RequestBody Map.Entry<Integer, Integer> data) {
 
 		try {
 			final boolean deleted = chatInterface.deleteGroupChat(data);
@@ -234,7 +237,7 @@ public class ChatController {
 			@ApiResponse(responseCode = "200", description = "Request successful"),
 			@ApiResponse(responseCode = "400", description = "Either user or group chat not found")
 	})
-	public ResponseEntity<Object> leaveGroup(@RequestBody Map<Integer, Integer> map) {
+	public ResponseEntity<Object> leaveGroup(@RequestBody Map.Entry<Integer, Integer> map) {
 
 		try {
 			chatInterface.leaveGroup(map);

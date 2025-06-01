@@ -3,7 +3,10 @@
  */
 package com.edugreat.akademiksresource.chat.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,12 +22,15 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
-import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.dao.ChatDao;
@@ -43,40 +49,76 @@ import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 import com.edugreat.akademiksresource.model.Student;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.transaction.Transactional;
+
+import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * Class that provides implementation for ChatInterface
  */
 
 @Service
+@Slf4j
 public class ChatService implements ChatInterface {
 
-	@Autowired
-	private GroupChatDao groupChatDao;
+	
+	private final GroupChatDao groupChatDao;
 
-	@Autowired
-	private StudentDao studentDao;
+	
+	private final StudentDao studentDao;
 
-	@Autowired
-	private ModelMapper modelMapper;
+	
+	private final ModelMapper modelMapper;
 
-	@Autowired
-	private GroupMembersDao groupMembersDao;
+	
+	private final GroupMembersDao groupMembersDao;
 
-	@Autowired
-	private ChatDao chatDao;
+	
+	private final ChatDao chatDao;
 
+	
+	private final MiscellaneousNotificationsDao miscellaneousNoticeDao;
+
+	private final CacheManager cacheManager;
+	
 	@Autowired
-	private MiscellaneousNotificationsDao miscellaneousNoticeDao;
+	private  RedisTemplate<String,Object> redisTemplate;
+	
+	private final ObjectMapper objectMapper;
+	
+	
+	
+	
+	public ChatService(GroupChatDao groupChatDao, StudentDao studentDao, ModelMapper modelMapper,
+			GroupMembersDao groupMembersDao, ChatDao chatDao, MiscellaneousNotificationsDao miscellaneousNoticeDao,
+			CacheManager cacheManager,ObjectMapper objectMapper) {
+		this.groupChatDao = groupChatDao;
+		this.studentDao = studentDao;
+		this.modelMapper = modelMapper;
+		this.groupMembersDao = groupMembersDao;
+		this.chatDao = chatDao;
+		this.miscellaneousNoticeDao = miscellaneousNoticeDao;
+		this.cacheManager = cacheManager;
+		this.objectMapper = objectMapper;		
+	}
 
 	//	configured content meant for deleted chat
 	@Value("${chat.deleted.content}")
 	private String DELETED_CHAT_CONTENT;
+	
+	
+	
 
 	@Transactional
 	@Override
+	@Caching(evict = {
+			
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP, key = "#dto.groupAdminId"),
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP_IDs, key =  "#dto.groupAdminId")
+	})
 	public void createGroupChat(GroupChatDTO dto) {
 
 		// check and retrieve the student trying to create the new group chat
@@ -98,8 +140,26 @@ public class ChatService implements ChatInterface {
 		return modelMapper.map(dto, GroupChat.class);
 	}
 
+	@Transactional(readOnly = true)
 	@Override
 	public SortedMap<Integer, MyGroupChatDTO> myGroupChatInfo(Integer studentId) {
+		
+		
+		Cache cache = cacheManager.getCache(RedisValues.MY_GROUP);
+		
+		if(cache !=  null && cache.get(studentId) != null) {
+			
+			Map<Integer, MyGroupChatDTO> cachedMap = objectMapper.convertValue(cache.get(studentId).get(),
+					
+					new TypeReference<Map<Integer, MyGroupChatDTO>>() {});
+			
+							
+				return new TreeMap<>(cachedMap);
+			
+		}
+		
+	
+		
 		SortedMap<Integer, MyGroupChatDTO> myGroupChatDTO = new TreeMap<>();
 
 		// Fetch group names and icons for the student
@@ -135,25 +195,39 @@ public class ChatService implements ChatInterface {
 			}
 
 		}
+		
+		cacheManager.getCache(RedisValues.MY_GROUP).put(studentId, myGroupChatDTO);
+		
+		List<Integer> myGroupIds = new ArrayList<>();
+		
+		myGroupChatDTO.keySet().forEach(groupId -> myGroupIds.add(groupId));
+		
+		redisTemplate.opsForValue().set(String.valueOf(studentId), myGroupIds);
+		
 
 		return myGroupChatDTO;
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	@Cacheable(cacheNames = RedisValues.IS_GROUPMEMBER, key = "#studentId")
 	public boolean isGroupMember(Integer studentId) {
+		
+		
+		
+		
 
 		return groupMembersDao.isGroupMember(studentId);
 	}
 
 	@Override
 	@Transactional
+	@CacheEvict(cacheNames = RedisValues.PREVIOUS_CHATS, key = "#groupId")
 	public ChatDTO instantChat(ChatDTO dto) {
 
-		// confirm the user is authenticated
-		final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
+		
 		// confirm that the group chat for which the chat is intended actually exists
-		if (authentication != null && groupChatDao.findById(dto.getGroupId()).isPresent()) {
+		if (groupChatDao.findById(dto.getGroupId()).isPresent()) {
 
 			// get the group for which the chat is intended
 			GroupChat groupChat = groupChatDao.findById(dto.getGroupId()).get();
@@ -177,8 +251,35 @@ public class ChatService implements ChatInterface {
 				chatDTO.setRepliedTo(currentlySavedChat.getRepliedTo());
 				chatDTO.setRepliedToChat(dto.getRepliedToChat());
 			}
+			
+//			key = user's ID, value = boolean flag that shows if they belong to the given group
+			final Map.Entry<Integer, Boolean> userEntry =  currentUserEntry(chatDTO.getGroupId());
+			
+//			ensure the user was logged before processing this code
+	
+			if(userEntry.getKey() != null && userEntry.getValue()) {
+				
+				final Integer userId = userEntry.getKey();
+				
 
-			return chatDTO;
+//				get and update previous chats
+				Map<Integer, List<ChatDTO>> previousChatsPerGroup = getPreviousChats(userId);
+				
+			
+//				update stored chats
+				previousChatsPerGroup.get(userId).add(chatDTO);
+				
+				cacheManager.getCache(RedisValues.PREVIOUS_CHATS).put(userId, previousChatsPerGroup);
+			
+				chatDTO.setChatReceipient(userId);
+			
+				return chatDTO;
+			
+			}
+			
+			
+			
+			
 		}
 
 		return null;
@@ -209,8 +310,45 @@ public class ChatService implements ChatInterface {
 
 		return dto;
 	}
+	
+//	method that checks if the current user is a logged user that belongs to the given group ID
+	private Map.Entry<Integer, Boolean> currentUserEntry(Integer groupId) {
+		
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		
+		String username = authentication.getName();
+		
+		
 
-	private ChatDTO _mapToChatDTO(Chat chat) {
+//		ensure the user was logged before processing this code
+		if(!username.toLowerCase().contains("anonymous")) {
+			
+//			get ID of the user
+			Integer userId = studentDao.getIdByUsername(username);
+			
+			if(userId != null) {
+				
+//				check if the user is a group member
+			final boolean isMember =	groupMembersDao.isGroupMember(groupId);
+			
+			
+			
+			if(isMember) {
+				
+				return new AbstractMap.SimpleEntry<>(userId, isMember);
+				
+			}
+				
+				
+				
+			}
+			
+			}
+		
+		return new AbstractMap.SimpleEntry<>(null, false);
+	}
+
+	private ChatDTO _mapToChatDTO(Chat chat, Integer studentId) {
 
 		Student sender = chat.getSender();
 
@@ -220,6 +358,7 @@ public class ChatService implements ChatInterface {
 		dto.setEditedChat(chat.getIsEditedChat());
 
 		dto.setSenderName(sender.getFirstName());
+		dto.setChatReceipient(studentId);
 
 		if (chat.getRepliedTo() != null) {
 
@@ -242,6 +381,8 @@ public class ChatService implements ChatInterface {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	@Cacheable(cacheNames = RedisValues.ALL_GROUPS)
 	public Map<Integer, GroupChatDTO> allGroupChats() {
 
 		List<GroupChat> allGroupChats = groupChatDao.findAll();
@@ -268,13 +409,21 @@ public class ChatService implements ChatInterface {
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	@Cacheable(value = RedisValues.MY_GROUP_IDs, key = "#studentId")
 	public List<Integer> myGroupIds(Integer studentId) {
-
+		
+	
 		return groupMembersDao.groupIdsFor(studentId);
 	}
 
 	@Override
 	@Transactional
+	@Caching(evict = {
+			
+			@CacheEvict(cacheNames = RedisValues.MISCELLANEOUS, allEntries = true),
+			@CacheEvict(cacheNames = RedisValues.PENDING_REQUEST, allEntries = true)
+	})
 	public MiscellaneousNotifications newGroupChatJoinRequest(GroupJoinRequest request) {
 
 		// check if the group the user wants to join actually exists.
@@ -297,11 +446,13 @@ public class ChatService implements ChatInterface {
 			Student groupAdmin = studentDao.findById(request.getGroupAdminId())
 					.orElseThrow(() -> new IllegalArgumentException("Something went wrong!"));
 
+			joinRequestNotification.setTargetGroupChat(request.getGroupId());
+			
 			// save the notification
 			joinRequestNotification = miscellaneousNoticeDao.save(joinRequestNotification);
 
 //			set the group chat this request notification targets at
-			joinRequestNotification.setTargetGroup(request.getGroupId());
+			joinRequestNotification.setTargetGroupChat(request.getGroupId());
 
 			// add new notification for the student(group admin)
 			groupAdmin.addMiscellaneousNotices(joinRequestNotification);
@@ -321,9 +472,13 @@ public class ChatService implements ChatInterface {
 
 	@Transactional
 	@Override
+    @Caching(evict = {
+			@CacheEvict(cacheNames = RedisValues.MISCELLANEOUS, allEntries = true),
+			@CacheEvict(cacheNames = RedisValues.PENDING_REQUEST, allEntries = true)
+	})
 	public MiscellaneousNotifications approveJoinRequest(Integer groupId, Integer requesterId, Integer requestId) {
 
-		// check if the user is already a member of the group they want to join
+		// check if the user is already a member of the group they wanted to join
 		final boolean isMember = groupMembersDao.isGroupMember(groupId, requesterId);
 
 		if (!isMember) {
@@ -346,11 +501,10 @@ public class ChatService implements ChatInterface {
 			MiscellaneousNotifications notification = new MiscellaneousNotifications("new member", requesterId,
 					student.getFirstName() + " has joined the group");
 
-			// save the notification
+			notification.setTargetGroupChat(groupId);		// save the notification
 			MiscellaneousNotifications _notification = miscellaneousNoticeDao.save(notification);
 
-//			 sets the group the notification targets at
-			_notification.setTargetGroup(groupId);
+
 
 			// remove this group id from the collection of group chats the user has
 			// pending join requests
@@ -383,6 +537,11 @@ public class ChatService implements ChatInterface {
 
 	@Override
 	@Transactional
+   @Caching(evict = {
+			
+			@CacheEvict(cacheNames = RedisValues.MISCELLANEOUS, allEntries = true),
+			@CacheEvict(cacheNames = RedisValues.PENDING_REQUEST, allEntries = true)
+	})
 	public void deleteChatNotifications(Integer studentId, List<Integer> notificationIds) {
 
 		// check if the student exists
@@ -411,12 +570,17 @@ public class ChatService implements ChatInterface {
 				studentDao.saveAndFlush(student);
 
 			}
-		}
+		}else throw new IllegalArgumentException("Unauthorized attempt");
 
 	}
 
 	@Override
 	@Transactional
+	@Caching(evict = {
+			
+			@CacheEvict(cacheNames = RedisValues.MISCELLANEOUS, allEntries = true),
+			@CacheEvict(cacheNames = RedisValues.PENDING_REQUEST, allEntries = true)
+	})
 	public void declineJoinRequest(Integer groupId, Integer studentId, Integer notificationId) {
 
 		// confirm the records exits
@@ -452,12 +616,13 @@ public class ChatService implements ChatInterface {
 				// delete the notification from the database
 				miscellaneousNoticeDao.deleteById(notificationId);
 
-			}
-		}
+			}else throw new IllegalArgumentException("Group not found");
+		}else throw new IllegalArgumentException("Unauthorized attempt");
 
 	}
 
 	@Override
+	@Cacheable(cacheNames = RedisValues.PENDING_REQUEST, unless = "#result ==  null")
 	public Set<Integer> getPendingGroupChatRequestsFor(Integer studentId) {
 
 		// confirm that the student exists
@@ -474,11 +639,15 @@ public class ChatService implements ChatInterface {
 
 	@Transactional
 	@Override
-	public boolean editGroupName(Map<Integer, Integer> data, String currentGroupName) {
+	@Caching(evict = {
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP, key = "#data.key"),
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP_IDs, key = "#data.key")
+	})
+	public boolean editGroupName(Map.Entry<Integer, Integer> data, String currentGroupName) {
 
-		final Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
+		final Integer studentId = data.getKey();
 
-		final Integer groupId = data.get(studentId);
+		final Integer groupId = data.getValue();
 
 //		confirm the group chat actually exists
 		final boolean groupExists = groupChatDao.existsById(groupId);
@@ -498,37 +667,46 @@ public class ChatService implements ChatInterface {
 
 		}
 
-		return false;
+		throw new IllegalArgumentException("Operation not allowed");
 	}
 
 	@Transactional
 	@Override
-	public boolean deleteGroupChat(Map<Integer, Integer> data) {
+	@Caching(evict = {
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP, key = "#data.key"),
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP_IDs, key = "#data.key"),
+			@CacheEvict(cacheNames = RedisValues.PREVIOUS_CHATS, key = "#data.value")
+	})
+	public boolean deleteGroupChat(Map.Entry<Integer, Integer> data) {
 
-		Integer studentId = data.keySet().stream().collect(Collectors.toList()).get(0);
+		Integer studentId = data.getKey();
 
-//		confirm group admin is the on trying to delete the group chat
-		if (studentId != null && studentId.equals(groupChatDao.getAdminId(data.get(studentId)))) {
+//		confirm group admin is the one trying to delete the group chat
+		if (studentId != null && studentId.equals(groupChatDao.getAdminId(data.getValue()))) {
 
-			groupChatDao.deleteById(data.get(studentId));
+			groupChatDao.deleteById(data.getValue());
 
-		} else
-			return false;
+		} else throw new IllegalArgumentException("Operation not allowed");
 
 		return true;
 	}
 
 	@Transactional
 	@Override
-	public void leaveGroup(Map<Integer, Integer> map) {
+	@Caching(evict = {
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP, key = "#data.key"),
+			@CacheEvict(cacheNames = RedisValues.MY_GROUP_IDs, key = "#data.key"),
+			@CacheEvict(cacheNames = RedisValues.PREVIOUS_CHATS, key = "#data.value")
+	})
+	public void leaveGroup(Map.Entry<Integer, Integer> map) {
 
-		Integer groupId = map.keySet().stream().collect(Collectors.toList()).get(0);
+		Integer groupId = map.getKey();
 
 //		get the group chat from which they intend to leave
 		GroupChat groupChat = groupChatDao.findById(groupId)
 				.orElseThrow(() -> new IllegalArgumentException("Group chat could not be fetched"));
 
-		Integer memberId = map.get(groupId);
+		Integer memberId = map.getValue();
 
 //		get the group member object
 		final GroupMember groupMember = groupMembersDao.findByGroupChatAndMember(groupId, memberId);
@@ -567,35 +745,90 @@ public class ChatService implements ChatInterface {
 	}
 
 	@Override
-	public List<ChatDTO> getPreviousChat(Integer studentId, Integer groupId) {
-
-//		get the date the user joined the group chat, so as to not allow them view chats histories prior to when they joined
-		LocalDateTime joinedAt = groupMembersDao.findJoinedDate(studentId, groupId);
-
-//		get chats histories from the time they joined the group chat
-		List<Chat> chats = chatDao.findByGroupIdOrderBySentAt(groupId).stream()
-				.filter(chat -> chat.getSentAt().isAfter(joinedAt)).collect(Collectors.toList());
-
-		if (chats != null && chats.size() > 0) {
-
-			List<ChatDTO> dtos = chats.stream().map(this::_mapToChatDTO).collect(Collectors.toList());
-
-			dtos.forEach(dto -> dto.setChatReceipient(studentId));
-
-			return dtos;
+	@Transactional(readOnly = true)
+	public Map<Integer, List<ChatDTO>> getPreviousChats(Integer studentId) {
+		
+//		check if the information is already cached
+		Object prevChatsObj = redisTemplate.opsForValue().get(RedisValues.PREVIOUS_CHATS+"::"+studentId);
+		
+		
+		if(prevChatsObj != null) {
+			
+			return objectMapper.convertValue(prevChatsObj,
+					
+					new TypeReference<Map<Integer, List<ChatDTO>>>(){}
+					);
 		}
+		
+		
+		Object obj = redisTemplate.opsForValue().get(RedisValues.JOIN_DATE+"::"+studentId);
+		
+		Map<Integer, String> joinedDates;
+		
+		if(obj != null) {
+						 joinedDates =  objectMapper.convertValue(obj, new TypeReference<Map<Integer, String>>() {});
+			
+		}else {
+						joinedDates = groupMembersDao.findGroupAndJoinedAt(studentId);
+					}
+		
+		
+		return processPreviousChats(joinedDates, studentId);
 
-		return null;
+		
+	}
+
+	private Map<Integer, List<ChatDTO>> processPreviousChats(Map<Integer, String> joinedDatesMap, Integer studentId) {
+	
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy-MM-dd");
+		
+		Map<Integer, List<ChatDTO>> messagesPerGroup = new HashMap<>();
+		
+//		fetch previous chat messages per group, filtering those messages sent after the given date the user joined the group chat
+		for(Map.Entry<Integer, String> map : joinedDatesMap.entrySet()) {
+			
+			LocalDate date = LocalDate.parse(map.getValue(), formatter);
+			
+//			start the date at midnight
+			LocalDateTime parsedDate = date.atStartOfDay();
+			List<ChatDTO> chats = chatDao.findByGroupChatIdOrderBySentAt(map.getKey())
+					           .stream().filter(chat -> chat.getSentAt().isAfter(parsedDate))
+					           .map(c -> _mapToChatDTO(c, studentId))
+					           .collect(Collectors.toList());
+			
+			messagesPerGroup.put(map.getKey(), chats);
+			
+		}
+		
+		
+		redisTemplate.opsForValue().set(RedisValues.PREVIOUS_CHATS+"::"+studentId, messagesPerGroup);
+		
+		
+		
+		return messagesPerGroup;
+		
+		
+		
+		
+		
 	}
 
 	@Override
-	public Set<MiscellaneousNotifications> streamChatNotifications(Integer studentId) {
+	@Transactional(readOnly =  true)
+	@Cacheable(cacheNames = RedisValues.MISCELLANEOUS, key = "#studentId")
+	public Map<Integer, List<MiscellaneousNotifications>> streamChatNotifications(Integer studentId) {
 
 //		fetch miscellaneous notification for the logged in student for notification whose type is either 'join request' or 'new member'
-		Set<MiscellaneousNotifications> requestNotifications = studentDao.findById(studentId).get()
+		List<MiscellaneousNotifications> requestNotifications = studentDao.findById(studentId).get()
 				.getMiscellaneousNotices().stream()
 				.filter(n -> n.getType().equals("join group") || n.getType().equals("new member"))
-				.collect(Collectors.toSet());
+				.collect(Collectors.toList());
+				
+		
+//		get a list of group chat IDs contained in each of the notifications
+		List<Integer> groupList = requestNotifications.stream()
+				                     .map(r -> r.getTargetGroupChat())
+				                     .collect(Collectors.toList());
 
 		requestNotifications.stream().forEach(request -> {
 
@@ -629,8 +862,21 @@ public class ChatService implements ChatInterface {
 		if (!staleNotificationsId.isEmpty()) {
 			miscellaneousNoticeDao.deleteAllById(staleNotificationsId);
 		}
-
-		return requestNotifications;
+	
+		Map<Integer, List<MiscellaneousNotifications>> notificationsPerGroup = new HashMap<>();
+		
+//		associate notifications to their respective group
+		for(Integer id : groupList) {
+			
+			var groupNotifications = requestNotifications.stream()
+					                 .filter(n -> n.getTargetGroupChat() == id)
+					                 .collect(Collectors.toList());
+			
+			notificationsPerGroup.put(id, groupNotifications);
+			
+		}
+		
+		return notificationsPerGroup;
 	}
 
 	@Override
@@ -652,6 +898,10 @@ public class ChatService implements ChatInterface {
 
 //				remove the chat from the list of groupChats
 				grpChat.getChats().remove(updatableChat);
+				
+				
+//				synchronize the data
+				groupChatDao.saveAndFlush(grpChat);
 
 //				update the chat with the current chat content (chat message)
 				updatableChat.setContent(chatDTO.getContent());
@@ -665,27 +915,46 @@ public class ChatService implements ChatInterface {
 				dto.setSenderName(chatDTO.getSenderName());
 
 				dto.setEditedChat(true);
+				
+				final Map.Entry<Integer, Boolean> userEntry = currentUserEntry(dto.getGroupId());
+				
+				
+				if(userEntry.getKey() != null && userEntry.getValue()) {
+					
+					final Integer userId = userEntry.getKey();
+					
+					
+					Map<Integer, List<ChatDTO>> previousChatsPerGroup = getPreviousChats(userId);
+					
+//					replace all matching chats in the list with the updated chat
+					previousChatsPerGroup.get(chatDTO.getGroupId())
+					.replaceAll(c -> c.getId().equals(chatDTO.getId()) ? dto : c );
+					
+//					update the cache manager
+					cacheManager.getCache(RedisValues.PREVIOUS_CHATS).put(userId, previousChatsPerGroup);
+		
+					dto.setChatReceipient(userId);
+					
+					return dto;
+				}
 
-//				synchronize the data
-				groupChatDao.saveAndFlush(grpChat);
-
-				return dto;
+				
 			}
 
 		}
 
-		return null;
+		throw new IllegalArgumentException("error processing request");
 	}
 
 	@Override
 	@Transactional
-	public ChatDTO deleteChat(Map<Integer, Integer> map, Integer deleterId) {
+	public void deleteChat(Map.Entry<Integer, Integer> map, Integer deleterId) {
 
-		final Integer groupId = map.keySet().stream().toList().get(0);
+		final Integer groupId = map.getKey();
 
-		final Integer chatId = map.get(groupId);
+		final Integer chatId = map.getValue();
 
-//		get the GroupChat the chat belongs to
+//		get the GroupChat the chat belongs in
 		GroupChat grpChat = groupChatDao.findById(groupId)
 				.orElseThrow(() -> new IllegalArgumentException("Couldn't delete chat from non-existent group"));
 
@@ -718,8 +987,34 @@ public class ChatService implements ChatInterface {
 				.orElseThrow(() -> new IllegalArgumentException("Deleter not found!")).getFirstName());
 
 		deletedChat.setContent(DELETED_CHAT_CONTENT);
+		
+		
+		final Map.Entry<Integer, Boolean> userEntry = currentUserEntry(groupId);
+		
+		if(userEntry.getKey() != null && userEntry.getValue()) {
+			
+			final Integer userId = userEntry.getKey();
+			
+			Map<Integer, List<ChatDTO>> previousChatsPerGroup = getPreviousChats(userId);
+			
+			
+//			replace replied chats with the updated values of replied chats
+			repliedChats.forEach(replied -> {
+				
+				previousChatsPerGroup.get(userId).replaceAll(p -> p.getId().equals(replied.getId()) ? _mapToChatDTO(replied, userId) : p);
+			});
+			
+//			update deleted chat reference in the list of previous chats
+			previousChatsPerGroup.get(userId).replaceAll(p -> p.getId().equals(deletedChat.getId()) ? deletedChat : p);
+			
+	
+//			update cached data
+			cacheManager.getCache(RedisValues.PREVIOUS_CHATS).put(groupId, previousChatsPerGroup);
+		}
+		
+	
 
-		return deletedChat;
+	
 	}
 
 // get a list of chats that have replied a given chat(referenced by chatId)
@@ -731,11 +1026,11 @@ public class ChatService implements ChatInterface {
 
 	@Transactional
 	@Override
-	public boolean lockGroup(Map<Integer, Integer> mapObj) {
+	public boolean lockGroup(Map.Entry<Integer, Integer> mapObj) {
 
-		final Integer groupId = mapObj.keySet().stream().collect(Collectors.toList()).get(0);
+		final Integer groupId = mapObj.getKey();
 
-		final Integer groupAdmin = mapObj.get(groupId);
+		final Integer groupAdmin = mapObj.getValue();
 
 //		get the group to be locked
 		GroupChat grpChat = groupChatDao.findById(groupId)
@@ -755,4 +1050,46 @@ public class ChatService implements ChatInterface {
 
 		return true;
 	}
+	
+//	private Collection<?> getAllCachedObjects(String cacheName, Integer studentId, Integer groupId){
+//		
+//		Cache cache = cacheManager.getCache(cacheName);
+//		
+//		if(cache != null) {
+//			
+//			Object nativeCache = cache.getNativeCache();
+//			
+//			if(nativeCache instanceof ConcurrentHashMap) {
+//				
+//				ConcurrentHashMap<?, ?> map = (ConcurrentHashMap<?, ?>)nativeCache;
+//				
+//				return new ArrayList<>(map.values());
+//			}else if(nativeCache instanceof RedisCache) {
+//				
+//			 Set<byte[]> keys = redisTemplate.getConnectionFactory()
+//					            .getConnection()
+//					            .keyCommands()
+//					            .keys((cacheName+"::*").getBytes());
+//			 
+//			 return keys.stream()
+//					 .map(key -> redisTemplate.opsForValue().get(new String(key)))
+//					 .filter(Objects::nonNull)
+//					 .collect(Collectors.toList());
+//			 
+//			}else throw new UnsupportedOperationException("Unsupported operation");
+//		}
+//		
+//		LocalDateTime joinedDate = groupMembersDao.findJoinedDate(studentId, groupId);
+//		
+//	 List<ChatDTO> previousChats = processPreviousChats(studentId, groupId, joinedDate);
+//	 
+//	 
+//	 if(!previousChats.isEmpty()) {
+//		 
+//		 cacheManager.getCache(RedisValues.PREVIOUS_CHATS).put(groupId, previousChats);
+//	 }
+//		
+//	 
+//	 return previousChats;
+//	}
 }

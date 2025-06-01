@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
@@ -31,7 +32,7 @@ import com.edugreat.akademiksresource.util.CachingKeysUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -135,6 +136,7 @@ public class AppAuthService implements AppAuthInterface {
 	@SuppressWarnings("unchecked")
 	@Override
 	// @Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
+	@Transactional
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 		
 		
@@ -178,6 +180,8 @@ public class AppAuthService implements AppAuthInterface {
 			if (optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
 
 				Student student = optionalStudent.get();
+				
+				
 
 //				check if the user's account has yet to be enabled
 				if (!student.isAccountEnabled()) {
@@ -201,6 +205,8 @@ public class AppAuthService implements AppAuthInterface {
 				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
 
 				dto.setCachingKey(cacheKey+">");
+				
+			
 
 				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey+">", (T) dto);
 

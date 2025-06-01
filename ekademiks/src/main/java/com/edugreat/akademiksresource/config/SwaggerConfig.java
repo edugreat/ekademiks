@@ -1,9 +1,5 @@
 package com.edugreat.akademiksresource.config;
 
-import java.util.List;
-import java.util.function.Predicate;
-
-import org.springdoc.core.customizers.OpenApiCustomiser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,7 +37,7 @@ public class SwaggerConfig {
 	}
 //	
 //	@Bean
-//	OpenApiCustomiser adminOnlyEndpoints() {
+//	OpenApiCustomizer adminOnlyEndpoints() {
 //		
 //		
 //		return openApi -> {

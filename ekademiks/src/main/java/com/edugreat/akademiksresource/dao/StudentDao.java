@@ -81,6 +81,9 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 	@Query("SELECT s FROM Student s JOIN s.assignmentResponses ar ON ar.instructorId =:instructorId")
 	List<Student> getAssessmentResponses(Integer instructorId);
 	
+	@Query("SELECT s.id FROM Student s WHERE s.email =:username")
+	Integer getIdByUsername(String username);
+	
 
 	
 	

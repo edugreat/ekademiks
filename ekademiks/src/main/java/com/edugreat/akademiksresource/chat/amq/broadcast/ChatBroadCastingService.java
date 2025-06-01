@@ -1,7 +1,6 @@
 package com.edugreat.akademiksresource.chat.amq.broadcast;
 
 import java.util.List;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -44,14 +43,13 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 	@Override
 	public void previousChatMessages(List<ChatDTO> chats) {
 		
+	
 		
-		
-		
-		if(chats != null && chats.size() > 0) {
+		if(chats != null && !chats.isEmpty()) {
 			
-			for(ChatDTO chat :chats) {
-				rabbitTemplate.convertAndSend(exchange, previousChatRoutingKey, chat);
-			}
+			
+				rabbitTemplate.convertAndSend(exchange, previousChatRoutingKey, chats);
+			
 		}
 		
 		
@@ -102,17 +100,13 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 
 //get chat notifications such as some new members and or request to join the group
 @Override
- public void broadcastPreviousChatNotifications(Set<MiscellaneousNotifications> chatNotifications, Integer targetGroupId) {
+ public void broadcastPreviousChatNotifications(List<MiscellaneousNotifications> chatNotifications) {
 
-	if(chatNotifications != null && chatNotifications.size() > 0) {
+	if(chatNotifications != null && !chatNotifications.isEmpty()) {
 		
-		for(MiscellaneousNotifications notification : chatNotifications) {
-			
-			
-			notification.setTargetGroup(targetGroupId);
+	
+		rabbitTemplate.convertAndSend(exchange, chatNotificationRoutingKey, chatNotifications);
 		
-		rabbitTemplate.convertAndSend(exchange, chatNotificationRoutingKey, notification);
-		}
 		
 	}
 	

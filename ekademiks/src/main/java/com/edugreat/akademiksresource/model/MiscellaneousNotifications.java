@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -18,9 +19,9 @@ public class MiscellaneousNotifications extends Notification {
 	@Transient
 	private String notifier;
 	
-//	computes the group the notification is targeted for
-	@Transient 
-	private Integer targetGroup;
+//	if the notification was about joining a group chat, this is the ID of the group chat
+	 @Column(nullable = true)
+	private Integer targetGroupChat;
 	
 //	indicate the target user for the notification
 	@Transient
@@ -50,12 +51,12 @@ public class MiscellaneousNotifications extends Notification {
 		this.notifier = notifier;
 	}
 
-	public Integer getTargetGroup() {
-		return targetGroup;
+	public Integer getTargetGroupChat() {
+		return targetGroupChat;
 	}
 
-	public void setTargetGroup(Integer forGroupId) {
-		this.targetGroup = forGroupId;
+	public void setTargetGroupChat(Integer forGroupId) {
+		this.targetGroupChat = forGroupId;
 	}
 
 	public Integer getReceipientId() {
