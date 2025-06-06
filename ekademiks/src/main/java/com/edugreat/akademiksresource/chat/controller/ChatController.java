@@ -1,9 +1,10 @@
 package com.edugreat.akademiksresource.chat.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,12 +12,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.dto.GroupChatDTO;
+import com.edugreat.akademiksresource.chat.livepresence.LivePresenceMonitorService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,8 +38,17 @@ import jakarta.validation.Valid;
 @SecurityRequirement(name = "bearerAuth")
 public class ChatController {
 
-	@Autowired
-	private ChatInterface chatInterface;
+	
+	private final ChatInterface chatInterface;
+	private final LivePresenceMonitorService livePresenceMonitorService;
+	public ChatController(ChatInterface chatInterface, 
+			LivePresenceMonitorService livePresenceMonitorService, ObjectMapper objectMapper) {
+		
+		this.chatInterface = chatInterface;
+		this.livePresenceMonitorService = livePresenceMonitorService;
+		
+		
+	}
 
 	@PostMapping("/group")
 	@Operation(summary = "Create group chat", description = "Creates new interactive group chat")
@@ -290,6 +305,30 @@ public class ChatController {
 
 		return null;
 	}
+	
+	@GetMapping("/live-presence")
+	public SseEmitter updateLivePresence (@RequestHeader("user-group-chat-ids") String csvIds, @RequestHeader("studentId")String id) {
+		
+		try {
+			
+			
+			List<Integer> groupChatIds = Arrays.stream(csvIds.split(","))
+					                     .map(String::trim) 
+					                     .map(Integer::parseInt)
+					                     .collect(Collectors.toList());
+					                     
+			
+			
+			return livePresenceMonitorService.updateLivePresence(groupChatIds, Integer.parseInt(id));
+		} catch (Exception e) {
+			
+			System.out.println(e);
+			
+			return null;
+		}
+	}
+	
+	
 
 
 }

@@ -58,6 +58,8 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 	
 	@Override
 	public void sendInstantChat(ChatDTO chat) {
+		
+		
 	
 //		get the number of group members currently online.
 		rabbitTemplate.convertAndSend(exchange, instantChatRoutingKey, chat);

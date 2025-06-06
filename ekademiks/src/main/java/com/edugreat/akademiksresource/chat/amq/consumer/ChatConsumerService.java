@@ -43,17 +43,22 @@ public class ChatConsumerService implements ChatConsumer {
   
   @RabbitListener(queues = { "${instant.chat.queue}" })
   public void consumeInstantChatMessage(ChatDTO chat) {
+	  
+	  System.out.println("sending instant chat to");
 
     
     final Integer groupId = chat.getGroupId();
 
 //    for each of the users in the group and currently online, send instant chat messages
+    
     connectedUsers.forEach((studentId, groups) -> {
+    	
+    	
       
-      if(groups.contains(groupId)) {
+      if(groups.contains(groupId) && emitters.get(studentId) != null) {
         
         try {
-          emitters.get(studentId).send(SseEmitter.event().data(List.of(chat)).name("chats"));
+          emitters.get(studentId).send(SseEmitter.event().data(chat).name("chats"));
         } catch (IOException e) {
           
           log.info("unable to send instant message to: {}", studentId);
@@ -206,61 +211,7 @@ public class ChatConsumerService implements ChatConsumer {
 
     
 
-  
-  @Scheduled(initialDelay = 60, fixedRate = 60, timeUnit = TimeUnit.SECONDS)
-  public void currentOnlineCounts() {
-
-    if(connectedUsers.size() > 0) {
-      
-      getOnlineMemberCounts();
-    }
-  }
-  
-//  extract the number of members per group who are currently online for periodic online presence update.
-  private void getOnlineMemberCounts() {
-
-    
-    
-    
-    List<Integer> groups = connectedUsers.values()
-                       .stream()
-                       .flatMap(List::stream)
-                       .collect(Collectors.toList());
-
-    connectedUsers.forEach((userId, groupList) -> {
-      
-      for(int groupId : groupList) {
-        
-        long membersOnline = groups.stream()
-                               .filter(g -> g == groupId)
-                               .count();
-        
-        emitOnlinePresence(userId, new AbstractMap.SimpleEntry<>(groupId, membersOnline));
-      }
-      
-    });
-    
-  
-  }
-  
-//  send the number of group users who are currently online
-  private void emitOnlinePresence(Integer userId, Map.Entry<Integer, Long>currentlyOnlinePerGroup ) {
-    
-    if(connectedUsers.containsKey(userId)) {
-      
-      try {
-        emitters.get(userId).send(SseEmitter.event().data(currentlyOnlinePerGroup).name("online"));
-      } catch (IOException e) {
-        
-        log.info("error emitting online presence for user: {}", userId);
-      }
-    }
-    
-    
-  }
-  
-
-
+ 
   
 //get a list of users of a group currently online
 private List<Integer> groupMembersOnline(Integer groupId) {

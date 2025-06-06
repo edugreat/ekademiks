@@ -46,12 +46,8 @@ public class MessageController {
 	private final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
 	@GetMapping("/messages")
-	public SseEmitter previousMessages(Integer studentId) {
+	public SseEmitter previousMessages(@RequestParam Integer studentId) {
 			
-		
-		
-			
-		
 		
 		SseEmitter emitter = chatConsumer.establishConnection(studentId);
 		
@@ -154,6 +150,7 @@ public class MessageController {
 			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 
+			System.out.println(e) ;
 
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
