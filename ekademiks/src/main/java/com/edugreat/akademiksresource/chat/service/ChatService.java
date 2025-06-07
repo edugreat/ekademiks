@@ -770,7 +770,7 @@ public class ChatService implements ChatInterface {
 	@Transactional(readOnly = true)
 	public Map<Integer, List<ChatDTO>> getPreviousChats(Integer studentId) {
 		
-		System.out.println("fetching previous messages");
+		
 		
 //		check if the information is already cached
 		Object prevChatsObj = redisTemplate.opsForValue().get(RedisValues.PREVIOUS_CHATS+"::"+studentId);
@@ -793,11 +793,11 @@ public class ChatService implements ChatInterface {
 		
 		if(obj != null) {
 						 joinedDates =  objectMapper.convertValue(obj, new TypeReference<Map<Integer, String>>() {});
-			System.out.println("obj is not null");
+			
 			
 		}else {
 						joinedDates = groupMembersDao.findGroupAndJoinedAt(studentId);
-			System.out.println("obj is null");		
+				
 		
 		}
 		
@@ -929,7 +929,7 @@ public class ChatService implements ChatInterface {
 				updatableChat.setContent(chatDTO.getContent());
 				updatableChat.setIsEditedChat(true);
 
-				Chat updatedChat = chatDao.save(updatableChat);				
+				Chat updatedChat = chatDao.saveAndFlush(updatableChat);				
 				
 				ChatDTO dto = mapToChatDTO(updatedChat);
 
@@ -993,12 +993,15 @@ public class ChatService implements ChatInterface {
 //		get all the chats that have replied the deleted chat and update the deletedBy property
 		List<Chat> repliedChats = repliedChats(chatId, groupId);
 
-		repliedChats.forEach(reply -> {
+		if(repliedChats.size() > 0) {
+			
+			repliedChats.forEach(reply -> {
 
-			reply.setDeletedBy(deleterId);
-		});
+				reply.setDeletedBy(deleterId);
+			});
 
-		chatDao.saveAllAndFlush(repliedChats);
+			chatDao.saveAllAndFlush(repliedChats);
+		}
 
 		ChatDTO deletedChat = mapToChatDTO(toBeDeleted);
 		deletedChat.setDeleterId(deleterId);
@@ -1022,11 +1025,11 @@ public class ChatService implements ChatInterface {
 //			replace replied chats with the updated values of replied chats
 			repliedChats.forEach(replied -> {
 				
-				previousChatsPerGroup.get(userId).replaceAll(p -> p.getId().equals(replied.getId()) ? _mapToChatDTO(replied, userId) : p);
+				previousChatsPerGroup.get(groupId).replaceAll(p -> p.getId().equals(replied.getId()) ? _mapToChatDTO(replied, userId) : p);
 			});
 			
 //			update deleted chat reference in the list of previous chats
-			previousChatsPerGroup.get(userId).replaceAll(p -> p.getId().equals(deletedChat.getId()) ? deletedChat : p);
+			previousChatsPerGroup.get(groupId).replaceAll(p -> p.getId().equals(deletedChat.getId()) ? deletedChat : p);
 			
 	
 //			update cached data
