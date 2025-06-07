@@ -375,6 +375,8 @@ public class ChatService implements ChatInterface {
 		ChatDTO dto = new ChatDTO(chat.getId(), chat.getGroupChat().getId(), chat.getSender().getId(),
 				chat.getContent(), chat.getSentAt());
 
+		
+		
 		dto.setEditedChat(chat.getIsEditedChat());
 
 		dto.setSenderName(sender.getFirstName());
@@ -778,7 +780,7 @@ public class ChatService implements ChatInterface {
 		
 		if(prevChatsObj != null) {
 			
-			System.out.println("previous messages not null");
+			
 			
 			return objectMapper.convertValue(prevChatsObj,
 					

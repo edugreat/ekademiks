@@ -21,7 +21,7 @@ public class ChatDTO {
 	@Min(value = 0)
 	private Integer senderId;
 	
-	private boolean isEditedChat = false;
+	private boolean editedChat = false;
 	
 	//@JsonIgnore
 	@Transient
