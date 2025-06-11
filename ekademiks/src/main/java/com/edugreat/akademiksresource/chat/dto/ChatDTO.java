@@ -23,6 +23,7 @@ public class ChatDTO {
 	
 	private boolean editedChat = false;
 	
+	
 	//@JsonIgnore
 	@Transient
 	private String senderName;

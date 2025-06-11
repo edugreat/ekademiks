@@ -2,11 +2,10 @@ package com.edugreat.akademiksresource.dto;
 
 public class AdminsDTO extends AppUserDTO {
 
-//	property specifically used to enable json de-serialize logged in user properly
-	private String type = "admin";
+
 	
 	public AdminsDTO() {
-		super();
+		super("admin");
 	}
 
 	public AdminsDTO(String firstName, String lastName, String password, String email, String mobileNumber) {
@@ -19,14 +18,5 @@ public class AdminsDTO extends AppUserDTO {
 
 	}
 
-	public String getType() {
-		return type;
-	}
-
-	public void setType(String type) {
-		this.type = type;
-	}
-
-
-
+	
 }

@@ -96,26 +96,7 @@ public class ChatController {
 		}
 	}
 
-	@GetMapping("/inGroup")
-	@Operation(summary = "Is group member", description = "Checks by ID if the logged in user belongs in any group")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Request successful"),
-			@ApiResponse(responseCode = "400", description = "Invalid ID or student not found")
-	})
-	public ResponseEntity<Object> isGroupMember(@RequestParam("id") String studentId) {
-		
-		
-
-		try {
-			return new ResponseEntity<Object>(chatInterface.isGroupMember(Integer.parseInt(studentId)), HttpStatus.OK);
-		} catch (Exception e) {
-			
-			
-
-			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
-		}
-	}
-
+	
 //	get all the group chats 
 	@GetMapping("/groups")
 	@Operation(summary  = "All groups", description = "Get all group chats")
@@ -252,10 +233,10 @@ public class ChatController {
 			@ApiResponse(responseCode = "200", description = "Request successful"),
 			@ApiResponse(responseCode = "400", description = "Either user or group chat not found")
 	})
-	public ResponseEntity<Object> leaveGroup(@RequestBody Map.Entry<Integer, Integer> map) {
+	public ResponseEntity<Object> leaveGroup(@RequestBody Map.Entry<Integer, Integer> map, @RequestHeader String cachingKey) {
 
 		try {
-			chatInterface.leaveGroup(map);
+			chatInterface.leaveGroup(map, cachingKey);
 		} catch (Exception e) {
 			
 

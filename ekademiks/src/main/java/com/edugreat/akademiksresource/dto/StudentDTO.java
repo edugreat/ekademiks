@@ -14,11 +14,9 @@ public class StudentDTO extends AppUserDTO {
 	@JsonView(UserView.class)
 	private String status;
 	
-//	property specifically used to enable json de-serialize logged in user properly
-	private String type = "student";
 
 	public StudentDTO() {
-		super();
+		super("student");
 	}
 
 	public StudentDTO(String firstName, String lastName, String password, String email) {
@@ -45,14 +43,7 @@ public class StudentDTO extends AppUserDTO {
 		this.status = category;
 	}
 
-	public String getType() {
-		return type;
-	}
-
-	public void setType(String type) {
-		this.type = type;
-	}
-	
+		
 	
 
 }

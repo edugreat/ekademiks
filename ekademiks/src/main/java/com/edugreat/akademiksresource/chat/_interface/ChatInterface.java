@@ -21,11 +21,8 @@ public interface ChatInterface {
 //  get a key-value pair of basic group chat information for  the given student referenced by studentId
   SortedMap<Integer, MyGroupChatDTO> myGroupChatInfo(Integer studentId);
 	
-//  provides contract method that checks if the student referenced by the studentId belongs in any group chat
-  boolean isGroupMember(Integer studentId);
   
 
-  
 //  provides end point for creating and sending chat messages
   ChatDTO instantChat(ChatDTO chat);
   
@@ -61,7 +58,8 @@ boolean editGroupName(Map.Entry<Integer, Integer> data, String currentGroupName)
 boolean deleteGroupChat(Map.Entry<Integer, Integer> data);
 
 //  provides functionality that allows a group member to exit or leave the group. The map's key is the group ID while the value is the ID of the member intending to leave
-void leaveGroup(Map.Entry<Integer, Integer> map);
+// caching key is used to reset cached user object in redis, updating if they still belong to a group chat or not
+void leaveGroup(Map.Entry<Integer, Integer> map, String cachingKey);
 
 
 // provides functionality to retrieve all group IDs and the joined date for the student referenced by studentId

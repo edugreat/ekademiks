@@ -6,15 +6,18 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.edugreat.akademiksresource.chat.dao.GroupMembersDao;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
@@ -28,11 +31,10 @@ import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.AppUser;
 import com.edugreat.akademiksresource.model.Student;
-import com.edugreat.akademiksresource.util.CachingKeysUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.BeanUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,19 +42,18 @@ import lombok.RequiredArgsConstructor;
 public class AppAuthService implements AppAuthInterface {
 
 	private final AdminsDao adminsDao;
+	private final GroupMembersDao groupMemberDo;
 	private final StudentDao studentDao;
 	private final JwtUtil jwtUtil;
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper mapper;
 
-	@Autowired
-	private CacheManager cacheManager;
-
-	@Autowired
-	private CachingKeysUtil cachingKeysUtil;
 	
-	@Autowired
-	private ObjectMapper objectMapper;
+
+	
+	private final RedisTemplate<String, AppUserDTO> redisTemplate;
+	
+	
 
 	@Transactional
 	@Override
@@ -129,13 +130,7 @@ public class AppAuthService implements AppAuthInterface {
 		return HttpStatus.CREATED.value();
 	}
 
-	// authentication method implemented manually due to the need to authenticate
-	// users mapped to different database tables, who might either be
-	// Admin or student. Still wish I can delegate this to the
-	// AuthenticationMangager bean to authenticate automatically
 	@SuppressWarnings("unchecked")
-	@Override
-	// @Cacheable(value = RedisValues.USER_CACHE, key = "'user'")
 	@Transactional
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
 		
@@ -153,22 +148,18 @@ public class AppAuthService implements AppAuthInterface {
 				var accessToken = jwtUtil.generateToken(admin);
 				var refreshToken = jwtUtil.createRefreshToken(admin);
 
-				var dto = mapper.map(admin, AdminsDTO.class);
+				AdminsDTO dto = new AdminsDTO();
+				
+				BeanUtils.copyProperties(admin, dto);	
+				
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
 				
 				
-//				clear previous cache of the current user
-                 clearPreviousCache(dto.getId(), cacheManager);
 
 //				generate new cache key;
 
-				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
-
-				dto.setCachingKey(cacheKey+">");
-
-				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey+">", (T) dto);
-				
+				redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
 
 				return (T) dto;
 			}
@@ -192,24 +183,17 @@ public class AppAuthService implements AppAuthInterface {
 				var accessToken = jwtUtil.generateToken(student);
 
 				var refreshToken = jwtUtil.createRefreshToken(student);
-				var dto = mapper.map(student, StudentDTO.class);
+				StudentDTO dto = new StudentDTO();
+				
+				BeanUtils.copyProperties(student, dto);
 				dto.setAccessToken(accessToken);
 				dto.setRefreshToken(refreshToken);
 
 				dto.setStatus(student.getStatus());
-
-//				clear previous cache of the current user
-                clearPreviousCache(dto.getId(), cacheManager);
 				
-//				generate new caching key;
-				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
-
-				dto.setCachingKey(cacheKey+">");
+				dto.setIsGroupMember(groupMemberDo.isGroupMember(dto.getId()));
 				
-			
-
-				cacheManager.getCache(RedisValues.USER_CACHE).put(cacheKey+">", (T) dto);
-
+				redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO)dto);
 				return (T) dto;
 			}
 
@@ -224,37 +208,6 @@ public class AppAuthService implements AppAuthInterface {
 	}
 
 //	Upon login, tends to remove current user from previous cache before caching again
-private void clearPreviousCache(Integer id, CacheManager cacheManager) {
-	
-	
-	Set<String> keys = cachingKeysUtil.getAllCacheKeys(RedisValues.USER_CACHE);
-	
-	String lookupKey = null;
-	
-	final String stringValue = String.valueOf(id);
-	
-	for(String k : keys) {
-		
-//		get substring characters of the key for use to check if the user has previously been cached
-		final String substr = k.substring(0, 1+stringValue.length());
-		
-		if(substr.equals(stringValue+">")) {
-			
-			lookupKey = k;
-			break;
-		}
-		
-		
-		if(lookupKey != null) {
-			cacheManager.getCache(RedisValues.USER_CACHE).evict(lookupKey);
-		}
-	}
-	
-		
-	
-	
-		
-	}
 
 //	Implementation that generates new token using the refresh token (for user validation) after the expiration of the existing token
 	@SuppressWarnings("unchecked")
@@ -288,16 +241,8 @@ private void clearPreviousCache(Integer id, CacheManager cacheManager) {
 			dto.setAccessToken(token);
 
 //			re-insert cached object after generating new JWT for the user
-			Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
-
-			if (cache != null) {
-
-//				generate new caching key;
-				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
-
-				cache.put(cacheKey, (T) dto);
-			}
-
+			
+			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
 			return (T) dto;
 
 		}
@@ -319,15 +264,9 @@ private void clearPreviousCache(Integer id, CacheManager cacheManager) {
 			dto.setAccessToken(token);
 
 //			re-insert cached object after generating new JWT for the user
-			Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
-
-			if (cache != null) {
-
-//				generate new caching key;
-				final String cacheKey = cachingKeysUtil.generateCachingKey(RedisValues.USER_CACHE);
-
-				cache.put(cacheKey, (T) dto);
-			}
+			
+			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO) dto);
+			
 			return (T) dto;
 
 		}
@@ -342,43 +281,35 @@ private void clearPreviousCache(Integer id, CacheManager cacheManager) {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AppUserDTO> T getCachedUser(String cachingKey) {
-	    Cache cache = cacheManager.getCache(RedisValues.USER_CACHE);
-	    
-	    if (cache != null) {
-	    	
-	        try {
-	            // Use Object.class as the type to get the raw value
-	            Object cachedValue = cache.get(cachingKey, Object.class);
-	           
-	            
-	            if (cachedValue != null) {
-	            	
-	                if (cachedValue instanceof AppUserDTO) {
-	                	
-	                    return (T) cachedValue;
-	                }
-	               
-	                else if (cachedValue instanceof Map) {
-	                	
-	                    Map<String, Object> map = (Map<String, Object>) cachedValue;
-	                    String type = (String) map.get("type");
-	                    
-	                    if ("student".equals(type)) {
-	                    	
-	                    	
-	                        return (T) objectMapper.convertValue(map, StudentDTO.class);
-	                    } else if ("admin".equals(type)) {
-	                    	
-	                        return (T) objectMapper.convertValue(map, AdminsDTO.class);
-	                    }
-	                }
-	            }
-	        } catch (Exception e) {
-	           
-	            e.printStackTrace();
-	        }
-	    }
-	    return null;
+	   
+	
+		try {
+			
+			AppUserDTO user = redisTemplate.opsForValue().get(RedisValues.USER_CACHE+"::"+cachingKey);
+			
+			if(user != null && (user instanceof StudentDTO || user instanceof AdminsDTO)) return (T)user;
+
+			return null;
+			
+			
+		} catch (Exception e) {
+			
+			System.out.println(e);
+			
+			return null;
+		}
+	
+	}
+
+	@Override
+	public <T extends AppUserDTO> void resetCachedUser(T user, String cachingKey) {
+		
+		
+		if(user != null) redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+cachingKey, user);
+		
+		else throw new IllegalArgumentException("cannot reset null user");
+		
+		
 	}
 
 }

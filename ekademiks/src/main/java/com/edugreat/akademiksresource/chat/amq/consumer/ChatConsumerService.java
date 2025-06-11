@@ -166,40 +166,41 @@ public class ChatConsumerService implements ChatConsumer {
   public SseEmitter establishConnection(Integer studentId) {
     
   
-    
-    
-  
+	  if(emitters.containsKey(studentId)) return emitters.get(studentId);
+	  
+	  
 
-    SseEmitter emitter = new SseEmitter(0l);
-    
-    
-    emitters.put(studentId, emitter);
-   
-    connectedUsers.put(studentId, userGroupIds(studentId));
-    
-    
-    ScheduledExecutorService heartbeatExecutor = startHeartbeat(studentId);
-   
-    heartbeatExecutors.put(studentId, heartbeatExecutor);
-    
-    
-    
-    
-    emitter.onCompletion(() -> cleanup(studentId));
-    
-    emitter.onError(e -> {
-    	
-    	System.out.println("connection error:");
-    	
-    	
-    	cleanup(studentId);
-    });
-    emitter.onTimeout(() -> cleanup(studentId));
-   
-   
 
-      return emitter;
-      
+	    SseEmitter emitter = new SseEmitter(0l);
+	    
+	    
+	    emitters.put(studentId, emitter);
+	   
+	    connectedUsers.put(studentId, userGroupIds(studentId));
+	    
+	    
+	    ScheduledExecutorService heartbeatExecutor = startHeartbeat(studentId);
+	   
+	    heartbeatExecutors.put(studentId, heartbeatExecutor);
+	    
+	    
+	    
+	    
+	    emitter.onCompletion(() -> cleanup(studentId));
+	    
+	    emitter.onError(e -> {
+	    	
+	    	System.out.println("connection error:");
+	    	
+	    	
+	    	cleanup(studentId);
+	    });
+	    emitter.onTimeout(() -> cleanup(studentId));
+	   
+	   
+
+	      return emitter;
+	      
       
     }
   

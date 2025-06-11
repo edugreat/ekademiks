@@ -12,9 +12,11 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -122,7 +124,7 @@ public class RedisConfig {
   
 	}
 	
-	@Bean
+	@Bean(name = "genericRedisTemplate")
 	RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
 	    RedisTemplate<String, Object> template = new RedisTemplate<>();
 	    template.setConnectionFactory(connectionFactory);
@@ -149,6 +151,21 @@ public class RedisConfig {
 	        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
 	        .build();
 	}
+	
+	@Bean(name = "appUserRedisTemplate")
+     RedisTemplate<String, AppUserDTO> studentRedisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        RedisTemplate<String, AppUserDTO> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        Jackson2JsonRedisSerializer<AppUserDTO> serializer = new Jackson2JsonRedisSerializer<>(objectMapper(), AppUserDTO.class);
+       
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(serializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(serializer);
+
+        return template;
+    }
 	
 	@Bean(destroyMethod = "shutdown")
 	RedissonClient redissonClient() {

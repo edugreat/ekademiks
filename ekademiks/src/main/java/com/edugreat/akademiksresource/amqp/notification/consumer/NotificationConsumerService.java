@@ -106,6 +106,8 @@ public class NotificationConsumerService implements NotificationConsumer {
 	@Override
 public SseEmitter establishConnection(Integer studentId) {
 		
+		if(clients.containsKey(studentId)) return clients.get(studentId);
+		
 		
 		
 		final SseEmitter emitter = new SseEmitter(0L);

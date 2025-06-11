@@ -47,6 +47,8 @@ public class MessageController {
 
 	@GetMapping("/messages")
 	public SseEmitter previousMessages(@RequestParam Integer studentId) {
+		
+		System.out.println("messages controller called");
 			
 		
 		SseEmitter emitter = chatConsumer.establishConnection(studentId);

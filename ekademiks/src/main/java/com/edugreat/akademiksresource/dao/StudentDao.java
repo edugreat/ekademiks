@@ -84,6 +84,8 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 	@Query("SELECT s.id FROM Student s WHERE s.email =:username")
 	Integer getIdByUsername(String username);
 	
+	Integer findIdByFirstName(String firstName);
+	
 
 	
 	

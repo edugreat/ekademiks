@@ -50,7 +50,7 @@ public class SecurityConfig {
 	private final JwtAuthtFilter jwtFilter;
 	private final AccountStatusFilter accountStatusFilter;
 
-	private static final String[] ALLOWED_HEADERS = { "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept",
+	private static final String[] ALLOWED_HEADERS = { "Origin", "Access-Control-Allow-Origin", "Content-Type", "Accept", "cachingKey",
 			"Authorization", "X-Request-With", "Access-Control-Request-Method", 
 			"Access-Control-Request-Headers","adminid", "institutionId","studentId", "Connection","Cache-Control","user-group-chat-ids"};
 	private static final String[] EXPOSED_HEADERS = { "Origin", "Content-Type", "Accept", "Authorization",

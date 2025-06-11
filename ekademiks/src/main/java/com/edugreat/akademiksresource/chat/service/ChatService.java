@@ -45,13 +45,15 @@ import com.edugreat.akademiksresource.chat.model.GroupChat;
 import com.edugreat.akademiksresource.chat.model.GroupMember;
 import com.edugreat.akademiksresource.chat.projection.GroupChatInfo;
 import com.edugreat.akademiksresource.config.RedisValues;
+import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dao.StudentDao;
+import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.GroupJoinRequest;
+import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 import com.edugreat.akademiksresource.model.Student;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,6 +80,8 @@ public class ChatService implements ChatInterface {
 
 	
 	private final ChatDao chatDao;
+	
+	private final AppAuthInterface appAuthInterface;
 
 	
 	private final MiscellaneousNotificationsDao miscellaneousNoticeDao;
@@ -94,7 +98,7 @@ public class ChatService implements ChatInterface {
 	
 	public ChatService(GroupChatDao groupChatDao, StudentDao studentDao, ModelMapper modelMapper,
 			GroupMembersDao groupMembersDao, ChatDao chatDao, MiscellaneousNotificationsDao miscellaneousNoticeDao,
-			CacheManager cacheManager,ObjectMapper objectMapper) {
+			CacheManager cacheManager,ObjectMapper objectMapper, AppAuthInterface appAuthInterface) {
 		this.groupChatDao = groupChatDao;
 		this.studentDao = studentDao;
 		this.modelMapper = modelMapper;
@@ -102,7 +106,9 @@ public class ChatService implements ChatInterface {
 		this.chatDao = chatDao;
 		this.miscellaneousNoticeDao = miscellaneousNoticeDao;
 		this.cacheManager = cacheManager;
-		this.objectMapper = objectMapper;		
+		this.objectMapper = objectMapper;	
+		this.appAuthInterface = appAuthInterface;
+				
 	}
 
 	//	configured content meant for deleted chat
@@ -208,17 +214,6 @@ public class ChatService implements ChatInterface {
 		return myGroupChatDTO;
 	}
 
-	@Override
-	@Transactional(readOnly = true)
-	@Cacheable(cacheNames = RedisValues.IS_GROUPMEMBER, key = "#studentId")
-	public boolean isGroupMember(Integer studentId) {
-		
-		
-		
-		
-
-		return groupMembersDao.isGroupMember(studentId);
-	}
 
 	@Override
 	@Transactional
@@ -391,13 +386,15 @@ public class ChatService implements ChatInterface {
 			dto.setRepliedToChat(chat.getRepliedToChat());
 
 		}
-
-		if (chat.getDeletedBy() != null) {
-
-			dto.setDeleter(studentDao.findById(chat.getDeletedBy())
-					.orElseThrow(() -> new IllegalArgumentException("deleter not found")).getFirstName());
-			dto.setDeleterId(chat.getDeletedBy());
+		
+		if(chat.getDeletedBy() != null) {
+			
+			dto.setDeleter(studentDao.getFirstName(chat.getDeletedBy()));
+			dto.setDeleterId(chat.getDeletedBy());		
+			
 		}
+
+		
 
 		return dto;
 	}
@@ -720,7 +717,7 @@ public class ChatService implements ChatInterface {
 			@CacheEvict(cacheNames = RedisValues.MY_GROUP_IDs, key = "#data.key"),
 			@CacheEvict(cacheNames = RedisValues.PREVIOUS_CHATS, key = "#data.value")
 	})
-	public void leaveGroup(Map.Entry<Integer, Integer> map) {
+	public void leaveGroup(Map.Entry<Integer, Integer> map, String cachingKey) {
 
 		Integer groupId = map.getKey();
 
@@ -740,6 +737,22 @@ public class ChatService implements ChatInterface {
 
 //			delete the group member entity
 			groupMembersDao.delete(groupMember);
+			
+			
+			var cachedUser = getCachedUser(cachingKey);
+			
+			if(cachedUser instanceof StudentDTO) {
+				
+				System.out.println("user is an instance of student dto");
+				
+				cachedUser.setIsGroupMember(groupMembersDao.isGroupMember(memberId));
+				
+				appAuthInterface.resetCachedUser(cachedUser, cachingKey);
+			}else {
+				
+				System.out.println("cached user not an instance of student dto");
+			}
+			
 		} else
 			throw new IllegalArgumentException("could not process request");
 
@@ -992,7 +1005,7 @@ public class ChatService implements ChatInterface {
 //		delete the chat from the database
 		chatDao.delete(toBeDeleted);
 
-//		get all the chats that have replied the deleted chat and update the deletedBy property
+//		get all the chats that have replied the deleted chat and update the 'deletedBy' property
 		List<Chat> repliedChats = repliedChats(chatId, groupId);
 
 		if(repliedChats.size() > 0) {
@@ -1007,19 +1020,17 @@ public class ChatService implements ChatInterface {
 
 		ChatDTO deletedChat = mapToChatDTO(toBeDeleted);
 		deletedChat.setDeleterId(deleterId);
-
-//		set the name of the user that deleted the chat
-		deletedChat.setDeleter(studentDao.findById(deleterId)
-				.orElseThrow(() -> new IllegalArgumentException("Deleter not found!")).getFirstName());
+		String deleterFirstName = studentDao.getFirstName(deleterId);
+		deletedChat.setDeleter(deleterFirstName);	
 
 		deletedChat.setContent(DELETED_CHAT_CONTENT);
 		
 		
-		final Map.Entry<Integer, Boolean> userEntry = currentUserEntry(groupId);
+		final Map.Entry<Integer, Boolean> loggeInUserEntry = currentUserEntry(groupId);
 		
-		if(userEntry.getKey() != null && userEntry.getValue()) {
+		if(loggeInUserEntry.getKey() != null && loggeInUserEntry.getValue()) {
 			
-			final Integer userId = userEntry.getKey();
+			final Integer userId = loggeInUserEntry.getKey();
 			
 			Map<Integer, List<ChatDTO>> previousChatsPerGroup = getPreviousChats(userId);
 			
@@ -1027,12 +1038,40 @@ public class ChatService implements ChatInterface {
 //			replace replied chats with the updated values of replied chats
 			repliedChats.forEach(replied -> {
 				
-				previousChatsPerGroup.get(groupId).replaceAll(p -> p.getId().equals(replied.getId()) ? _mapToChatDTO(replied, userId) : p);
+				previousChatsPerGroup.get(groupId).replaceAll(p -> p.getId().equals(replied.getId()) ?
+						
+						processRepliedChatsAfterDeletion(p, deleterFirstName, deleterId) :
+							
+							p
+							);
 			});
 			
-//			update deleted chat reference in the list of previous chats
-			previousChatsPerGroup.get(groupId).replaceAll(p -> p.getId().equals(deletedChat.getId()) ? deletedChat : p);
 			
+//			operation below searches the cached version of the deleted chat, replacing it with a new object(deletedChat)
+//			that has the information of the user that deleted it
+			int indexOfDeletedChat  = -1;
+		
+			List<ChatDTO> chatsPerGroup = previousChatsPerGroup.get(groupId);			
+			
+			for(int i = 0; i < chatsPerGroup.size(); i++) {
+				
+				if(chatsPerGroup.get(i).getId().equals(deletedChat.getId())) {
+					
+					indexOfDeletedChat = i;
+					
+					break;
+				}
+			}
+			
+			if(indexOfDeletedChat != -1) {
+				
+				chatsPerGroup.set(indexOfDeletedChat, deletedChat);	
+				
+//				makes a replacement
+				previousChatsPerGroup.put(groupId, chatsPerGroup);
+				
+			
+			}
 	
 //			update cached data
 			cacheManager.getCache(RedisValues.PREVIOUS_CHATS).put(groupId, previousChatsPerGroup);
@@ -1041,6 +1080,16 @@ public class ChatService implements ChatInterface {
 	
 
 	
+	}
+	
+//	update information of the user that deleted the chat
+	private ChatDTO processRepliedChatsAfterDeletion(ChatDTO replier, String deleter, Integer deleterId) {
+		
+		replier.setDeleter(deleter);
+		replier.setDeleterId(deleterId);		
+		
+		return replier;
+		
 	}
 
 // get a list of chats that have replied a given chat(referenced by chatId)
@@ -1076,22 +1125,16 @@ public class ChatService implements ChatInterface {
 
 		return true;
 	}
-	
-//   private List<Integer> userGroupIds(Integer studentId){
-//	   
-//	   Object groupIdObj = redisTemplate.opsForValue().get(RedisValues.MY_GROUP_IDs+"::"+studentId);
-//	   
-//	   if(groupIdObj != null) {
-//		   
-//		   return objectMapper.convertValue(groupIdObj, new TypeReference<List<Integer>>() {});
-//	   }
-//	   
-//	   List<Integer> myGroupIds = groupMembersDao.groupIdsFor(studentId);
-//	   
-//	   redisTemplate.opsForValue().set(RedisValues.MY_GROUP_IDs+"::"+studentId, myGroupIds);
-//	   
-//	   return myGroupIds;
-//	   
-//	   
-//   }
+	public <T extends AppUserDTO> T getCachedUser(String cachingKey) {
+		
+		
+		T cachedUser = appAuthInterface.getCachedUser(cachingKey);
+		
+		if(cachedUser!= null) {
+			
+			return cachedUser;
+		}
+		throw new IllegalArgumentException("cached user is null");
+		
+	}
 }

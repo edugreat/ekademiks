@@ -24,6 +24,10 @@ public interface AppAuthInterface {
 
 //	return redis cached logged in user
 	<T extends AppUserDTO> T getCachedUser(String cachingKey);
+	
+//	this method is used to reset the content of the user cache, especially when they've left a group chat.
+//	In this scenario, we check if they still belong to a group, setting appropriate parameters
+	<T extends AppUserDTO> void resetCachedUser(T user, String cachingKey);
 	}
 	
 

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.edugreat.akademiksresource.views.UserView;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -17,7 +18,6 @@ import lombok.Data;
 @Data
 @JsonTypeInfo(
 		 use = JsonTypeInfo.Id.NAME,
-		 include = JsonTypeInfo.As.PROPERTY,
 		 property = "type",
 		 visible = true
 		 
@@ -26,12 +26,24 @@ import lombok.Data;
 	@JsonSubTypes.Type(value = StudentDTO.class, name = "student"),
 	@JsonSubTypes.Type(value = AdminsDTO.class, name = "admin")})
 public class AppUserDTO {
-	public AppUserDTO() {
+	public AppUserDTO() {}
+	
+	
+protected AppUserDTO(String type) {
+		
+		this.type = type;
 	}
+	
 
 	@Min(value = 0, message = "id must be greater than 0")
 	@JsonView(UserView.class)
 	private Integer id;
+	
+	@JsonProperty("type")
+	private String type;
+	
+	@JsonView(UserView.class)
+	private boolean isGroupMember;
 
 	@NotBlank(message = "first name must be provided")
 	@Pattern(regexp = "^[a-zA-Z]{2,}$")
@@ -92,6 +104,18 @@ public class AppUserDTO {
 		this.password = password;
 		this.email = email;
 		this.mobileNumber = mobileNumber;
+	}
+	
+	
+	public String getType() {
+		
+		return type;
+	}
+	
+	public void setIsGroupMember(boolean isAMember) {
+		
+		this.isGroupMember = isAMember;
+		
 	}
 
 	// each child class should implement this method to populate the user roles
