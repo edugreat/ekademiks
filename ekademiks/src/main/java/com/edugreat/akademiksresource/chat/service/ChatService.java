@@ -984,7 +984,7 @@ public class ChatService implements ChatInterface {
 
 	@Override
 	@Transactional
-	public void deleteChat(Map.Entry<Integer, Integer> map, Integer deleterId) {
+	public ChatDTO deleteChat(Map.Entry<Integer, Integer> map, Integer deleterId) {
 
 		final Integer groupId = map.getKey();
 
@@ -1079,6 +1079,7 @@ public class ChatService implements ChatInterface {
 		
 	
 
+		return deletedChat;
 	
 	}
 	

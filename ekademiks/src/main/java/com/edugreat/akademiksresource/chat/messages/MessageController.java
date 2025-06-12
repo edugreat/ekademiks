@@ -192,7 +192,7 @@ public class MessageController {
 		
 		try {
 			
-			chatInterface.deleteChat(map, deleterId);
+			broadcaster.sendInstantChat(chatInterface.deleteChat(map, deleterId));
 			
 			return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {

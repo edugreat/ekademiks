@@ -79,7 +79,7 @@ void leaveGroup(Map.Entry<Integer, Integer> map, String cachingKey);
  ChatDTO updateChat(ChatDTO chatDTO);
  
 // the key of map is the id pointing to the GroupChat the chat belongs to while the value is the id of the Chat
- void deleteChat(Map.Entry<Integer, Integer> map, Integer deleterId);
+ ChatDTO deleteChat(Map.Entry<Integer, Integer> map, Integer deleterId);
  
 // provides functionality that locks the group chat referenced by mapObj's value.
 // The key of the map is the user who intends to lock the chat, which is expected to be the group admin
