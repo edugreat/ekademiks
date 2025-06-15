@@ -14,10 +14,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import lombok.extern.slf4j.Slf4j;
+
 /*
   * Service class keeps atomic track of user presence for each group chat maintained in its map instance
   */
 @Service
+@Slf4j
 public class LivePresenceMonitorService {
 	
 	private Map<Integer, AtomicInteger> activeUserPerGroup = new ConcurrentHashMap<>();
@@ -26,13 +29,12 @@ public class LivePresenceMonitorService {
 	
 	public SseEmitter updateLivePresence(List<Integer> userGroupIds, Integer userId) {
 		
-		System.out.println("--------------");
 		
 		
 		
 		if(!isConnected(userId)) {
 			
-			System.out.println("is not connected");
+			
 			
 			ConnectionId newConnection = new ConnectionId(userId, userGroupIds);
 			
@@ -147,12 +149,22 @@ public class LivePresenceMonitorService {
 		System.out.println("executing scheduled task");
 		System.out.println(">>>>>>>>>>>>");
 		
-		connectors.forEach((connector, emitter) -> {
+		for(Map.Entry<ConnectionId, SseEmitter> entry : connectors.entrySet()) {
 			
+			final ConnectionId connectionId = entry.getKey();
+			final SseEmitter emitter = entry.getValue();
 			
-			
-			for(Integer groupId: connector.getGroupIds()) {
+//			confirm the user connection is alive
+			if(!isConnectionAlive(emitter)) {
 				
+				cleanup(connectionId);
+				
+				continue;
+			}
+			
+			for(Integer  groupId: connectionId.getGroupIds()) {
+				
+
 				int userCount = activeUserPerGroup.getOrDefault(groupId, new AtomicInteger(0)).get();
 				try {
 					emitter.send(SseEmitter.event().data(Map.of("key", groupId, "value", userCount)).name("live-presence"));
@@ -160,11 +172,29 @@ public class LivePresenceMonitorService {
 					
 					System.out.println("error notifying");
 				}
+				
+				
+
 			}
+		}
+		
+	}
+	
+//	checks if connection is still alive
+	private boolean isConnectionAlive(SseEmitter emitter) {
+		
+		try {
 			
-		});
-		
-		
+			emitter.send(SseEmitter.event().comment("ping"));
+			
+			return true;
+			
+		} catch (Exception e) {
+			
+			log.info("lost live update connection: {}");
+			return false;
+			
+		}
 	}
 	
 	

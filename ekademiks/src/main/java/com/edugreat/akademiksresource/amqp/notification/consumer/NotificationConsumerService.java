@@ -35,6 +35,8 @@ public class NotificationConsumerService implements NotificationConsumer {
 		final Integer studentId = notification.getReceipientIds().get(0);
 
 		if (studentId != null && clients.containsKey(studentId)) {
+			
+		
 
 			try {
 				notify(notification, studentId);
@@ -55,29 +57,38 @@ public class NotificationConsumerService implements NotificationConsumer {
 		
 		
 
-//		get the receipient of this notification
+//		get the recipient of this notification
 		final List<Integer> recipientIds = notification.getReceipientIds();
-		
 		
 
 //		 A case where the notification is meant for all users
 		if (recipientIds == null || recipientIds.size() == 0) {
 			
 			
-
-				clients.forEach((studentId, emitter) -> {
+			
+			for(Map.Entry<Integer, SseEmitter> entry: clients.entrySet()) {
+				
+				final SseEmitter emitter = entry.getValue();
+				final Integer userId = entry.getKey();
+				
+				if(!isConnectionAlive(userId, emitter)) {
 					
-					try {
-						notify(notification, studentId);
-					} catch (IOException e) {
-						
-						log.info(String.format("Error notifying :{}", studentId));
-						
-						
-					}
+					cleanup(userId);
 					
-									
-				});
+					continue;
+				}
+				
+				
+				try {
+					
+					notify(notification, userId);
+					
+				} catch (Exception e) {
+					log.info(String.format("Error notifying :{}", userId));
+				}
+				
+				
+			}
 				
 		
 
@@ -117,7 +128,7 @@ public SseEmitter establishConnection(Integer studentId) {
 		clients.put(studentId, emitter);
 		
 		
-	ScheduledExecutorService executorService = 	startHeartbeat(studentId);
+	ScheduledExecutorService executorService = 	startHeartbeat(emitter, studentId);
 	
 	heartbeatExecutors.put(studentId, executorService);
 		
@@ -157,16 +168,25 @@ public SseEmitter establishConnection(Integer studentId) {
 		return null;
 	}
 	
-	 private  ScheduledExecutorService startHeartbeat(Integer connectionId) {  
+	 private  ScheduledExecutorService startHeartbeat(SseEmitter emitter, Integer connectionId) {  
 	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
 	        executorService.scheduleAtFixedRate(() -> {  
 	        	
 	        	if(clients.containsKey(connectionId)) {
+	        		
+	        		if(!isConnectionAlive(connectionId, emitter)) {
+	        			
+	        			cleanup(connectionId);
+	        			
+	        			return;
+	        		}
             		
             		try {
 						clients.get(connectionId).send(SseEmitter.event().comment("heartbeat").name("heartbeat"));
 					} catch (IOException e) {
-						log.error("Error sending heartbeat: " + e.getMessage());
+						log.error("Error sending heartbeat:{}",  connectionId);
+						cleanup(connectionId);
+						return;
 					}
             	}
               
@@ -186,6 +206,25 @@ public SseEmitter establishConnection(Integer studentId) {
 			 scheduledExecutor.shutdown();
 		 }
 		 
+		 
+	 }
+	 
+//	 checks if the user connection is still alive
+	 private boolean isConnectionAlive(Integer userId, SseEmitter emitter) {
+		
+		 try {
+			emitter.send(SseEmitter.event().comment("ping"));
+			
+			return true;
+		} catch (IOException e) {
+			
+			log.info("lost connection for notification");
+			
+			cleanup(userId);
+			
+			return false;
+			
+		}
 		 
 	 }
 
