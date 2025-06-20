@@ -12,7 +12,7 @@ import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.model.Subject;
 
 @Repository
-@RepositoryRestResource(exported = false)
+//@RepositoryRestResource(exported = false)
 public interface SubjectDao extends JpaRepository<Subject, Integer> {
 
 	// finds subject by the subject name

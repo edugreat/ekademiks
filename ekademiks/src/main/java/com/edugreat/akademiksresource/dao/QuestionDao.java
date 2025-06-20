@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.edugreat.akademiksresource.model.Question;
 @Repository
-@RepositoryRestResource(exported = false)
+//@RepositoryRestResource(exported = false)
 public interface QuestionDao extends JpaRepository<Question, Integer> {
 
 	// gets all the questions for the given test identifier

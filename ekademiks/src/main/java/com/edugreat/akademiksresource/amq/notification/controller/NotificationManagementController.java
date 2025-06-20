@@ -4,15 +4,15 @@ package com.edugreat.akademiksresource.amq.notification.controller;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edugreat.akademiksresource.amqp.notification.broadcast.NotificationBroadcast;
 import com.edugreat.akademiksresource.amqp.notification.consumer.NotificationConsumer;
@@ -23,6 +23,7 @@ import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 import com.edugreat.akademiksresource.model.Student;
 
 import jakarta.transaction.Transactional;
+import reactor.core.publisher.Flux;
 
 //   This controller handles notifications communications to the clients which have connected to be notified.
 @RestController
@@ -44,32 +45,20 @@ public class NotificationManagementController {
 	private StudentDao studentDao;
 
 //	Server notification endpoint
-	@GetMapping("/notice/notify_me")
-	public SseEmitter streamNotificaions(@RequestParam Integer _xxid) throws IOException {
+	@GetMapping(path = "/notice/notify_me", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Flux<ServerSentEvent<?>> streamNotificaions(@RequestParam Integer _xxid) throws IOException {
 
 //			delete all read notifications
 			notificationInterface.deleteReadNotifications();
-
-//			
-			final SseEmitter emitter = notificationConsumer.establishConnection(_xxid);
-
-			if (emitter != null) {
-
-				List<AssessmentUploadNotification> notifications = notificationInterface
-						.unreadNotificationsFor(_xxid);
-
-				notifications.forEach(notification -> notification.setReceipientIds(List.of(_xxid)));
-
-				notificationBroadcast.getPreviousNotifications(notifications);
-				
-				return emitter;
-			}
-
 			
-
-		
-
-		return null;
+			Flux<ServerSentEvent<?>> connection = notificationConsumer.establishConnection(_xxid);
+			
+			List<AssessmentUploadNotification> notifications = notificationInterface.unreadNotificationsFor(_xxid);
+			
+			notifications.forEach(n -> n.setReceipientIds(List.of(_xxid)));
+			notificationBroadcast.getPreviousNotifications(notifications);
+			
+			 return connection;
 
 	}
 

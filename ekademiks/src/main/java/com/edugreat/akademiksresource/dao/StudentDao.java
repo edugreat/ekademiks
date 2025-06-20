@@ -17,7 +17,7 @@ import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 import com.edugreat.akademiksresource.model.Student;
 
 @Repository
-@RepositoryRestResource(exported = false)
+//@RepositoryRestResource(exported = false)
 public interface StudentDao extends JpaRepository<Student, Integer> {
 
 	// checks the the existence of a student by their email

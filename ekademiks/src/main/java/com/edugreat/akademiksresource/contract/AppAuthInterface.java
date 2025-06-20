@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.contract;
 import java.io.IOException;
 
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
+import com.edugreat.akademiksresource.controller.StudentRegistrationData;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.model.AppUser;
 
@@ -14,7 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public interface AppAuthInterface {
 
 	// Contract that registers new user
-	public int signUp(AppUserDTO dto);
+	public int signUp(StudentRegistrationData registrationData);
 
 	// Allows users to sign in using different role preferences
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role);

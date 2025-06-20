@@ -1,268 +1,236 @@
 package com.edugreat.akademiksresource.chat.livepresence;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 /*
   * Service class keeps atomic track of user presence for each group chat maintained in its map instance
   */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class LivePresenceMonitorService {
-	
-	private Map<Integer, AtomicInteger> activeUserPerGroup = new ConcurrentHashMap<>();
-	
-	private Map<ConnectionId, SseEmitter> connectors = new ConcurrentHashMap<>();
-	
-	public SseEmitter updateLivePresence(List<Integer> userGroupIds, Integer userId) {
-		
-		
-		
-		
-		if(!isConnected(userId)) {
-			
-			
-			
+
+    // Track active users per group
+    private final Map<Integer, AtomicInteger> activeUserPerGroup = new ConcurrentHashMap<>();
+    
+    // Reactive event sinks for each user
+    private final Map<Integer, Sinks.Many<ServerSentEvent<?>>> userSinks = new ConcurrentHashMap<>();
+    
+    // Rich connection metadata
+    private final Map<Integer, ConnectionId> connections = new ConcurrentHashMap<>();
+
+    private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(30);
+
+
+	public Flux<ServerSentEvent<?>> updateLivePresence(List<Integer> userGroupIds, Integer userId) {
+
+		if (!connections.containsKey(userId)) {
+
 			ConnectionId newConnection = new ConnectionId(userId, userGroupIds);
+
 			
-			 return createNewConnection(newConnection);
+			connections.put(userId, newConnection);
+			
+			Sinks.Many<ServerSentEvent<?>> sink = userSinks.computeIfAbsent(userId,
+		id -> Sinks.many().unicast().onBackpressureBuffer());
+		
+			updateActiveGroups(userGroupIds, true);
+			userGroupIds.forEach(this::broadcastPresenceUpdate);
 			
 			
+//			heartbeat stream
+			Flux<ServerSentEvent<?>> heartbeat = startHeartbeat();
+		
+			
+//			initial presence update
+			Flux<ServerSentEvent<?>> initialPresence = computeInitialPresence(userGroupIds);
+			
+//			combine all streams
+			return sink.asFlux()
+					.mergeWith(initialPresence)
+					.mergeWith(heartbeat)
+					.doOnCancel(() -> cleanup(userId))
+					.doOnTerminate(() -> cleanup(userId))
+					.doOnError(e -> cleanup(userId));
+		
 		}
+
+		return userSinks.get(userId).asFlux()
+				.mergeWith(computeInitialPresence(userGroupIds))
+				.mergeWith(startHeartbeat())
+				.doOnCancel(() -> cleanup(userId))
+				.doOnTerminate(() -> cleanup(userId))
+				.doOnError(e -> cleanup(userId));
 	
-		return getUserConnector(userId);
-	
+
 	}
-	
-	private SseEmitter createNewConnection(ConnectionId connection) {
-		
-		
-			
-			SseEmitter emitter = new SseEmitter(0L);
-			
-			connectors.put(connection, emitter);
-			emitter.onError(error -> {
-				
-				System.out.println("error creating live presence notifier");
-				 cleanup(connection);
-			});
-			
-			emitter.onCompletion(() -> {
-				
-				System.out.println("live presence completed");
-				cleanup(connection);
-			});
-			
-			emitter.onTimeout(() -> {
-				
-				System.out.println("live presence timedout");
-				cleanup(connection);
-			});
-			
-			updateActiveGroups(connection.getGroupIds());
-		
-			
-		
-		return emitter;
+
+	private Flux<ServerSentEvent<?>> computeInitialPresence(List<Integer> userGroupIds) {
+		Flux<ServerSentEvent<?>> initialPresence = Flux.fromIterable(userGroupIds)
+				.map(groupId -> createPresenceEvent(groupId));
+		return initialPresence;
 	}
-	
-//	tracks if a user has already been connected to the connectors map
-	private boolean isConnected(Integer userId) {
-		
-		return connectors.keySet().stream().filter(key -> key.getUserId().equals(userId)).toList().size() > 0;
+
+	private Flux<ServerSentEvent<?>> startHeartbeat() {
+		Flux<ServerSentEvent<?>> heartbeat = Flux.interval(HEARTBEAT_INTERVAL)
+				.map(i -> ServerSentEvent.builder().comment("heartbeat")
+				.event("heartbeat")
+				.build());
+		return heartbeat;
 	}
+
+	private ServerSentEvent<?> createPresenceEvent(Integer groupId) {
+		
+		return ServerSentEvent.builder()
+				.data(Map.of("key", groupId,
+						"value", activeUserPerGroup.getOrDefault(groupId, new AtomicInteger(0)).get()))
+				.event("live-presence")
+				.build();
+
+		
+	}
+
 	
-	private void updateActiveGroups(List<Integer> groupIds) {
-		
-		System.out.println("updating active groups");
-		System.out.println(groupIds);
-		
-		for(Integer id: groupIds) {
+	private void updateActiveGroups(List<Integer> groupIds, boolean increment) {
+
+		groupIds.forEach(groupId -> {
 			
-			if(activeUserPerGroup.containsKey(id)) {
+			AtomicInteger count = activeUserPerGroup.computeIfAbsent(groupId,
+				k -> new AtomicInteger(0));
+			
+			if(increment) {
 				
-				activeUserPerGroup.get(id).incrementAndGet();
+				count.incrementAndGet();
 				
-				continue;
+			}else {
+				count.decrementAndGet();
 			}
-			
-				activeUserPerGroup.put(id, new AtomicInteger(0));
-				activeUserPerGroup.get(id).incrementAndGet();
-			
+			if(count.get() <= 0) {
+				
+				activeUserPerGroup.remove(groupId);
+			}
+		});
 		}
+
 		
-		
-	}
 	
+
 //	method that returns SSE connector given a student ID
-	private SseEmitter getUserConnector(Integer studentId) {
+	private void broadcastPresenceUpdate(Integer groupId) {
 		
-		for(Map.Entry<ConnectionId, SseEmitter> connectionMap : connectors.entrySet()) {
+		int count = activeUserPerGroup.getOrDefault(groupId, new AtomicInteger(0)).get();
+		
+		ServerSentEvent<?> event = ServerSentEvent.builder()
+				.data(Map.of("key", groupId, "value", count))
+				.event("live-presence")
+				.build();
+		
+		connections.values().stream()
+		.filter(conn -> conn.getGroupIds().contains(groupId))
+		.map(ConnectionId::getUserId)
+		.forEach(userId -> {
 			
-			if(connectionMap.getKey().getGroupIds().contains(studentId)) {
-				
-				return connectionMap.getValue();
+			Sinks.Many<ServerSentEvent<?>> sink = userSinks.get(userId);
+			
+			if(sink != null) {
+				sink.tryEmitNext(event);
 			}
-		}
-		
-		return null;
+		});
+				
+
 	}
-	
+
 //	cleanup implementation due to error on SSE 
-	private void cleanup(ConnectionId connectionId) {
+	private void cleanup(Integer userId) {
+
+		ConnectionId conn = connections.remove(userId);
 		
-		connectors.remove(connectionId);
-		
-		for(Integer groupId : connectionId.getGroupIds()) {
+		if(conn != null) {
 			
-			if(activeUserPerGroup.containsKey(groupId)) {
-				
-				if(activeUserPerGroup.get(groupId).get() == 0) {
-					activeUserPerGroup.remove(groupId);
-					continue;
-				}
-				
-				activeUserPerGroup.get(groupId).decrementAndGet();
-			}
+			updateActiveGroups(conn.getGroupIds(), false);
+			conn.getGroupIds().forEach(this::broadcastPresenceUpdate);
 		}
-		
-		
-		
+
 	}
+
 	
-	@Scheduled(initialDelay = 1, fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
-	public void sendLivePresence() {
-		
-		System.out.println("executing scheduled task");
-		System.out.println(">>>>>>>>>>>>");
-		
-		for(Map.Entry<ConnectionId, SseEmitter> entry : connectors.entrySet()) {
-			
-			final ConnectionId connectionId = entry.getKey();
-			final SseEmitter emitter = entry.getValue();
-			
-//			confirm the user connection is alive
-			if(!isConnectionAlive(emitter)) {
-				
-				cleanup(connectionId);
-				
-				continue;
-			}
-			
-			for(Integer  groupId: connectionId.getGroupIds()) {
-				
 
-				int userCount = activeUserPerGroup.getOrDefault(groupId, new AtomicInteger(0)).get();
-				try {
-					emitter.send(SseEmitter.event().data(Map.of("key", groupId, "value", userCount)).name("live-presence"));
-				} catch (IOException e) {
-					
-					System.out.println("error notifying");
-				}
-				
-				
-
-			}
-		}
+	@Scheduled(fixedRate = 30000) // Every 30 seconds
+	public void checkActiveConnections() {
 		
+		log.info("schedule presence checks");
+	    connections.values().stream()
+	        .flatMap(conn -> conn.getGroupIds().stream())
+	        .distinct()
+	        .forEach(groupId -> {
+	            int currentCount = activeUserPerGroup.getOrDefault(groupId, new AtomicInteger(0)).get();
+	            if (currentCount > 0) {
+	                broadcastPresenceUpdate(groupId); // Sync all groups periodically
+	            }
+	        });
 	}
-	
-//	checks if connection is still alive
-	private boolean isConnectionAlive(SseEmitter emitter) {
-		
-		try {
-			
-			emitter.send(SseEmitter.event().comment("ping"));
-			
-			return true;
-			
-		} catch (Exception e) {
-			
-			log.info("lost live update connection: {}");
-			return false;
-			
-		}
-	}
-	
-	
-
-
 }
 
- // an object representing user connection identification
- class ConnectionId{
-	 
-	 private Integer userId;
-	 
-	 private List<Integer> groupIds = Collections.synchronizedList(new ArrayList<>());
-	 
-	 public ConnectionId(Integer userId, List<Integer> groupIds) {
-		 
-		 this.userId = userId;
-		 addUserGroupIds(groupIds);
-		 
-	 }
-	 
-	 
+// an object representing user connection identification
 
-	public Integer getUserId() {
-		return userId;
-	}
+    class ConnectionId {
+    private final Integer userId;
+    private final List<Integer> groupIds;
+    private final Instant connectedAt;
 
+    public ConnectionId(Integer userId, List<Integer> groupIds) {
+        this.userId = Objects.requireNonNull(userId);
+        this.groupIds = Collections.unmodifiableList(groupIds);
+        this.connectedAt = Instant.now();
+    }
 
+    public Integer getUserId() {
+        return userId;
+    }
 
-	public List<Integer> getGroupIds() {
-		return groupIds;
-	}
+    public List<Integer> getGroupIds() {
+        return groupIds;
+    }
 
-	
+    public Instant getConnectedAt() {
+        return connectedAt;
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConnectionId that = (ConnectionId) o;
+        return userId.equals(that.userId);
+    }
 
-	private void addUserGroupIds(List<Integer> groupIds) {
-		
-		
-		for(Integer id : groupIds) {
-			System.out.println(id);
-			if(!this.groupIds.contains(id)) {
-				this.groupIds.add(id);
-			}
-		}
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId);
+    }
 
-
-
-	@Override
-	public int hashCode() {
-		
-		return Objects.hash(userId);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		
-		if(obj != null && this == obj) return true;
-		if(getClass() == obj.getClass()) return true;
-		
-		ConnectionId that = (ConnectionId)obj;
-		
-		return Objects.equals(userId, that.userId);
-		
-		
-	}
-	 
-	 
-	
+    @Override
+    public String toString() {
+        return "ConnectionId{" +
+            "userId=" + userId +
+            ", groupIds=" + groupIds +
+            ", connectedAt=" + connectedAt +
+            '}';
+    }
 }

@@ -1,7 +1,9 @@
 package com.edugreat.akademiksresource.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +27,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @AllArgsConstructor
 @RequestMapping("/auth")
+@Slf4j
 @Tag(name = "Authentications", description = "Endpoints for managing user authentications")
+
 public class AuthenticateController {
 	private final AppAuthInterface appInterface;
+	
+	private final Validator validator;
 
 	@PostMapping("/sign-up")
 	@ResponseStatus(HttpStatus.OK)
@@ -44,9 +53,39 @@ public class AuthenticateController {
 			@ApiResponse(responseCode = "400", description = "Duplicate account attempt")
 	})
 	@SecurityRequirements()
-	public int signUp(@RequestBody @Valid AppUserDTO userDTO) throws Exception {
+	public ResponseEntity<Object> signUp(@RequestBody  StudentRegistrationData registrationData) {
 
-		return appInterface.signUp(userDTO);
+		try {
+			
+			Set<ConstraintViolation<StudentRegistrationData>> violations = validator.validate(registrationData);
+			
+			if(!violations.isEmpty() ) {
+				
+				List<String> errors = violations.stream().map(v -> v.getMessage()).toList();
+				
+				List<String> phoneNumberUnrelatedErrors = errors.stream().filter(e -> !e.contains("Phone number")).toList();
+				
+				if(!phoneNumberUnrelatedErrors.isEmpty()) {
+					return new ResponseEntity<Object>(phoneNumberUnrelatedErrors, HttpStatus.BAD_REQUEST);
+				}
+				
+				if(errors.size() > 1) {
+					return new ResponseEntity<Object>("Please check your provided mobile number", HttpStatus.BAD_REQUEST);
+				}
+				
+				if(errors.size() == 1 && !(errors.get(0).equals("Phone number is missing"))) {
+					return new ResponseEntity<Object>(errors.get(0), HttpStatus.BAD_REQUEST);
+				}
+			}
+			
+
+			
+			return ResponseEntity.ok(appInterface.signUp(registrationData));
+		} catch (Exception e) {
+		
+			
+			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
+		}
 
 	}
 

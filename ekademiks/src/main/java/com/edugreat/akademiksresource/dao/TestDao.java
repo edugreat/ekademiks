@@ -14,7 +14,7 @@ import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
 
 @Repository
-@RepositoryRestResource(collectionResourceRel = "Tests", exported = false)
+@RepositoryRestResource(collectionResourceRel = "Tests")
 public interface TestDao extends JpaRepository<Test, Integer> {
 
 	// Fetches from the database a list of questions using the given arguments

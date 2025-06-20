@@ -1,15 +1,13 @@
 package com.edugreat.akademiksresource.auth;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
@@ -20,21 +18,19 @@ import org.springframework.transaction.annotation.Transactional;
 import com.edugreat.akademiksresource.chat.dao.GroupMembersDao;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
+import com.edugreat.akademiksresource.controller.StudentRegistrationData;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.model.Admins;
-import com.edugreat.akademiksresource.model.AppUser;
 import com.edugreat.akademiksresource.model.Student;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ValidatorFactory;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -57,74 +53,50 @@ public class AppAuthService implements AppAuthInterface {
 
 	@Transactional
 	@Override
-	public int signUp(AppUserDTO userDTO) {
-		AppUserDTO user = null;
-		AppUser newUser = null;
-		// Check the type of user wanting to sign up.
-		// if the intending user is a student
+	public int signUp(StudentRegistrationData registrationData) {
+		try {
+			
+			// Check the type of user wanting to sign up.
+			// if the intending user is a student
 
-		// check if the user already exists in the student table
-		final boolean existsAsStudentByEmail = studentDao.existsByEmail((userDTO.getEmail()));
+			// check if the user already exists in the student table
+			final boolean existsAsStudentByEmail = studentDao.existsByEmail((registrationData.email()));
 
-		if (existsAsStudentByEmail) {
-			throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
-		}
-
-		// checks if the user already exists in the admin table
-		final boolean existsAsAdminByEmail = adminsDao.existsByEmail((userDTO.getEmail()));
-		if (existsAsAdminByEmail) {
-			throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
-		}
-
-		// check if mobile number exists
-		if (userDTO.getMobileNumber() != null) {
-
-			final boolean existsAsAdminByMobile = adminsDao.existsByMobile(userDTO.getMobileNumber());
-			if (existsAsAdminByMobile == true)
-				throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
-
-			final boolean existsAsStudentByMobile = studentDao.existsByMobile(userDTO.getMobileNumber());
-			if (existsAsStudentByMobile == true)
-				throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
-		}
-
-		if (userDTO.getRoles().contains(Roles.Student.name())) {
-
-			user = mapper.map(userDTO, StudentDTO.class);
-			newUser = new Student();
-			user.setRoles(userDTO.getRoles());
-
-			newUser.setFirstName(user.getFirstName());
-			newUser.setLastName(user.getLastName());
-			newUser.setEmail(user.getEmail());
-			newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-			((Student) newUser).addRoles(user.getRoles());
-			if (user.getMobileNumber() != null) {
-				newUser.setMobileNumber(user.getMobileNumber());
+			if (existsAsStudentByEmail) {
+				throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
 			}
 
-			// save the new object to the database
-			studentDao.save((Student) newUser);
-
-		} else {
-
-			user = mapper.map(userDTO, AdminsDTO.class);
-			user.setRoles(userDTO.getRoles());
-
-			newUser = new Admins();
-
-			newUser.setFirstName(user.getFirstName());
-			newUser.setLastName(user.getLastName());
-			newUser.setEmail(user.getEmail());
-			newUser.setPassword(passwordEncoder.encode(user.getPassword()));
-			((Admins) newUser).addRoles(user.getRoles());
-			if (user.getMobileNumber() != null) {
-				newUser.setMobileNumber(user.getMobileNumber());
+			// checks if the user already exists in the admin table
+			final boolean existsAsAdminByEmail = adminsDao.existsByEmail((registrationData.email()));
+			if (existsAsAdminByEmail) {
+				throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
 			}
 
-			// Save the new object to the database
-			adminsDao.save((Admins) newUser);
+			// check if mobile number exists
+			if (registrationData.mobileNumber() != null) {
 
+				final boolean existsAsAdminByMobile = adminsDao.existsByMobile(registrationData.mobileNumber());
+				if (existsAsAdminByMobile == true)
+					throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
+
+				final boolean existsAsStudentByMobile = studentDao.existsByMobile(registrationData.mobileNumber());
+				if (existsAsStudentByMobile == true)
+					throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
+			}
+
+		
+			Student student = new Student();
+					
+					BeanUtils.copyProperties(registrationData, student);
+					
+					student.setPassword(passwordEncoder.encode(registrationData.password()));
+					
+					student.addRoles(Set.of("Student"));
+					
+					studentDao.save(student);
+			
+		} catch (Exception e) {
+			 throw e;
 		}
 
 		return HttpStatus.CREATED.value();
@@ -311,5 +283,21 @@ public class AppAuthService implements AppAuthInterface {
 		
 		
 	}
-
+	
+	private void postLoginCleanup(Integer userId) {
+		
+		redisTemplate.delete(RedisValues.USER_CACHE+"::"+userId);
+		redisTemplate.delete(RedisValues.PREVIOUS_CHATS+"::"+userId);
+		redisTemplate.delete(RedisValues.MY_GROUP_IDs+"::"+userId);
+		redisTemplate.delete(RedisValues.MY_GROUP+"::"+userId);
+		redisTemplate.delete(RedisValues.MISCELLANEOUS+"::"+userId);
+		
+		
+	}
+	
+	
 }
+
+
+
+

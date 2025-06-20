@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -36,6 +39,7 @@ public class Test {
 	private Set<Question> questions = new HashSet<>();
 
 	@OneToMany(mappedBy = "test", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
+	@JsonIgnore
 	private Set<StudentTest> studentTests = new HashSet<>();
 
 	@Column

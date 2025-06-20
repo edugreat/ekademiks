@@ -1,12 +1,13 @@
 package com.edugreat.akademiksresource.amqp.notification.consumer;
 
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
 
 public interface NotificationConsumer {
 	
-	SseEmitter establishConnection(Integer studentId);
+	Flux<ServerSentEvent<?>> establishConnection(Integer studentId);
 	
 //	disconnects the user from SSE notification once they logout from the client
-	public SseEmitter disconnectFromSSE(Integer studentId);
+	public void disconnectFromSSE(Integer studentId);
 
 }

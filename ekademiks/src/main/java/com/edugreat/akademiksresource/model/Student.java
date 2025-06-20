@@ -18,6 +18,7 @@ import com.edugreat.akademiksresource.chat.model.GroupMember;
 import com.edugreat.akademiksresource.enums.Roles;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -74,8 +75,9 @@ public class Student extends AppUser {
 		super(firstName, lastName, email, password);
 
 	}
-
+    
 	@OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE }, mappedBy = "student", orphanRemoval = true)
+	@JsonIgnore
 	private Set<StudentTest> studentTests = new HashSet<>();
 
 	//	A set of assessmentUploadNotifications a student receives

@@ -3,6 +3,7 @@
  */
 package com.edugreat.akademiksresource.chat.service;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,6 +11,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +28,10 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.redis.connection.RedisKeyCommands;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -250,41 +255,43 @@ public class ChatService implements ChatInterface {
 //			key = user's ID, value = boolean flag that shows if they belong to the given group
 			final Map.Entry<Integer, Boolean> userEntry =  currentUserEntry(chatDTO.getGroupId());
 			
-//			ensure the user was logged before processing this code
-	
-			if(userEntry.getKey() != null && userEntry.getValue()) {
-				
-				final Integer userId = userEntry.getKey();
-				
-				
-//				get and update previous chats
-				Map<Integer, List<ChatDTO>> previousChatsPerGroup = getPreviousChats(userId);
-				
+			System.out.println("logged in users");		
+			System.out.println(userEntry.getKey()+" "+userEntry.getValue());
 			
-//				update stored chats
-				if(previousChatsPerGroup.get(dto.getGroupId()) != null) {
+			
+//			update group members' message cache
+			Set<String> userIds = scanPreviousMessageKeys(String.valueOf(dto.getGroupId()));
+			
+			if(userIds != null && userIds.size() > 0) {
+				
+				updateUsersPreviousChats(userIds, chatDTO);
+				
+				return chatDTO;
+			}else {
+				
+				log.info("userIds show null");				
+				
+				// update for the currently logged in user
+				
+				if(userEntry.getKey() != null && userEntry.getValue()) {
 					
+					Map<Integer, List<ChatDTO>> previousChatsPerGroup = new HashMap<>();
 					
-					previousChatsPerGroup.get(dto.getGroupId()).add(chatDTO);
-				}else {
-					
-					
+					final Integer userId = userEntry.getKey();
 					
 					List<ChatDTO> l = new ArrayList<>();
 					l.add(chatDTO);
 					previousChatsPerGroup.put(dto.getGroupId(),l );
 					
+					redisTemplate.opsForValue().set(RedisValues.PREVIOUS_CHATS+"::"+userId, previousChatsPerGroup);
+					
+					return chatDTO;
+					
 				}
 				
-				cacheManager.getCache(RedisValues.PREVIOUS_CHATS).put(userId, previousChatsPerGroup);
-				
-				chatDTO.setChatReceipient(userId);
-			
-				return chatDTO;
-			
 			}
 			
-			
+		
 			
 			
 		}
@@ -785,7 +792,7 @@ public class ChatService implements ChatInterface {
 	@Transactional(readOnly = true)
 	public Map<Integer, List<ChatDTO>> getPreviousChats(Integer studentId) {
 		
-		
+		System.out.println("checking previous message from the cache");
 		
 //		check if the information is already cached
 		Object prevChatsObj = redisTemplate.opsForValue().get(RedisValues.PREVIOUS_CHATS+"::"+studentId);
@@ -793,13 +800,15 @@ public class ChatService implements ChatInterface {
 		
 		if(prevChatsObj != null) {
 			
-			
+			System.out.println("previous message exist in cache");
 			
 			return objectMapper.convertValue(prevChatsObj,
 					
 					new TypeReference<Map<Integer, List<ChatDTO>>>(){}
 					);
 		}
+		
+		System.out.println("previous message does exist in cache");
 		
 		
 		Object obj = redisTemplate.opsForValue().get(RedisValues.JOIN_DATE+"::"+studentId);
@@ -1138,4 +1147,99 @@ public class ChatService implements ChatInterface {
 		throw new IllegalArgumentException("cached user is null");
 		
 	}
+	
+//	method that retrieves redis stored previous message keys which can be used to update users previous messages
+//	as long as the cached data lives
+	private Set<String> scanPreviousMessageKeys(String groupId){
+		
+		Set<String> userIds = new HashSet<>();
+		
+		
+		RedisKeyCommands keyCommands = redisTemplate.getConnectionFactory().getConnection().keyCommands();
+		
+		String pattern = RedisValues.PREVIOUS_CHATS+"::*";
+		
+		final String groupIdPattern = RedisValues.MY_GROUP_IDs+"::";
+		
+		ScanOptions scanOptions = ScanOptions.scanOptions().match(pattern).count(100).build();
+		
+		Cursor<byte[]> cursor = keyCommands.scan(scanOptions);
+		try {
+			
+			while(cursor.hasNext()) {
+				
+				String key = new String(cursor.next(), StandardCharsets.UTF_8);
+				
+				log.info("retrieved redis key:{}", key);
+				
+				int index = key.lastIndexOf(":");
+				
+				if(index >= 0) {
+					
+					String userId = key.substring(index+1, key.length());
+					
+					log.info("retrieved userId {}", userId);					
+					List<String> myGroupIds = getCachedDataFromKey(groupIdPattern.concat(userId));
+					
+					log.info("my groups ids {}", myGroupIds);
+					log.info("comparing group id {}", groupId);
+					
+					if(myGroupIds != null && myGroupIds.contains(groupId)) {
+						
+						log.info("adding to userIds {}", groupId);
+						
+						userIds.add(userId);
+					}
+				}
+				
+			}
+			
+		} catch (Exception e) {
+			log.info("key scanning failed: {}", e.getMessage());
+			
+			
+			
+		}
+		
+		
+		return userIds;
+	}
+	
+	
+//	generic method that returns redis cached values using cached key
+	private  <T extends Object> T getCachedDataFromKey(String key){
+		
+		Object obj = redisTemplate.opsForValue().get(key);
+		
+		if(obj != null) {
+			
+			log.info("cached data not null");
+			
+			return objectMapper.convertValue(obj, new TypeReference<T>() {});
+		}
+	
+		log.info("cached data is null");	
+		return null;
+	}
+	
+	private void updateUsersPreviousChats(Set<String> userIds, ChatDTO recentChat) {
+		
+		userIds.forEach(userId -> {
+			Object obj = redisTemplate.opsForValue().get(RedisValues.PREVIOUS_CHATS+"::"+userId);
+			
+			if(obj != null) {
+				
+				Map<Integer, List<ChatDTO>> previousChatsPerGroup = objectMapper.convertValue(obj, new TypeReference<Map<Integer, List<ChatDTO>>>() {});
+				
+		
+				previousChatsPerGroup.get(recentChat.getGroupId()).add(recentChat);	
+				
+				redisTemplate.opsForValue().set(RedisValues.PREVIOUS_CHATS+"::"+userId,previousChatsPerGroup);
+			}
+		});
+		
+		
+	}
+	
+	
 }

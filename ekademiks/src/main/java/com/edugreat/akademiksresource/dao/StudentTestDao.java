@@ -11,9 +11,8 @@ import com.edugreat.akademiksresource.model.StudentTest;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 
 
-//@RepositoryRestResource(collectionResourceRel = "StudentTests")
+@RepositoryRestResource(collectionResourceRel = "StudentTests")
 @Repository
-@RepositoryRestResource(exported = false)
 public interface StudentTestDao extends JpaRepository<StudentTest, Integer> {
 
 	// get a list of student's score in a particular test.

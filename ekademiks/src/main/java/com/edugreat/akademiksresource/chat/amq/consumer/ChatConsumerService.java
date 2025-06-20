@@ -1,27 +1,27 @@
 package com.edugreat.akademiksresource.chat.amq.consumer;
 
-import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
 import com.edugreat.akademiksresource.chat._interface.ChatInterface;
 import com.edugreat.akademiksresource.chat.dao.GroupChatDao;
 import com.edugreat.akademiksresource.chat.dto.ChatDTO;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
+
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 @Service
 @Slf4j
+
 public class ChatConsumerService implements ChatConsumer {
 
   @Autowired
@@ -30,65 +30,30 @@ public class ChatConsumerService implements ChatConsumer {
   @Autowired
   private ChatInterface chatInterface;
 
-  private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
+  private final Map<Integer, Sinks.Many<ServerSentEvent<?>>> userSinks = new ConcurrentHashMap<>();
   
 //  maintains a concurrent map of connected users where key is the user ID and value, a list of the group IDs they belong to
   private Map<Integer, List<Integer>> connectedUsers = new ConcurrentHashMap<>();
   
-  private final Map<Integer, ScheduledExecutorService> heartbeatExecutors = new ConcurrentHashMap<>();
-
-  private static final long HEARTBEAT_INTERVAL = 30000;
-  
   @RabbitListener(queues = { "${instant.chat.queue}" })
   public void consumeInstantChatMessage(ChatDTO chat) {
 	  
-	  System.out.println("sending instant chat to");
-
-    
-    final Integer groupId = chat.getGroupId();
-    
-    
-    
-    for(Map.Entry<Integer, List<Integer>> entry  : connectedUsers.entrySet()) {
-    	
-    	final Integer userId = entry.getKey();
-    	
-    	
-//    	checks if the connection is still alive
-    	if(emitters.get(userId) != null) {
-    		
-    		final boolean connected = isConnectionAlive(emitters.get(userId));
-    		
-    		if(!connected) {
-    			
-    			cleanup(userId);
-    			
-    			continue;
-    		}
-    		
-    		if(!entry.getValue().contains(groupId))  continue; //not a group member
-    		
-    		 
-            try {
-              emitters.get(userId).send(SseEmitter.event().data(chat).name("chats"));
-            } catch (IOException e) {
-            	
-            	 log.info("unable to send instant message to: {}", userId);
-            	continue;
-              
-             
-            }
-    		
-    	} else {
-    		
-    		cleanup(userId);
-    		continue;
-    	}
-    	
-
-    	
-    }
-    
+	  log.info("received instant chat:{}",chat);
+	  
+	  final Integer groupId = chat.getGroupId();
+	
+	  connectedUsers.entrySet().stream()
+	  .filter(entry -> entry.getValue().contains(groupId))
+	  .map(Map.Entry::getKey)
+	  .forEach(userId -> {
+		  
+		  Sinks.Many<ServerSentEvent<?>> sink = userSinks.get(userId);
+		  
+		  if(sink != null) {
+			  
+			  sink.tryEmitNext(ServerSentEvent.builder(chat).event("chats").build());
+		  }
+	  });
 
   
 
@@ -100,29 +65,15 @@ public class ChatConsumerService implements ChatConsumer {
 
 //     get the groupAdmin ID
     final Integer groupAdminId = groupChatDao.getAdminId(requestNotification.getTargetGroupChat());
-    
-  
-//    check if the group admin is currently connected to receive notification
-    if (groupAdminId != null && connectedUsers.containsKey(groupAdminId) && emitters.containsKey(groupAdminId)) {
+ 
+    if(groupAdminId != null && connectedUsers.containsKey(groupAdminId)) {
     	
-    	final SseEmitter emitter = emitters.get(groupAdminId);
-    	if(!isConnectionAlive(emitter)) {
+    	Sinks.Many<ServerSentEvent<?>> sink = userSinks.get(groupAdminId);
+    	
+    	if(sink != null) {
     		
-    		cleanup(groupAdminId);
-    		
-    		return;
+    		sink.tryEmitNext(ServerSentEvent.builder(requestNotification).event("notifications").build());
     	}
-      
-      
-
-      try {
-    	  emitter.send(SseEmitter.event().data(requestNotification).name("notifications"));
-      } catch (IOException e) {
-
-   
-        log.info(String.format("Error notifying group admin: {}", groupAdminId));
-      }
-
     }
 
   }
@@ -130,24 +81,19 @@ public class ChatConsumerService implements ChatConsumer {
   @RabbitListener(queues = { "${previous.chat.queue}" })
  void publishPreviousChatsMessages(List<ChatDTO> chats) {
     
+	  final Integer destination = chats.get(0).getChatReceipient();
+	  
+	  if(connectedUsers.containsKey(destination)) {
+		  
+		  Sinks.Many<ServerSentEvent<?>> sink = userSinks.get(destination);
+		  
+		  if(sink != null) {
+			  
+			  sink.tryEmitNext(ServerSentEvent.builder(chats).event("chats").build());
+		  }
+	  }
     
-    final Integer destination = chats.get(0).getChatReceipient();
-
-//    check if the user is online
-    if (connectedUsers.containsKey(destination) && emitters.get(destination) != null) {
-    	
-    	final SseEmitter emitter = emitters.get(destination);
-    	
-    
-      try {
-    	  emitter.send(SseEmitter.event().data(chats).name("chats"));
-      } catch (IOException e) {
-
-        
-        log.info(String.format("unable to send previous chat to: {}", destination));
-        cleanup(destination);
-      }
-    }
+ 
   }
 
 //  notifies group members about a new member that just joined the group
@@ -156,31 +102,16 @@ public class ChatConsumerService implements ChatConsumer {
 
 //    get the group members id
     final List<Integer> members = groupMembersOnline(notification.getTargetGroupChat());
-    
-    for(Integer userId : members) {
+   
+    members.forEach(userId -> {
     	
-    	final SseEmitter emitter = emitters.get(userId);
+    	Sinks.Many<ServerSentEvent<?>> sink = userSinks.get(userId);
     	
-    	if(emitter != null && isConnectionAlive(emitter)) {
+    	if(sink != null) {
     		
-    		try {
-				
-    			emitter.send(SseEmitter.event().data(notification).name("notifications"));
-    			
-			} catch (Exception e) {
-				
-				continue;
-			}
-    		
-    	}else {
-    		
-    		cleanup(userId);
-    		continue;
+    		sink.tryEmitNext(ServerSentEvent.builder(notification).event("notifications").build());
     	}
-    	
-    
-    }
-  
+    });
   
     
 
@@ -190,86 +121,43 @@ public class ChatConsumerService implements ChatConsumer {
    void sendPreviousChatNotifications(List<MiscellaneousNotifications> previousNotifications) {
 
 //      get the student id the notifications targets at
-    final Integer studentId = previousNotifications.get(0).getReceipientId();
+    final Integer userId = previousNotifications.get(0).getReceipientId();
 
-    if (studentId != null && connectedUsers.containsKey(studentId) && emitters.get(studentId) != null) {
-       
-    	 final SseEmitter emitter = emitters.get(studentId);
+    if(userId != null && connectedUsers.containsKey(userId)) {
     	
-    if(!isConnectionAlive(emitter)) {
+    	Sinks.Many<ServerSentEvent<?>> sink = userSinks.get(userId);
     	
-    	cleanup(studentId);
-    	return;
-    	
+    	if(sink != null) {
+    		
+    		sink.tryEmitNext(ServerSentEvent.builder(previousNotifications).event("notifications").build());
+    		
+    	}
     }
-      
-     
-
-      try {
-        
-        emitter.send(SseEmitter.event().data(previousNotifications).name("notifications"));
-      } catch (IOException e) {
-
-      
-
-        log.info(String.format("Error emitting previous notifications to : {}", studentId+" -> groupId: "+previousNotifications.get(0).getTargetGroupChat()));
-
-
-      }
-
-    }
+   
 
   }
 
   @Override
-  public SseEmitter establishConnection(Integer studentId) {
-    
-  
-	  if(emitters.containsKey(studentId)) return emitters.get(studentId);
-	  
-	  
-
-
-	    SseEmitter emitter = new SseEmitter(0l);
-	    
-	    
-	    emitters.put(studentId, emitter);
-	   
-	    connectedUsers.put(studentId, userGroupIds(studentId));
-	    
-	    
-	    ScheduledExecutorService heartbeatExecutor = startHeartbeat(studentId);
-	   
-	    heartbeatExecutors.put(studentId, heartbeatExecutor);
-	    
-	    
-	    
-	    
-	    emitter.onCompletion(() -> cleanup(studentId));
-	    
-	    emitter.onError(e -> {
-	    	
-	    	System.out.println("connection error:");
-	    	
-	    	
-	    	cleanup(studentId);
-	    });
-	    emitter.onTimeout(() -> cleanup(studentId));
-	   
-	   
-
-	      return emitter;
-	      
+  public Flux<ServerSentEvent<?>> establishConnection(Integer studentId) {
+      Sinks.Many<ServerSentEvent<?>> sink = Sinks.many().unicast().onBackpressureBuffer();
+      userSinks.put(studentId, sink);
+      connectedUsers.put(studentId, userGroupIds(studentId));
       
-    }
-  
-  private List<Integer> userGroupIds(Integer studentId){
-    
-   return chatInterface.myGroupIds(studentId);
-    
+      // Add heartbeat
+      Flux<ServerSentEvent<Object>> heartbeat = Flux.interval(Duration.ofSeconds(30))
+          .map(i -> ServerSentEvent.builder().comment("heartbeat").event("heartbeat").build())
+          .doFinally(signal -> cleanup(studentId));
+      
+      return sink.asFlux()
+          .mergeWith(heartbeat)
+          .doOnCancel(() -> cleanup(studentId))
+          .doOnError(e -> cleanup(studentId))
+          .doOnTerminate(() -> cleanup(studentId));
   }
-
-    
+  
+  private List<Integer> userGroupIds(Integer studentId) {
+      return chatInterface.myGroupIds(studentId);
+  }
 
  
   
@@ -279,70 +167,24 @@ private List<Integer> groupMembersOnline(Integer groupId) {
   return connectedUsers.entrySet()
       .stream()
       .filter(x -> x.getValue().contains(groupId))
-      .map(x -> x.getKey())
+      .map(Map.Entry::getKey)
       .collect(Collectors.toList());
   
 }
 
-  private ScheduledExecutorService startHeartbeat(Integer connectionId) {
-    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    executorService.scheduleAtFixedRate(() -> {
-      
-      if(emitters.containsKey(connectionId)) {
-    	  
-    	  if(! isConnectionAlive(emitters.get(connectionId))) {
-    		  
-    		  log.info("Connection is inactive. Cleaning up: {}", connectionId);
-    		  
-    		  cleanup(connectionId);
-    		  
-    		  return;
-    	  }
-        try {
-          emitters.get(connectionId).send(SseEmitter.event().comment("heartbeat").name("heartbeat"));
-        } catch (IOException e) {
-          log.info("error sending hearbeat:{}", connectionId);
-          
-          cleanup(connectionId);
-        }
-      }
-    }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);
-  
-    return executorService;
+  private void cleanup(Integer connectionId) {
+	  
+	  
+	  Sinks.Many<ServerSentEvent<?>> sink = userSinks.remove(connectionId);
+	  if(sink != null) {
+		  
+		  sink.tryEmitComplete();
+	  }
+	  
+	  connectedUsers.remove(connectionId);
+	
   }
 
  
-  
-//  cleanup method in case of sse errors
-  private void cleanup(Integer connectionId) {
-    
-    
-    emitters.remove(connectionId);
-    connectedUsers.remove(connectionId);
-    
-    ScheduledExecutorService executorService = heartbeatExecutors.get(connectionId);
-    
-    if(executorService != null) {
-      
-      heartbeatExecutors.remove(connectionId);
-      
-      executorService.shutdownNow();
-      
-    }
-}
-  
-//  periodic checks for active connections to avoid error resulting in sending to stale connection
-  private boolean isConnectionAlive(SseEmitter emitter) {
-	  
-	  try {
-		  
-		emitter.send(SseEmitter.event().comment("ping"));
-		
-		return true;
-	} catch (Exception e) {
-		
-		return false;
-	}
-  }
-
+ 
 }

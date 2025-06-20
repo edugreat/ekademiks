@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,6 +28,7 @@ import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/chats")
@@ -46,59 +48,32 @@ public class MessageController {
 	private final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
 
 	@GetMapping("/messages")
-	public SseEmitter previousMessages(@RequestParam Integer studentId) {
-		
-		System.out.println("messages controller called");
-			
-		
-		SseEmitter emitter = chatConsumer.establishConnection(studentId);
-		
-		
-		
-		if(emitter != null) {
-
-			try {
-				
-				
-//		send previous chat messages
-		
-		Map<Integer, List<ChatDTO>> previousChatsPerGroup = chatInterface.getPreviousChats(studentId);
-		
-		for(Map.Entry<Integer, List<ChatDTO>> chatEntry : previousChatsPerGroup.entrySet()) {
-			
-					
-			
-			broadcaster.previousChatMessages(chatEntry.getValue());
-		}
-	
-//		send previous chat notifications
-		
-		Map<Integer, List<MiscellaneousNotifications>> notificationsPerGroup = chatInterface.streamChatNotifications(studentId);
-		
-		for(Map.Entry<Integer, List<MiscellaneousNotifications>> notificationSet : notificationsPerGroup.entrySet()) {
-			
-			broadcaster.broadcastPreviousChatNotifications(notificationSet.getValue());
-			
-		}
-		
-		
-				
-			} catch (Exception e) {
-				
-				System.out.println(e);
-				
-				return null;
+	public Flux<ServerSentEvent<?>> previousMessages(@RequestParam Integer studentId) {
+		  return chatConsumer.establishConnection(studentId)
+			        .mergeWith(
+			            Flux.defer(() -> {
+			                Map<Integer, List<ChatDTO>> previousChatsPerGroup = chatInterface.getPreviousChats(studentId);
+			                return Flux.fromIterable(previousChatsPerGroup.entrySet())
+			                    .map(chatEntry -> ServerSentEvent.builder()
+			                        .data(chatEntry.getValue())  // Send entire list for this group
+			                        .event("chats")
+			                        .id(String.valueOf(chatEntry.getKey()))  // Group ID as event ID
+			                        .build());
+			            })
+			        )
+			        .mergeWith(
+			            Flux.defer(() -> {
+			                Map<Integer, List<MiscellaneousNotifications>> notificationsPerGroup = 
+			                    chatInterface.streamChatNotifications(studentId);
+			                return Flux.fromIterable(notificationsPerGroup.entrySet())
+			                    .map(notificationSet -> ServerSentEvent.builder()
+			                        .data(notificationSet.getValue())  // Send entire notification list
+			                        .event("notifications")
+			                        .id(String.valueOf(notificationSet.getKey()))  // Group ID as event ID
+			                        .build());
+			            })
+			        );
 			}
-		
-			
-			
-		}	
-		
-
-		
-		return emitter;
-		
-	}
 
 //	end point for sending request to join group chat
 	@PostMapping("/join_req")

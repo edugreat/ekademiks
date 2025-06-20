@@ -1,231 +1,85 @@
 package com.edugreat.akademiksresource.amqp.notification.consumer;
 
-import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.edugreat.akademiksresource.model.AssessmentUploadNotification;
 
-import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 @Service
-@Slf4j
 public class NotificationConsumerService implements NotificationConsumer {
 
-	private static final long HEARTBEAT_INTERVAL = 30000;//30 seconds heart-beat interval
+    private final Map<Integer, Sinks.Many<ServerSentEvent<?>>> clientSinks = new ConcurrentHashMap<>();
+    private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(30);
 
-	private static Map<Integer, SseEmitter> clients = new ConcurrentHashMap<>();
-	
-//	thread-safe heart-beat executor service
-	private Map<Integer, ScheduledExecutorService> heartbeatExecutors = new ConcurrentHashMap<>();
-	
-	
-	@RabbitListener(queues = { "${previous.notification.queue}" })
-	 void consumePreviousNotification(AssessmentUploadNotification notification) {
-		
-//		get the receipient of this notification
-		final Integer studentId = notification.getReceipientIds().get(0);
+    @RabbitListener(queues = "${previous.notification.queue}")
+    public void consumePreviousNotification(AssessmentUploadNotification notification) {
+        notification.getReceipientIds().stream()
+            .filter(clientSinks::containsKey)
+            .forEach(userId -> emitNotification(notification, userId));
+    }
 
-		if (studentId != null && clients.containsKey(studentId)) {
-			
-		
+    @RabbitListener(queues = "${instant.notification.queue}")
+    public void consumeInstantNotification(AssessmentUploadNotification notification) {
+        List<Integer> recipientIds = notification.getReceipientIds();
+        
+        if (recipientIds == null || recipientIds.isEmpty()) {
+            // Broadcast to all connected clients
+            clientSinks.keySet().forEach(userId -> emitNotification(notification, userId));
+        } else {
+            // Send to specific recipients
+            recipientIds.stream()
+                .filter(clientSinks::containsKey)
+                .forEach(userId -> emitNotification(notification, userId));
+        }
+    }
 
-			try {
-				notify(notification, studentId);
-			} catch (IOException e) {
-				
-				
-				log.info("error notifying: {}", studentId);
-				
-				
-			}
+    @Override
+    public Flux<ServerSentEvent<?>> establishConnection(Integer studentId) {
+        Sinks.Many<ServerSentEvent<?>> sink = Sinks.many().unicast().onBackpressureBuffer();
+        clientSinks.put(studentId, sink);
 
-		}
+        // Heartbeat stream
+        Flux<ServerSentEvent<?>> heartbeat = Flux.interval(HEARTBEAT_INTERVAL)
+            .map(i -> ServerSentEvent.builder()
+                .comment("heartbeat")
+                .event("heartbeat")
+                .build());
 
-	}
+        return sink.asFlux()
+            .mergeWith(heartbeat)
+            .doOnCancel(() -> cleanup(studentId))
+            .doOnTerminate(() -> cleanup(studentId));
+    }
 
-	@RabbitListener(queues = { "${instant.notification.queue}" })
-	 void consumeInstantNotification(AssessmentUploadNotification notification) {
-		
-		
+    @Override
+    public void disconnectFromSSE(Integer studentId) {
+        cleanup(studentId);
+    }
 
-//		get the recipient of this notification
-		final List<Integer> recipientIds = notification.getReceipientIds();
-		
+    private void emitNotification(AssessmentUploadNotification notification, Integer userId) {
+        Sinks.Many<ServerSentEvent<?>> sink = clientSinks.get(userId);
+        if (sink != null) {
+            sink.tryEmitNext(
+                ServerSentEvent.builder(notification)
+                    .event("notifications")
+                    .build()
+            );
+        }
+    }
 
-//		 A case where the notification is meant for all users
-		if (recipientIds == null || recipientIds.size() == 0) {
-			
-			
-			
-			for(Map.Entry<Integer, SseEmitter> entry: clients.entrySet()) {
-				
-				final SseEmitter emitter = entry.getValue();
-				final Integer userId = entry.getKey();
-				
-				if(!isConnectionAlive(userId, emitter)) {
-					
-					cleanup(userId);
-					
-					continue;
-				}
-				
-				
-				try {
-					
-					notify(notification, userId);
-					
-				} catch (Exception e) {
-					log.info(String.format("Error notifying :{}", userId));
-				}
-				
-				
-			}
-				
-		
-
-
-//				a case where notification is meant for some currently logged in students
-		}else if(recipientIds.size() > 0) {
-      recipientIds.forEach(id -> {
-				
-				if(clients.containsKey(id)) {
-					
-					try {
-						
-						notify(notification, id);
-					} catch (Exception e) {
-						
-
-					}
-				}
-			});
-			
-		}
-		
-
-	}
-
-	@Override
-public SseEmitter establishConnection(Integer studentId) {
-		
-		if(clients.containsKey(studentId)) return clients.get(studentId);
-		
-		
-		
-		final SseEmitter emitter = new SseEmitter(0L);
-		
-		
-		
-		clients.put(studentId, emitter);
-		
-		
-	ScheduledExecutorService executorService = 	startHeartbeat(emitter, studentId);
-	
-	heartbeatExecutors.put(studentId, executorService);
-		
-		emitter.onError(e -> {
-			cleanup(studentId);
-			log.info("emitter error: {},", e.getMessage());
-		});
-		emitter.onCompletion(() -> {
-			cleanup(studentId);
-			log.info("emitter completed for: {}", studentId);
-		});
-		
-		emitter.onTimeout(() -> {
-			cleanup(studentId);
-			log.info("emitter timedout for: {}", studentId);
-		});
-		
-		
-		
-		return emitter;
-	}
-
-	private void notify(AssessmentUploadNotification notification, final Integer studentId) throws IOException {
-
-		clients.get(studentId).send(SseEmitter.event().data(notification).name("notifications"));
-
-	}
-
-	@Override
-	public SseEmitter disconnectFromSSE(Integer studentId) {
-		
-		if(clients.containsKey(studentId)) {
-			
-			return clients.remove(studentId);
-		}
-		
-		return null;
-	}
-	
-	 private  ScheduledExecutorService startHeartbeat(SseEmitter emitter, Integer connectionId) {  
-	        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();  
-	        executorService.scheduleAtFixedRate(() -> {  
-	        	
-	        	if(clients.containsKey(connectionId)) {
-	        		
-	        		if(!isConnectionAlive(connectionId, emitter)) {
-	        			
-	        			cleanup(connectionId);
-	        			
-	        			return;
-	        		}
-            		
-            		try {
-						clients.get(connectionId).send(SseEmitter.event().comment("heartbeat").name("heartbeat"));
-					} catch (IOException e) {
-						log.error("Error sending heartbeat:{}",  connectionId);
-						cleanup(connectionId);
-						return;
-					}
-            	}
-              
-	        }, HEARTBEAT_INTERVAL, HEARTBEAT_INTERVAL, TimeUnit.MILLISECONDS);  
-	        
-	        return executorService;
-	    }
-	 
-//	 cleans up tasks after encountering emitter errors, to avoid concurrency issues
-	 private void cleanup(Integer studentId) {
-		 
-		 clients.remove(studentId);
-		 
-		 ScheduledExecutorService scheduledExecutor = heartbeatExecutors.remove(studentId);
-		 if(scheduledExecutor != null) {
-			 
-			 scheduledExecutor.shutdown();
-		 }
-		 
-		 
-	 }
-	 
-//	 checks if the user connection is still alive
-	 private boolean isConnectionAlive(Integer userId, SseEmitter emitter) {
-		
-		 try {
-			emitter.send(SseEmitter.event().comment("ping"));
-			
-			return true;
-		} catch (IOException e) {
-			
-			log.info("lost connection for notification");
-			
-			cleanup(userId);
-			
-			return false;
-			
-		}
-		 
-	 }
-
+    private void cleanup(Integer studentId) {
+        Sinks.Many<ServerSentEvent<?>> sink = clientSinks.remove(studentId);
+        if (sink != null) {
+            sink.tryEmitComplete();
+        }
+    }
 }

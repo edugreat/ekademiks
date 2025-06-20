@@ -11,8 +11,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
@@ -45,25 +43,21 @@ protected AppUserDTO(String type) {
 	@JsonView(UserView.class)
 	private boolean isGroupMember;
 
-	@NotBlank(message = "first name must be provided")
-	@Pattern(regexp = "^[a-zA-Z]{2,}$")
 	@JsonView(UserView.class)
 	private String firstName;
 
-	@NotBlank(message = "last name must be provided")
-	@Pattern(regexp = "^[a-zA-Z]{2,}$")
+	
 	@JsonView(UserView.class)
 	private String lastName;
 
-	@Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$")
-	@NotBlank(message = "Password required")
+	
 	private String password;
 
-	@Pattern(regexp = "^\\s*(?:\\+?(\\d{1,3}))?([-. (]*(\\d{3})[-. )]*)?((\\d{3})[-. ]*(\\d{2,4})(?:[-.x ]*(\\d+))?)\\s*$", message = "Unsupported mobile number")
+	
 	@JsonView(UserView.class)
 	private String mobileNumber;
 
-	@Pattern(regexp = "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?", message = "invalid email type")
+
 	@JsonView(UserView.class)
 	private String email;
 	
