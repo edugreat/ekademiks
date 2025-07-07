@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,8 @@ import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.TopicAndDuration;
+
+import jakarta.persistence.Tuple;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "Tests")
@@ -23,8 +26,11 @@ public interface TestDao extends JpaRepository<Test, Integer> {
 
 	// Fetches from the database, Test object using the test name and the test
 	// category
-	@Query("SELECT t From Test t JOIN t.subject s WHERE t.testName =:testName AND s.level.category =:category")
-	public Test findByTestNameAndCategory(String testName, Category category);
+	@Query("SELECT t From Test t JOIN t.subject s WHERE t.id =:assessmentId AND s.level.id =:categoryId")
+	public Test findByTestIdAndCategoryId(Integer assessmentId, Integer categoryId);
+	
+	@Query("SELECT t FROM Test t JOIN t.subject s WHERE t.testName =:testName AND s.level.category =:category")
+    public Test findByTestNameAndCategory(String testName, Category category);
 
 	// fetches all the tests for the given subject and category belonging to the given institutions plus all those meant for any user
 	@Query("SELECT new com.edugreat.akademiksresource.projection.TopicAndDuration(t.testName, t.duration) FROM Test t JOIN t.subject s ON (t.owningInstitution =:institutionId OR t.owningInstitution IS NULL) AND s.level.category =:category AND s.subjectName =:subjectName")
@@ -54,7 +60,10 @@ public interface TestDao extends JpaRepository<Test, Integer> {
 	TopicAndDuration retrieveTopicAndurationById(Integer testId);
 
 //	Retrieves all assessment topics for the given assessment category
-	@Query("SELECT CONCAT(t.testName) FROM Test t JOIN t.subject s WHERE s.level.category = :category")  
-	List<String> getTopicsFor(Category category);
+	@Query("SELECT CONCAT(t.testName) FROM Test t JOIN t.subject s WHERE s.level.id = :categoryId")  
+	List<String> getTopicsFor(Integer categoryId);
+	
+	   @Query("SELECT t. id, t.testName FROM Test t JOIN t.subject s WHERE s.level.id = :categoryId ORDER BY t.testName ASC")
+	List<Tuple> getTopicsAsTuples(@Param("categoryId") Integer categoryId);
 
 }

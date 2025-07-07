@@ -1,8 +1,10 @@
 package com.edugreat.akademiksresource.controller;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,9 @@ import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.util.ApiResponseObject;
+import com.edugreat.akademiksresource.util.AssessmentTopic;
+import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -40,7 +45,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -51,6 +58,7 @@ import lombok.AllArgsConstructor;
 public class AdminController {
 
     private final AdminInterface service;
+    private Validator validator;
 
     @GetMapping("/user")
     @JsonView(UserView.class)
@@ -126,7 +134,7 @@ public class AdminController {
         throw new AcademicException("Invalid email format", Exceptions.BAD_REQUEST.name());
     }
 
-    @PostMapping("/sub")
+    @PostMapping("/subjects")
     @Operation(summary = "Create new subjects", 
                description = "Adds new subjects to the system. Requires ADMIN role.")
     @ApiResponses(value = {
@@ -137,8 +145,23 @@ public class AdminController {
     public ResponseEntity<Object> setSubject(
             @Parameter(description = "List of subject DTOs to create", required = true)
             @RequestBody List<SubjectDTO> dtos) {
-        service.setSubjects(dtos);
-        return new ResponseEntity<>(HttpStatus.OK);
+    	
+    
+       
+    	List<String> violations = validateObjectList(dtos);
+    	
+    	if(!violations.isEmpty()) {
+    		
+    		return new ResponseEntity<>(violations, HttpStatus.BAD_REQUEST);
+    	}
+       
+        try {
+        	 service.setSubjects(dtos);
+        	 return new ResponseEntity<>(HttpStatus.OK);
+		} catch (Exception e) {
+			
+			return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+		}
     }
     
     @PutMapping("/update/questions")
@@ -182,7 +205,7 @@ public class AdminController {
         }
     }
 
-    @GetMapping("levels")
+    @GetMapping("categories")
     @Operation(summary = "Get assessment levels", 
                description = "Retrieves all academic assessment levels. Requires ADMIN role.")
     @ApiResponse(responseCode = "200", description = "Assessment levels retrieved successfully")
@@ -190,9 +213,9 @@ public class AdminController {
         return new ResponseEntity<Object>(service.findAllLevels(), HttpStatus.OK);
     }
 
-    @PostMapping("/level")
-    @Operation(summary = "Create assessment levels", 
-               description = "Adds new assessment categories/levels. Requires ADMIN role.")
+    @PostMapping("/categories")
+    @Operation(summary = "Create assessment categories", 
+               description = "Adds new assessment categories. Requires ADMIN role.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Assessment levels created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid level data format"),
@@ -201,11 +224,24 @@ public class AdminController {
     public ResponseEntity<Object> addLevel(
             @Parameter(description = "List of level DTOs to create", required = true)
             @RequestBody List<LevelDTO> dtos) {
+    	System.out.println("controller");
         try {
+        	
+        	List<String> violations = validateObjectList(dtos) ;
+        	
+           if(!violations.isEmpty()) {
+        	   
+        	   return new ResponseEntity<>(violations, HttpStatus.BAD_REQUEST);
+           }
+        	
             service.addLevels(dtos);
+            
+            
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        	
+        	System.out.println(e);
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -225,8 +261,12 @@ public class AdminController {
             @RequestParam Integer id) {
         try {
             service.updateTest(id, updates);
+            
+           
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
+        	
+        	      	
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -382,18 +422,40 @@ public class AdminController {
     
     @GetMapping("/topics")
     @Operation(summary = "Get assessment topics", 
-               description = "Retrieves all assessment topics grouped by category. Requires ADMIN role.")
+               description = "Retrieves all assessment topics for the given category ID category. Requires ADMIN role.")
     @ApiResponse(responseCode = "200", description = "Assessment topics retrieved successfully",
                 content = @Content(schema = @Schema(example = "{\"Math\": [\"Algebra\", \"Geometry\"], \"Science\": [\"Biology\", \"Chemistry\"]}")))
-    public ResponseEntity<Map<String, List<String>>> assessmentTopics() {
+    public ResponseEntity<ApiResponseObject<List<AssessmentTopic>>> assessmentTopics(@RequestParam("category") Integer categoryId) {
+    	
+    	
         try {
-            return new ResponseEntity<Map<String,List<String>>>(service.getAssessmentTopics(), HttpStatus.OK);
+        	Map<Integer, String> maps = service.getAssessmentTopics(categoryId);
+        	
+        	List<AssessmentTopic> assessmentTopics = new ArrayList<>();
+        	for(Map.Entry<Integer, String> entry: maps.entrySet()) {
+        		
+        		assessmentTopics.add(new AssessmentTopic(entry.getKey(), entry.getValue()));
+        	}
+        	
+        	
+        	ApiResponseObject<List<AssessmentTopic>> response = new ApiResponseObject<>(assessmentTopics, null, true);
+        	
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+            
         } catch (Exception e) {
-            throw new IllegalArgumentException("Something went wrong");
+        	
+        	System.out.println(e.getMessage());
+        	
+        	
+        	ApiResponseObject<List<AssessmentTopic>> response = new ApiResponseObject<>(null, e.getMessage(), false);
+        	
+        	return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
     
-    @PatchMapping("/edit/topic")
+    @PatchMapping("/topics")
     @Operation(summary = "Update assessment topic", 
                description = "Renames an assessment topic within a category. Requires ADMIN role.")
     @ApiResponses(value = {
@@ -405,18 +467,20 @@ public class AdminController {
     public ResponseEntity<Object> updateAssessmentTopic(
             @Parameter(description = "Map containing new topic name", required = true,
                       schema = @Schema(example = "{\"newTopic\": \"Advanced Algebra\"}"))
-            @RequestBody Map<String, String> record,
-            @Parameter(description = "Category containing the topic", required = true)
-            @RequestParam String category) {
+            @RequestBody AssessmentTopicRequest update) {
+    	
+    	
         try {
-            service.updateAssessmentTopic(record, category);
+           service.updateAssessmentTopic(update);
             return new ResponseEntity<Object>(HttpStatus.OK);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Sorry, something went wrong");
+        	
+        	System.out.println(e.getMessage());
+           return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
     
-    @DeleteMapping("/del/topic")
+    @DeleteMapping("/topics")
     @Operation(summary = "Delete assessment topic", 
                description = "Deletes an assessment topic from a category. Requires ADMIN role.")
     @ApiResponses(value = {
@@ -427,13 +491,12 @@ public class AdminController {
     })
     public ResponseEntity<Object> deleteAssessment(
             @Parameter(description = "Category containing the topic", required = true)
-            @RequestParam String category,
-            @Parameter(description = "Name of the topic to delete", required = true)
-            @RequestParam String topic) {
+            @RequestParam Integer assessmentId, Integer category) {
         try {
-            service.deleteAssessment(category, topic);
+            service.deleteAssessment(assessmentId,  category);
             return new ResponseEntity<Object>(HttpStatus.OK);
         } catch (Exception e) {
+        	System.out.println(e.getMessage());
             return new ResponseEntity<Object>("Something went wrong!", HttpStatus.BAD_REQUEST);
         }
     }
@@ -498,7 +561,7 @@ public class AdminController {
         }
     }
     
-    @PatchMapping("/update/category")
+    @PatchMapping("/update/categories")
     @Operation(summary = "Update category name", 
                description = "Renames an assessment category. Requires ADMIN role.")
     @ApiResponses(value = {
@@ -520,7 +583,7 @@ public class AdminController {
         }
     }
     
-    @DeleteMapping("/delete/category")
+    @DeleteMapping("/delete/categories")
     @Operation(summary = "Delete category", 
                description = "Deletes an assessment category and all its contents. Requires ADMIN role.")
     @ApiResponses(value = {
@@ -602,4 +665,28 @@ public class AdminController {
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+    
+    private <T extends Object> List<String>  validateObjectList(List<T> toValidate) {
+    	
+    	List<String> errors = new ArrayList<>();
+    	
+    	toValidate.forEach(dto -> {
+    		
+    		Set<ConstraintViolation<T>> violations = validator.validate(dto);
+    		
+    		if(!violations.isEmpty()) {
+    			
+    			violations.stream().map(error -> error.getMessage()).toList().forEach(e -> errors.add(e));
+    			
+    		}
+    	});
+    	
+    	return errors;
+    	
+    	
+    }
+    
+    
 }
+
+ 

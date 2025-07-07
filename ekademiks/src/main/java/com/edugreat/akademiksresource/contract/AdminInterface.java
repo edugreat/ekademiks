@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.HttpStatusCode;
-
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.InstitutionDTO;
@@ -15,6 +13,7 @@ import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.dto.StudentRecord;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
+import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 
 /*
  * The contracts declared here are for user with the Admin roles.
@@ -67,15 +66,18 @@ public interface AdminInterface {
 //	provides functionality for deleting a particular assessment from the database
 	 void deleteAssessment(Integer testId);
 	
-//	provides functionality to retrieve all the assessment topics for editing or deletion purpose
-	 Map<String, List<String>> getAssessmentTopics();
+//	provides functionality to retrieve all the assessment topics for a given assessment category(e.g senior, junior etc) for editing or deletion purpose.
+//	 Key is the assessment ID and value is the assessment name
+	Map<Integer, String> getAssessmentTopics(int categoryId);
+	
+	 
 
 //	provides functionality for updating assessment topic. The key being the old value while the value is the current value.
 //	Category represents the assessment category under which the assessment falls
-	 void updateAssessmentTopic(Map<String, String>record, String category);
+	 void updateAssessmentTopic(AssessmentTopicRequest update);
 
 //	deleted the given assessment from the database
-	void deleteAssessment(String category, String topic);
+	void deleteAssessment(Integer assessmentId, Integer categoryId);
 
 //	provides functionality for retrieving all assessment subject names as a map whose keys are the assessment categories and values are the subject names
 	 Map<String, List<String>> assessmentSubjects();

@@ -1,5 +1,7 @@
 package com.edugreat.akademiksresource.service;
 
+
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +21,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +57,10 @@ import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.model.WelcomeMessage;
+import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 import com.edugreat.akademiksresource.util.OptionUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -77,6 +83,8 @@ public class AdminService implements AdminInterface {
 	private final TestDao testDao;
 	private final WelcomeMessageDao welcomeMsgDao;
 	private final QuestionDao questionDao;
+	private final RedisTemplate<String, Object> redisTemplate;
+	private final ObjectMapper objectMapper;
 
 	private final InstitutionDao institutionDao;
 
@@ -367,36 +375,49 @@ public class AdminService implements AdminInterface {
 	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
 			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
 	public Integer uploadAssessment(TestDTO testDTO) {
+		
+		
+		try {
+			
+			Integer categoryId = levelDao.findByCategory(Category.valueOf(testDTO.getCategory())).getId();
+			
+			if(categoryId == null) throw new IllegalArgumentException("Invalid assessment category");
+			
+			
 
-		// check if test name exists in the database
-		Test t = testDao.findByTestNameAndCategory(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
-		if (t != null) {
+			// check if test name exists in the database
+			Test t = testDao.findByTestIdAndCategoryId(testDTO.getId(), categoryId);
+			if (t != null) {
 
-			throw new AcademicException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
+				throw new AcademicException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
+			}
+
+			// fetches from the database, subject to which the test is associated
+			Subject loadedSubject = findSubjectOrThrow(testDTO.getSubjectName(), testDTO.getCategory());
+
+			Set<Question> validQuestions = validateQuestions(testDTO.getQuestions());
+
+			// map the TestDTO object to test object
+			Test validTest = mapper.map(testDTO, Test.class);
+
+			validTest.setQuestions(validQuestions);
+
+			// performs the bidirectional association between test and question objects
+			validQuestions.stream().forEach(x -> x.setTest(validTest));
+
+			loadedSubject.addTest(validTest);
+
+			// return the id of the just uploaded test assessment for notification purpose
+			Integer id = findId(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
+			if (id == null) throw new IllegalArgumentException("Invalid request");
+
+			return id;
+
+			
+		} catch (Exception e) {
+			
+			throw e;
 		}
-
-		// fetches from the database, subject to which the test is associated
-		Subject loadedSubject = findSubjectOrThrow(testDTO.getSubjectName(), testDTO.getCategory());
-
-		Set<Question> validQuestions = validateQuestions(testDTO.getQuestions());
-
-		// map the TestDTO object to test object
-		Test validTest = mapper.map(testDTO, Test.class);
-
-		validTest.setQuestions(validQuestions);
-
-		// performs the bidirectional association between test and question objects
-		validQuestions.stream().forEach(x -> x.setTest(validTest));
-
-		loadedSubject.addTest(validTest);
-
-		// return the id of the just uploaded test assessment for notification purpose
-		Integer id = findId(testDTO.getTestName(), Category.valueOf(testDTO.getCategory()));
-		if (id == null)
-			throw new IllegalArgumentException("Invalid request");
-
-		return id;
-
 	}
 
 	// returns the id of a test assessment using its information
@@ -526,12 +547,12 @@ public class AdminService implements AdminInterface {
 
 			// verifies that the parameter is a valid allowable category. Can throw
 			// exception on attempt to provide invalid enum type
-			dtos.forEach(dto -> Category.valueOf(dto.getCategory()));
+			dtos.forEach(dto -> Category.valueOf(dto.getCategory().toUpperCase()));
 
 			// check if Level object for that category already exists in the database
 
 			dtos.forEach(dto -> {
-				if (levelDao.existsByCategory(Category.valueOf(dto.getCategory()))) {
+				if (levelDao.existsByCategory(Category.valueOf(dto.getCategory().toUpperCase()))) {
 					throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
 							Exceptions.BAD_REQUEST.name());
 				}
@@ -552,7 +573,7 @@ public class AdminService implements AdminInterface {
 			}
 
 		} catch (IllegalArgumentException e) {
-			throw new AcademicException("Illegal parameter for category", Exceptions.BAD_REQUEST.name());
+			throw new AcademicException(e.getMessage(), Exceptions.BAD_REQUEST.name());
 		}
 
 	}
@@ -594,91 +615,70 @@ public class AdminService implements AdminInterface {
 		return Pattern.matches("^[A-Za-z0-9\s,;:!.'\"-]+[.!?]*$", msg);
 	}
 
-	@SuppressWarnings("unchecked")
+	
 	@Override
-	public Map<String, List<String>> getAssessmentTopics() {
-
-		Map<String, List<String>> map = new TreeMap<>();
-
-		Cache juniorCategoryCache = cacheManager.getCache(RedisValues.ASSESSMENT_TOPICS);
-//		get all assessment topics for junior assessments
-		List<String> juniorCategory = null;
-
-		if (juniorCategoryCache != null && juniorCategoryCache.get("JUNIOR") != null) {
-
-			Cache.ValueWrapper valueWrapper = juniorCategoryCache.get("JUNIOR");
-			juniorCategory = new ArrayList<>((List<String>) valueWrapper);
-		} else {
-
-			juniorCategory = testDao.getTopicsFor(Category.JUNIOR);
+	public Map<Integer, String> getAssessmentTopics(int categoryId) {
+		
+		Object obj = redisTemplate.opsForValue().get(RedisValues.ASSESSMENT_TOPICS+"::"+categoryId);
+		
+		if(obj != null) {
+			
+			Map<Integer, String> topics =  objectMapper.convertValue(obj, new TypeReference<Map<Integer, String>>() {});
+			
+			return topics;
+			
 		}
-
-		Cache seniorCategoryCache = cacheManager.getCache(RedisValues.ASSESSMENT_TOPICS);
-
-		List<String> seniorCategory = null;
-
-		if (seniorCategoryCache != null && juniorCategoryCache.get("SENIOR") != null) {
-
-			Cache.ValueWrapper valueWrapper = juniorCategoryCache.get("SENIOR");
-			seniorCategory = new ArrayList<>((List<String>) valueWrapper);
-		} else {
-
-			seniorCategory = testDao.getTopicsFor(Category.SENIOR);
-		}
-
-		testDao.getTopicsFor(Category.SENIOR);
-
-		if (juniorCategory.size() > 0) {
-
-			Collections.sort(juniorCategory);
-			map.put("JUNIOR", juniorCategory);
-
-		}
-
-		if (seniorCategory.size() > 0) {
-
-			Collections.sort(seniorCategory);
-			map.put("SENIOR", seniorCategory);
-		}
-
-		if (!map.isEmpty()) {
-
-			return map;
-		}
-		;
-
-		return null;
+		
+		
+//		fetch from the database
+		Map<Integer, String> assessmentTopics = testDao.getTopicsAsTuples(categoryId).stream()
+				                                .collect(Collectors.toMap(
+				                                		tuple -> tuple.get(0, Integer.class), 
+				                                		tuple -> tuple.get(1, String.class)
+				                                		));
+		
+	
+		
+		redisTemplate.opsForValue().set(RedisValues.ASSESSMENT_TOPICS+"::"+categoryId, assessmentTopics);
+		
+		return assessmentTopics;	
+		
+		
 	}
 
 	@Override
 	@Transactional
-	public void updateAssessmentTopic(Map<String, String> record, String category) {
+	public void updateAssessmentTopic(AssessmentTopicRequest update) {
 
-		record.forEach((oldName, newName) -> {
-
-			Test updatableTest = testDao.findByTestNameAndCategory(oldName, Category.valueOf(category));
-			if (updatableTest == null) {
-
-				throw new IllegalArgumentException("Record not found!");
-			}
-
-			updatableTest.setTestName(newName);
-			testDao.saveAndFlush(updatableTest);
-
-		});
+		final Integer assId =update.assessmentId();
+		final Integer catId = update.categoryId();
+		
+		Test updatableTest = testDao.findByTestIdAndCategoryId(assId, catId);
+		
+		if(updatableTest == null) throw new IllegalArgumentException("Record not found!");
+		
+		updatableTest.setTestName(update.currentName());
+		
+		testDao.save(updatableTest);
+		redisTemplate.delete(RedisValues.ASSESSMENT_TOPICS+"::"+catId);
+		
+	
 
 	}
 
 	@Override
 	@Transactional
-	public void deleteAssessment(String category, String topic) {
+	public void deleteAssessment(Integer assessmentId, Integer categoryId) {
 
-		Test deletable = testDao.findByTestNameAndCategory(topic, Category.valueOf(category));
+		Test deletable = testDao.findByTestIdAndCategoryId(assessmentId, categoryId);
 
 		if (deletable == null)
 			throw new IllegalArgumentException("Record does not exist!");
 
 		testDao.delete(deletable);
+		
+		
+		redisTemplate.delete(RedisValues.ASSESSMENT_TOPICS+"::"+categoryId);
 
 	}
 
