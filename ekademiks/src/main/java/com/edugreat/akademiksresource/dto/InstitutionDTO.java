@@ -13,28 +13,45 @@ public class InstitutionDTO {
 	
 	private Integer id;
 	
-	@NotNull
-	@NotEmpty
+	@NotNull(message = "Missing name for institution")
+	@NotEmpty(message = "Institution's name is required")
 	private String name;
 	
 	private LocalDateTime  createdOn;
 	
-	@NotNull
-	@NotEmpty
+	@NotNull(message = "Please indicate your state")
+	@NotEmpty(message = "Your state is missing")
 	private String state;
 	
-	@NotNull
-	@NotEmpty
+	@NotNull(message = "Local government not found")
+	@NotEmpty(message = "Please indicate local government")
 	private String localGovt;
 	
-	@Min(value = 1)
+	@Min(value = 1, message = "Could not identify instructor")
 	private Integer createdBy;
 	
-	private int studentPopulation;
+	private Integer studentPopulation;
+	
+	public InstitutionDTO() {}
 
-	public InstitutionDTO(Integer id, @NotNull @NotEmpty String name, int studentPopulation) {
+	public InstitutionDTO(
+			Integer id,
+			@NotNull(message = "Please indicate your state")
+	        @NotEmpty(message = "Your state is missing") String name, 
+	        Integer studentPopulation,
+	        String state,
+	        String localGovt,
+	        int createdBy,
+	        LocalDateTime createdOn
+	        
+			) {
+		
 		
 		this.id = id;
+		this.state = state;
+		this.localGovt = localGovt;
+		this.createdOn = createdOn;
+		this.createdBy = createdBy;
 		this.name = name;
 		this.studentPopulation = studentPopulation;
 	}

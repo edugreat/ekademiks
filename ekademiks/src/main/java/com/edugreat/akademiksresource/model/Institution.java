@@ -73,7 +73,7 @@ public class Institution {
 		student.setInstitution(this);
 		
 
-		studentPopulation++; // increment student population count
+		
 		
 		return studentList.add(student);
 		

@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -831,16 +832,34 @@ public class AdminService implements AdminInterface {
 	public List<InstitutionDTO> getInstitutions(Integer adminId) {
 
 		List<Institution> institutions = institutionDao.findByCreatedByOrderByNameAsc(adminId);
+		
+	
+		
+		if (!institutions.isEmpty()) {
+			
+			
+			return mapToDTOs(institutions);
+		}
+			
 
-		if (!institutions.isEmpty())
-			return institutions.stream().map(this::mapToDTO).collect(Collectors.toList());
-
-		return List.of();
+		return Collections.emptyList();
 	}
 
-	private InstitutionDTO mapToDTO(Institution institution) {
-
-		return new InstitutionDTO(institution.getId(), institution.getName(), institution.getStudentPopulation());
+	private List<InstitutionDTO> mapToDTOs(List<Institution> institutions) {
+		
+		List<InstitutionDTO> dtos = new ArrayList<>();
+		
+		for(Institution institution : institutions) {
+			
+			InstitutionDTO dto = new InstitutionDTO();
+			
+			BeanUtils.copyProperties(institution, dto);
+			dtos.add(dto);
+		}
+		
+		return dtos;
+		
+		
 
 	}
 
@@ -865,7 +884,11 @@ public class AdminService implements AdminInterface {
 				throw new IllegalArgumentException("some records already exist");
 
 		}
-
+		
+//		increment the count of total students added
+		Integer currentPopulation = institution.getStudentPopulation();
+		
+		institution.setStudentPopulation( currentPopulation == null ? studentRecords.size() : currentPopulation+studentRecords.size());
 		studentDao.saveAllAndFlush(verifiedRecords);
 
 		institutionDao.saveAndFlush(institution);
@@ -885,7 +908,7 @@ public class AdminService implements AdminInterface {
 			// throws exception if the student does not exist or the supplied password does
 			// not match with the actual password in the database
 			if (op.isEmpty() || !(passwordEncoder.matches(r.password(), op.get().getPassword())))
-				throw new IllegalArgumentException("Email and or password error");
+				throw new IllegalArgumentException("wrong email and or password");
 
 			students.add(op.get());
 

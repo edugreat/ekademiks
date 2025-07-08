@@ -31,9 +31,11 @@ import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.service.StatesAndRegionService;
 import com.edugreat.akademiksresource.util.ApiResponseObject;
 import com.edugreat.akademiksresource.util.AssessmentTopic;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
+import com.edugreat.akademiksresource.util.Region;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -59,6 +61,7 @@ public class AdminController {
 
     private final AdminInterface service;
     private Validator validator;
+    private final StatesAndRegionService region;
 
     @GetMapping("/user")
     @JsonView(UserView.class)
@@ -615,9 +618,20 @@ public class AdminController {
     public ResponseEntity<Object> registerInstitution(
             @Parameter(description = "Institution DTO containing registration details", required = true)
             @RequestBody @Valid InstitutionDTO institutionDTO) {
-        try {
+    	
+    
+    	try {
+    		
+    		List<String> violations = validateObject(institutionDTO);
+    		
+    		if(!violations.isEmpty()) {
+    			
+    			return new ResponseEntity<>(violations, HttpStatus.BAD_REQUEST);
+    		}
             service.registerInstitution(institutionDTO);
+            
             return new ResponseEntity<>(HttpStatus.OK);
+          
         } catch (Exception e) {
             return new ResponseEntity<Object>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -634,12 +648,19 @@ public class AdminController {
     public ResponseEntity<Object> getInstitutions(
             @Parameter(description = "ID of the admin making the request", required = true)
             @RequestHeader String adminId) {
+    	
+    	
         try {
             if(adminId != null) {
+            	
+            	
+            	
                 return new ResponseEntity<Object>(service.getInstitutions(Integer.parseInt(adminId)), HttpStatus.OK);
             }
         } catch (Exception e) {
+        	 System.out.println(e.getMessage());
             return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+           
         }
         return new ResponseEntity<>(new IllegalArgumentException("Number format error"), HttpStatus.BAD_REQUEST);
     }
@@ -658,11 +679,15 @@ public class AdminController {
             @RequestBody List<StudentRecord> studentRecords,
             @Parameter(description = "ID of the institution to register students to", required = true)
             @RequestHeader String institutionId) {
+    	
+    	System.out.println("adding students");
         try {
             service.addStudentRecords(studentRecords, Integer.parseInt(institutionId));
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+        	
+        	System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
     
@@ -685,6 +710,61 @@ public class AdminController {
     	
     	
     }
+    
+    private <T extends Object> List<String> validateObject(T obj){
+    	
+    	List<String> errors = new ArrayList<>();
+    	
+    	Set<ConstraintViolation<T>> violations = validator.validate(obj);
+    	if(!violations.isEmpty()) {
+    		
+    		violations.stream().map(error -> error.getMessage()).toList() .forEach(e -> errors.add(e));
+    		
+    	}
+    	
+    	return errors;
+    }
+    
+    @GetMapping("/regions")
+    public ResponseEntity<ApiResponseObject<List<Region>>> states() {
+      
+    	try {
+			List<Region> states = region.getAllStates();
+			
+			ApiResponseObject<List<Region>> response = new ApiResponseObject<List<Region>>(states, null, true);
+		
+			return new ResponseEntity<>(response, HttpStatus.OK);
+    	
+    	} catch (Exception e) {
+			
+    		ApiResponseObject<List<Region>> response = new ApiResponseObject<>(null, e.getMessage(), false);
+		
+    		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    	}
+    	
+    	
+    }
+    
+    @GetMapping("/lgas")
+    public ResponseEntity<ApiResponseObject<List<String>>> lgas(@RequestParam String state) {
+       
+    	try {
+			
+    		 
+        	List<String> lgas = region.getLGAsByState(state);
+        	
+        	ApiResponseObject<List<String>> response = new ApiResponseObject<List<String>>(lgas, null, true);
+        	
+        	return new ResponseEntity<>(response, HttpStatus.OK);
+		} catch (Exception e) {
+			
+			ApiResponseObject<List<String>> response = new ApiResponseObject<>(null, e.getMessage(), false);
+			
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+		}
+    }
+    
+    
     
     
 }
