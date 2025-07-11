@@ -680,7 +680,7 @@ public class AdminController {
             @Parameter(description = "ID of the institution to register students to", required = true)
             @RequestHeader String institutionId) {
     	
-    	System.out.println("adding students");
+    	
         try {
             service.addStudentRecords(studentRecords, Integer.parseInt(institutionId));
             return new ResponseEntity<>(HttpStatus.OK);
@@ -763,6 +763,31 @@ public class AdminController {
 			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 		}
     }
+    
+    
+     @GetMapping("/assessment/names")
+    public ResponseEntity<ApiResponseObject<List<String>>> getAssessmentNames(@RequestHeader List<String> studentTestIds) {
+       
+    	try {
+    		
+    		List<Integer> ids = studentTestIds.stream().map(Integer::parseInt).toList();
+    		
+			List<String> assessmentNames = service.getAssessmentNamesFor(ids);
+			
+			ApiResponseObject<List<String>> response = new ApiResponseObject<List<String>>(assessmentNames, null, true);
+			
+			return new ResponseEntity<>(response, HttpStatus.OK);
+		} catch (Exception e) {
+		
+			ApiResponseObject<List<String>> response = new ApiResponseObject<List<String>>(null, e.getMessage(), false);
+			
+			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+			
+		}
+    	
+    
+    }
+    
     
     
     

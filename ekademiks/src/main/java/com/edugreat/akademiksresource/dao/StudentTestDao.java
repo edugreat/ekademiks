@@ -30,4 +30,6 @@ public interface StudentTestDao extends JpaRepository<StudentTest, Integer> {
 	@Query("SELECT st FROM StudentTest st JOIN st.student s JOIN st.test t WHERE s.id =:studentId AND t.id =:testId")
 	public StudentTest findByStudentAndTest(Integer studentId, Integer testId);
 
+	@Query("SELECT t.testName FROM StudentTest st JOIN st.test t WHERE st.id IN :studentTestIds")
+	 List<String> getAssessmentNamesByIds(List<Integer> studentTestIds);
 }

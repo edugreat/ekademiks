@@ -5,14 +5,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import com.edugreat.akademiksresource.model.AssignmentResponse;
 import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 import com.edugreat.akademiksresource.model.Student;
 
@@ -85,6 +86,9 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 	Integer getIdByUsername(String username);
 	
 	Integer findIdByFirstName(String firstName);
+	
+	@RestResource(path = "status")
+	Page<Student> findByStatus(@Param("status") String status, Pageable pageable);
 	
 
 	

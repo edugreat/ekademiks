@@ -33,6 +33,7 @@ import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.QuestionDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
+import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.dao.WelcomeMessageDao;
@@ -88,6 +89,7 @@ public class AdminService implements AdminInterface {
 	private final ObjectMapper objectMapper;
 
 	private final InstitutionDao institutionDao;
+	private final StudentTestDao studentTestDao;
 
 	@Autowired
 	private CacheManager cacheManager;
@@ -915,6 +917,21 @@ public class AdminService implements AdminInterface {
 		}
 		return students;
 
+	}
+
+	@Override
+	@Transactional
+	public List<String> getAssessmentNamesFor(List<Integer> studentTestIds) {
+		
+		try {
+			
+			return studentTestDao.getAssessmentNamesByIds(studentTestIds);
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e);
+		}
+		
+		
 	}
 
 }

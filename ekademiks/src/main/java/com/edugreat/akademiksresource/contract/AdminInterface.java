@@ -103,5 +103,7 @@ public interface AdminInterface {
 //	provides method that adds student's records to registered institution
 	void addStudentRecords(List<StudentRecord> studentRecords, Integer instutionId);
 	
+	List<String> getAssessmentNamesFor(List<Integer> studentTestIds);
+	
 	
 }
