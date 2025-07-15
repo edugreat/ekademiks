@@ -131,7 +131,7 @@ public class NotificationService implements NotificationInterface {
 			final Institution targetInstitution = institutionDao.findById(receipientInstitutitonId)
 					.orElseThrow(() -> new IllegalArgumentException("Targetted institution not found"));
 
-			List<Student> targetStudents = targetInstitution.getStudentList();
+			List<Student> targetStudents = targetInstitution.getStudents();
 
 			if (targetStudents.size() > 0) {
 

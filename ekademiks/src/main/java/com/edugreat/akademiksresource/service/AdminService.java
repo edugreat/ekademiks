@@ -874,7 +874,7 @@ public class AdminService implements AdminInterface {
 				.orElseThrow(() -> new IllegalArgumentException("Institution does not exist"));
 
 //		get the students already registered
-		final List<Student> students = institution.getStudentList();
+		final List<Student> students = institution.getStudents();
 
 		final List<Student> verifiedRecords = verifyStudentRecords(studentRecords);
 

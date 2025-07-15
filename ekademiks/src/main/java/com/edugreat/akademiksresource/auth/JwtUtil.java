@@ -10,6 +10,7 @@ import java.util.function.Function;
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -29,12 +30,23 @@ public class JwtUtil {
 	@Value("${jwt.secret}")
 	private String SECRET_KEY;
 
-	public String generateToken(UserDetails userDetails) {
+	public String generateToken(UserDetails userDetails, String selectedRole) {
 
+		
+		List<String> authorities = userDetails.getAuthorities().stream()
+				.map(GrantedAuthority::getAuthority)
+				.toList();
+		
+		if(!authorities.contains(selectedRole)) {
+			
+			throw new IllegalArgumentException("You cannot login as "+selectedRole);
+		}
+
+				
 //		Include the user's roles to the generated token
 		Map<String, Object> claims = new HashMap<>();
-		claims.put("roles", userDetails.getAuthorities().stream().map(authority -> authority.getAuthority()).toList());
-
+		//claims.put("roles", userDetails.getAuthorities().stream().map(authority -> authority.getAuthority()).toList());
+        claims.put("roles", List.of(selectedRole));
 		return Jwts.builder().claims(claims).subject(userDetails.getUsername())
 				.issuedAt(new Date(System.currentTimeMillis()))
 				.expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)).signWith(getSignedKey()).compact();
@@ -78,7 +90,7 @@ public class JwtUtil {
 	}
 	
 //	Methods handles creation of refresh token
-	public String createRefreshToken(UserDetails userDetails) {
+	public String createRefreshToken(UserDetails userDetails, String selectedRole) {
 		
 		Date now = new Date();
 		Date expiry = new Date(now.getTime() + 86400000);//24 hours as refresh token should live longer than access tokens
@@ -86,7 +98,8 @@ public class JwtUtil {
 
 //		Include the user's roles to the generated token
 		Map<String, Object> claims = new HashMap<>();
-		claims.put("roles", userDetails.getAuthorities().stream().map(authority -> authority.getAuthority()).toList());
+	//	claims.put("roles", userDetails.getAuthorities().stream().map(authority -> authority.getAuthority()).toList());
+		claims.put("roles", selectedRole);
 		
 		return Jwts.builder().claims(claims).subject(userDetails.getUsername())
 				.issuedAt(now)

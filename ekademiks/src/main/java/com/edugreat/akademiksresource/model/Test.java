@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.edugreat.akademiksresource.instructor.Instructor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -42,6 +42,10 @@ public class Test {
 	@JsonIgnore
 	private Set<StudentTest> studentTests = new HashSet<>();
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "instructor_id", nullable = true)
+	private Instructor instructor;
+	
 	@Column
 	private long duration;
 	
@@ -106,6 +110,14 @@ public class Test {
 
 	public void setQuestions(Set<Question> questions) {
 		this.questions = questions;
+	}
+
+	public Instructor getInstructor() {
+		return instructor;
+	}
+
+	public void setInstructor(Instructor instructor) {
+		this.instructor = instructor;
 	}
 
 	public long getDuration() {

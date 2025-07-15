@@ -80,7 +80,7 @@ public class AuthenticateController {
 			
 
 			
-			return ResponseEntity.ok(appInterface.signUp(registrationData));
+			return ResponseEntity.ok(appInterface.studentSignup(registrationData));
 		} catch (Exception e) {
 		
 			

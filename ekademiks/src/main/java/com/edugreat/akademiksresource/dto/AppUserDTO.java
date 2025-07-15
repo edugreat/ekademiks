@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.edugreat.akademiksresource.instructor.InstructorDTO;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -22,7 +23,9 @@ import lombok.Data;
 		)
 @JsonSubTypes({
 	@JsonSubTypes.Type(value = StudentDTO.class, name = "student"),
-	@JsonSubTypes.Type(value = AdminsDTO.class, name = "admin")})
+	@JsonSubTypes.Type(value = AdminsDTO.class, name = "admin"),
+    @JsonSubTypes.Type(value = InstructorDTO.class, name = "instructor")	
+})
 public class AppUserDTO {
 	public AppUserDTO() {}
 	
@@ -112,10 +115,6 @@ protected AppUserDTO(String type) {
 		
 	}
 
-	// each child class should implement this method to populate the user roles
-	// specific to the type of the user
-//     public Set<Roles> getUserRoles(){
-//    	 return null;
-//     }
+
 
 }

@@ -2,10 +2,14 @@ package com.edugreat.akademiksresource.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.edugreat.akademiksresource.instructor.Instructor;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
@@ -14,6 +18,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -52,13 +57,27 @@ public class Institution {
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "institution")
 	@JsonManagedReference
-	private List<Student> studentList = new ArrayList<>();
+	private List<Student> students = new ArrayList<>();
+	
+	@ManyToMany(mappedBy = "institutions", fetch = FetchType.LAZY)
+	@JsonIgnore
+	private Set<Instructor> instructors = new HashSet<>();
 	
 	public Institution() {
 		
 		createdOn = LocalDateTime.now();
 		
 		studentPopulation = 0;
+	}
+	
+	
+public Institution(String name, String state, String localGovt, Integer createdBy) {
+		
+		this.createdOn = LocalDateTime.now();
+		this.name = name;
+		this.state = state;
+		this.localGovt = localGovt;
+		this.createdBy = createdBy;
 	}
 	
 	
@@ -75,26 +94,29 @@ public class Institution {
 
 		
 		
-		return studentList.add(student);
+		return students.add(student);
 		
 		
-		
-		
-		
-		
-		
+	}
+	
+	// In Institution.java
+	public void addInstructor(Instructor instructor) {
+	    if (instructor != null && !this.instructors.contains(instructor)) {
+	        this.instructors.add(instructor);
+	        instructor.getInstitutions().add(this);
+	    }
+	}
+
+	public void removeInstructor(Instructor instructor) {
+	    if (instructor != null && this.instructors.contains(instructor)) {
+	        this.instructors.remove(instructor);
+	        instructor.getInstitutions().remove(this);
+	    }
 	}
 
 
 
 
-	public Institution(String name, String state, String localGovt, Integer createdBy) {
-		
-		this.createdOn = LocalDateTime.now();
-		this.name = name;
-		this.state = state;
-		this.localGovt = localGovt;
-		this.createdBy = createdBy;
-	}
+	
 
 }

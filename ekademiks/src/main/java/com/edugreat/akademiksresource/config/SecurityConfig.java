@@ -29,7 +29,9 @@ import lombok.AllArgsConstructor;
 @EnableGlobalAuthentication
 public class SecurityConfig {
 
-	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**",
+	private static final String[] PUBLIC_API = { "/auth/**",  "/students/**", "/tests/**","/public/**",
+			"/instructors/signup/**",
+			
 			"/learning/**","/allow/**",
 	         
 			"/swagger-ui/**",  
@@ -37,7 +39,8 @@ public class SecurityConfig {
 		    "/v3/api-docs/**",  
 		    "/api-docs/**",     
 		    "/webjars/**",      
-		    "/swagger-resources/**"
+		    "/swagger-resources/**",
+		  
 	
 	
 	
@@ -73,7 +76,7 @@ public class SecurityConfig {
 			configuration.setExposedHeaders(List.of(EXPOSED_HEADERS));
 			return configuration;
 		})).csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(request -> request.requestMatchers(PUBLIC_API)
-				.permitAll().requestMatchers(STUDENT_URL).hasAnyAuthority("Student").requestMatchers(ADMINS_URL).hasAnyAuthority("Admin")
+				.permitAll().requestMatchers(STUDENT_URL).hasAnyAuthority("Student").requestMatchers(ADMINS_URL).hasAnyAuthority("Admin","Instuctor")
 
 		)
 

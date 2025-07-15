@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.springframework.http.HttpStatus;
@@ -31,11 +30,10 @@ import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
-import com.edugreat.akademiksresource.service.StatesAndRegionService;
 import com.edugreat.akademiksresource.util.ApiResponseObject;
 import com.edugreat.akademiksresource.util.AssessmentTopic;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
-import com.edugreat.akademiksresource.util.Region;
+import com.edugreat.akademiksresource.util.ValidatorService;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -47,9 +45,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
-import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -60,8 +56,9 @@ import lombok.AllArgsConstructor;
 public class AdminController {
 
     private final AdminInterface service;
-    private Validator validator;
-    private final StatesAndRegionService region;
+    private final ValidatorService validatorService;
+   
+   
 
     @GetMapping("/user")
     @JsonView(UserView.class)
@@ -151,7 +148,7 @@ public class AdminController {
     	
     
        
-    	List<String> violations = validateObjectList(dtos);
+    	List<String> violations = validatorService.validateObjectList(dtos);
     	
     	if(!violations.isEmpty()) {
     		
@@ -230,7 +227,7 @@ public class AdminController {
     	System.out.println("controller");
         try {
         	
-        	List<String> violations = validateObjectList(dtos) ;
+        	List<String> violations = validatorService.validateObjectList(dtos) ;
         	
            if(!violations.isEmpty()) {
         	   
@@ -622,7 +619,7 @@ public class AdminController {
     
     	try {
     		
-    		List<String> violations = validateObject(institutionDTO);
+    		List<String> violations = validatorService.validateObject(institutionDTO);
     		
     		if(!violations.isEmpty()) {
     			
@@ -690,79 +687,10 @@ public class AdminController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+   
     
-    private <T extends Object> List<String>  validateObjectList(List<T> toValidate) {
-    	
-    	List<String> errors = new ArrayList<>();
-    	
-    	toValidate.forEach(dto -> {
-    		
-    		Set<ConstraintViolation<T>> violations = validator.validate(dto);
-    		
-    		if(!violations.isEmpty()) {
-    			
-    			violations.stream().map(error -> error.getMessage()).toList().forEach(e -> errors.add(e));
-    			
-    		}
-    	});
-    	
-    	return errors;
-    	
-    	
-    }
+  
     
-    private <T extends Object> List<String> validateObject(T obj){
-    	
-    	List<String> errors = new ArrayList<>();
-    	
-    	Set<ConstraintViolation<T>> violations = validator.validate(obj);
-    	if(!violations.isEmpty()) {
-    		
-    		violations.stream().map(error -> error.getMessage()).toList() .forEach(e -> errors.add(e));
-    		
-    	}
-    	
-    	return errors;
-    }
-    
-    @GetMapping("/regions")
-    public ResponseEntity<ApiResponseObject<List<Region>>> states() {
-      
-    	try {
-			List<Region> states = region.getAllStates();
-			
-			ApiResponseObject<List<Region>> response = new ApiResponseObject<List<Region>>(states, null, true);
-		
-			return new ResponseEntity<>(response, HttpStatus.OK);
-    	
-    	} catch (Exception e) {
-			
-    		ApiResponseObject<List<Region>> response = new ApiResponseObject<>(null, e.getMessage(), false);
-		
-    		return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    	}
-    	
-    	
-    }
-    
-    @GetMapping("/lgas")
-    public ResponseEntity<ApiResponseObject<List<String>>> lgas(@RequestParam String state) {
-       
-    	try {
-			
-    		 
-        	List<String> lgas = region.getLGAsByState(state);
-        	
-        	ApiResponseObject<List<String>> response = new ApiResponseObject<List<String>>(lgas, null, true);
-        	
-        	return new ResponseEntity<>(response, HttpStatus.OK);
-		} catch (Exception e) {
-			
-			ApiResponseObject<List<String>> response = new ApiResponseObject<>(null, e.getMessage(), false);
-			
-			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-		}
-    }
     
     
      @GetMapping("/assessment/names")

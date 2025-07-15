@@ -172,7 +172,7 @@ public class AssignmentController {
 		Institution institution = assignmentDetailsDao.getInstitution(assignmentId);
 
 //		filter the concerned students
-		List<String> candidateIds = institution.getStudentList().stream()
+		List<String> candidateIds = institution.getStudents().stream()
 				.filter(student -> student.getStatus().equalsIgnoreCase(category)).map(x -> x.getId().toString())
 				.collect(Collectors.toList());
 

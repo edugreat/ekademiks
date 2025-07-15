@@ -1,8 +1,6 @@
 package com.edugreat.akademiksresource.auth;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,17 +18,22 @@ import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.controller.StudentRegistrationData;
 import com.edugreat.akademiksresource.dao.AdminsDao;
+import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.instructor.Instructor;
+import com.edugreat.akademiksresource.instructor.InstructorDTO;
+import com.edugreat.akademiksresource.instructor.InstructorDao;
+import com.edugreat.akademiksresource.instructor.InstructorRegistrationRequest;
 import com.edugreat.akademiksresource.model.Admins;
+import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Student;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.ValidatorFactory;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,9 +43,11 @@ public class AppAuthService implements AppAuthInterface {
 	private final AdminsDao adminsDao;
 	private final GroupMembersDao groupMemberDo;
 	private final StudentDao studentDao;
+	private final InstructorDao instructorDao;
 	private final JwtUtil jwtUtil;
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper mapper;
+	private final InstitutionDao institutionDao;
 
 	
 
@@ -53,7 +58,7 @@ public class AppAuthService implements AppAuthInterface {
 
 	@Transactional
 	@Override
-	public int signUp(StudentRegistrationData registrationData) {
+	public int studentSignup(StudentRegistrationData registrationData) {
 		try {
 			
 			// Check the type of user wanting to sign up.
@@ -101,83 +106,141 @@ public class AppAuthService implements AppAuthInterface {
 
 		return HttpStatus.CREATED.value();
 	}
+	
+	
 
+	
+	@SuppressWarnings("unchecked")
+	private <T extends AppUserDTO> T processBeforLogin(Object obj, String selectedRole){
+		
+		if(obj instanceof Admins) {
+			
+			String accessToken  = jwtUtil.generateToken((Admins)obj, selectedRole);
+			String refreshToken = jwtUtil.createRefreshToken((Admins)obj, selectedRole);
+			
+			AdminsDTO dto = new AdminsDTO();
+			BeanUtils.copyProperties((Admins)obj, dto);
+			dto.setAccessToken(accessToken);
+			
+			dto.setRefreshToken(refreshToken);
+			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
+			
+			
+			return (T)dto;
+		}
+		
+		
+		if(obj instanceof Student) {
+			
+
+			String accessToken  = jwtUtil.generateToken((Student)obj, selectedRole);
+			String refreshToken = jwtUtil.createRefreshToken((Student)obj, selectedRole);
+			
+			StudentDTO dto = new StudentDTO();
+			BeanUtils.copyProperties((Student)obj, dto);
+			dto.setAccessToken(accessToken);
+			
+			dto.setRefreshToken(refreshToken);
+			dto.setStatus(((Student)obj).getStatus());
+			dto.setIsGroupMember(groupMemberDo.isGroupMember(dto.getId()));
+			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO)dto);
+			
+			
+			return (T)dto;
+			
+			
+		}
+		
+		if(obj instanceof Instructor) {
+			
+
+			
+			String accessToken  = jwtUtil.generateToken((Instructor)obj, selectedRole);
+			String refreshToken = jwtUtil.createRefreshToken((Instructor)obj, selectedRole);
+			
+			InstructorDTO dto = new InstructorDTO();
+			BeanUtils.copyProperties((Instructor)obj, dto);
+			dto.setAccessToken(accessToken);
+			
+			dto.setRefreshToken(refreshToken);
+			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (InstructorDTO)dto);
+			
+			return (T) dto;
+			
+			
+		}
+		
+		throw new RuntimeException("Unidentifiable user");
+		
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Transactional
-	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role) {
+	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String selectedRole) {
 		
+		final String username = request.getEmail();
 		
+	switch (selectedRole.toLowerCase()) {
+	case "admin":
 		
-		String username = request.getEmail();
-		String password = request.getPassword();
+	case "superadmin":
+		Optional<Admins> optionalAdmin = adminsDao.findByEmail(username);
+		
+		if (optionalAdmin.isPresent() && passwordEncoder.matches(request.getPassword(), optionalAdmin.get().getPassword())) {
 
-		// check if the user is an Admin
-		if (role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("superadmin")) {
-			Optional<Admins> optionalAdmin = adminsDao.findByEmail(username);
-			if (optionalAdmin.isPresent() && passwordEncoder.matches(password, optionalAdmin.get().getPassword())) {
+			Admins admin = optionalAdmin.get();
+		
+			AdminsDTO dto = processBeforLogin(admin, selectedRole);
 
-				Admins admin = optionalAdmin.get();
-				var accessToken = jwtUtil.generateToken(admin);
-				var refreshToken = jwtUtil.createRefreshToken(admin);
-
-				AdminsDTO dto = new AdminsDTO();
-				
-				BeanUtils.copyProperties(admin, dto);	
-				
-				dto.setAccessToken(accessToken);
-				dto.setRefreshToken(refreshToken);
-				
-				
-
-//				generate new cache key;
-
-				redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
-
-				return (T) dto;
-			}
-
-		} else {
-
-			// Then the user might be a student
-			Optional<Student> optionalStudent = studentDao.findByEmail(username);
-			if (optionalStudent.isPresent() && passwordEncoder.matches(password, optionalStudent.get().getPassword())) {
-
-				Student student = optionalStudent.get();
-				
-				
-
-//				check if the user's account has yet to be enabled
-				if (!student.isAccountEnabled()) {
-
-					throw new DisabledException("Account is disabled !");
-				}
-//				proceed from here since account is enabled
-				var accessToken = jwtUtil.generateToken(student);
-
-				var refreshToken = jwtUtil.createRefreshToken(student);
-				StudentDTO dto = new StudentDTO();
-				
-				BeanUtils.copyProperties(student, dto);
-				dto.setAccessToken(accessToken);
-				dto.setRefreshToken(refreshToken);
-
-				dto.setStatus(student.getStatus());
-				
-				dto.setIsGroupMember(groupMemberDo.isGroupMember(dto.getId()));
-				
-				redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO)dto);
-				return (T) dto;
-			}
-
+			return (T) dto;
 		}
+		break;
+		
+	case "student":
+		
+		Optional<Student> optionalStudent = studentDao.findByEmail(username);
+		if (optionalStudent.isPresent() && passwordEncoder.matches(request.getPassword(), optionalStudent.get().getPassword())) {
 
-		// the user does not exist in the database
-		throw new AcademicException(
-				(role.equalsIgnoreCase("admin") || role.equalsIgnoreCase("superadmin")) ? "admin not found!"
-						: "student not found!",
-				Exceptions.RECORD_NOT_FOUND.name());
+			Student student = optionalStudent.get();
+			
+			
 
+//			check if the user's account has yet to be enabled
+			if (!student.isAccountEnabled()) {
+
+				throw new DisabledException("Account is disabled !");
+			}
+//			
+			StudentDTO dto = processBeforLogin(student, selectedRole);
+			return (T) dto;
+		}
+		
+	case "instructor":
+		
+		Optional<Instructor> optionalInstructor = instructorDao.findByEmail(username);
+		if(optionalInstructor.isPresent() && passwordEncoder.matches(request.getPassword(), optionalInstructor.get().getPassword() ) ) {
+			
+			InstructorDTO dto = processBeforLogin(optionalInstructor.get(), selectedRole);
+			
+			return (T) dto;
+		}
+		
+		
 	}
+	
+	throw new AcademicException(loginErrorMessage(selectedRole.toLowerCase()), HttpStatus.BAD_REQUEST.name());
+	}
+	
+	
+	private String loginErrorMessage(String role) {
+		
+		if(role.equals("admin") || role.equals("superadmin")) return "admin not found!";
+		if(role.equals("student")) return "student not found!";
+		
+		if(role.equals("instructor")) return "instructor not found!";
+		
+		return "user not found!";
+   	}
 
 //	Upon login, tends to remove current user from previous cache before caching again
 
@@ -206,7 +269,7 @@ public class AppAuthService implements AppAuthInterface {
 			}
 
 			Admins admin = optional.get();
-			String token = jwtUtil.generateToken(admin);
+			String token = jwtUtil.generateToken(admin, role);
 			;
 			var dto = mapper.map(admin, AdminsDTO.class);
 
@@ -230,7 +293,7 @@ public class AppAuthService implements AppAuthInterface {
 			}
 
 			Student student = optional.get();
-			String token = jwtUtil.generateToken(student);
+			String token = jwtUtil.generateToken(student, role);
 			StudentDTO dto = mapper.map(student, StudentDTO.class);
 
 			dto.setAccessToken(token);
@@ -291,6 +354,50 @@ public class AppAuthService implements AppAuthInterface {
 		redisTemplate.delete(RedisValues.MY_GROUP_IDs+"::"+userId);
 		redisTemplate.delete(RedisValues.MY_GROUP+"::"+userId);
 		redisTemplate.delete(RedisValues.MISCELLANEOUS+"::"+userId);
+		
+		
+	}
+
+
+
+
+	@Override
+	public void instructorSignup(InstructorRegistrationRequest request) {
+		
+		try {
+			
+			
+			if(instructorDao.existsByEmail(request.email())) {
+				
+				
+				
+				throw new RuntimeException("Account already exists!");
+				
+			}
+			
+			Institution institution = institutionDao.findById(request.institution() )
+					.orElseThrow(() -> new RuntimeException("Institution(s) not found"));
+			
+			Instructor instructor = new Instructor();
+			
+			instructor.getInstitutions().add(institution);
+			
+			
+			
+			BeanUtils.copyProperties(request, instructor);
+			instructor.setPassword(passwordEncoder.encode(instructor.getPassword()));
+			
+			instructorDao.save(instructor);
+			
+			
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e);
+		
+		
+		}
+		
+		
 		
 		
 	}
