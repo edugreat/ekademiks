@@ -24,6 +24,7 @@ import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
+import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDTO;
@@ -32,6 +33,7 @@ import com.edugreat.akademiksresource.instructor.InstructorRegistrationRequest;
 import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Student;
+import com.edugreat.akademiksresource.model.UserRoles;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -123,6 +125,8 @@ public class AppAuthService implements AppAuthInterface {
 			dto.setAccessToken(accessToken);
 			
 			dto.setRefreshToken(refreshToken);
+			
+			dto.setRoles(Set.of(selectedRole));
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
 			
 			
@@ -143,6 +147,8 @@ public class AppAuthService implements AppAuthInterface {
 			dto.setRefreshToken(refreshToken);
 			dto.setStatus(((Student)obj).getStatus());
 			dto.setIsGroupMember(groupMemberDo.isGroupMember(dto.getId()));
+			
+			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO)dto);
 			
 			
@@ -163,6 +169,8 @@ public class AppAuthService implements AppAuthInterface {
 			dto.setAccessToken(accessToken);
 			
 			dto.setRefreshToken(refreshToken);
+			
+			dto.setRoles(Set.of(selectedRole));
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (InstructorDTO)dto);
 			
 			return (T) dto;
@@ -179,6 +187,7 @@ public class AppAuthService implements AppAuthInterface {
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String selectedRole) {
 		
 		final String username = request.getEmail();
+		System.out.println(selectedRole);
 		
 	switch (selectedRole.toLowerCase()) {
 	case "admin":
@@ -386,6 +395,7 @@ public class AppAuthService implements AppAuthInterface {
 			
 			BeanUtils.copyProperties(request, instructor);
 			instructor.setPassword(passwordEncoder.encode(instructor.getPassword()));
+			instructor.setRoles(Set.of(new UserRoles(Roles.Instructor)));
 			
 			instructorDao.save(instructor);
 			

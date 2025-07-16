@@ -23,21 +23,21 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 
 	// checks the the existence of a student by their email
 	@Query("SELECT CASE WHEN COUNT(s.email) > 0 THEN true ELSE false END FROM Student s WHERE s.email =:email")
-	 boolean existsByEmail(String email);
+	boolean existsByEmail(String email);
 
 	// checks the existence of a student by their phone number
 	@Query("SELECT CASE WHEN COUNT(s.mobileNumber) > 0 THEN true ELSE false END FROM Student s WHERE s.mobileNumber =:mobile")
-	 boolean existsByMobile(String mobile);
+	boolean existsByMobile(String mobile);
 
 	// finds student by their phone number
-	 Student findByMobileNumber(String mobileNumber);
+	Student findByMobileNumber(String mobileNumber);
 
 	// finds student by their email address
-	 Optional<Student> findByEmail(String email);
+	Optional<Student> findByEmail(String email);
 
 	@Modifying
 	@Query("DELETE FROM Student s WHERE s.email =:email")
-	 void deleByEmail(@Param("email") String email);
+	void deleByEmail(@Param("email") String email);
 
 //	select all students that were notified
 	@Query("SELECT s FROM Student s JOIN s.assessmentNotifications n ON n.id =:notificationId")
@@ -47,13 +47,11 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 //	This count is used to decide if the notification should be deleted from the database or kept
 	@Query("SELECT COUNT(n) FROM Student s JOIN s.assessmentNotifications n ON n.id =:notificationId")
 	int getUnreadNotificationCountForStudents(Integer notificationId);
-	
-	
+
 //	get all unread messages for the student referenced by the student id
 	@Query("SELECT s.unreadChats FROM Student s WHERE s.id =:studentId")
-	 SortedMap<Integer, Integer> unreadChats(Integer studentId);
-	
-	
+	SortedMap<Integer, Integer> unreadChats(Integer studentId);
+
 //	get notifications by type belonging to the student referenced by the given ID
 	@Query("SELECT n FROM Student s JOIN s.miscellaneousNotices n WHERE s.id =:studentId AND n.type =:type")
 	Set<MiscellaneousNotifications> findNotificationsByType(Integer studentId, String type);
@@ -61,7 +59,7 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 //	returns the first name of the student referenced by the given student ID
 	@Query("SELECT s.firstName FROM Student s WHERE s.id =:studentId")
 	String getFirstName(Integer studentId);
-	
+
 //	select all notifications of the given types belonging to the given student referenced by studentId.
 //	Basically, this query method selects notifications about request to join group chat as well as those about request approval
 	@Query("SELECT n FROM Student s JOIN s.miscellaneousNotices n WHERE s.id =:studentId AND n.type LIKE CONCAT('%',:joinRequest,'%') OR n.type LIKE CONCAT('%',:reqApproved,'%')")
@@ -81,16 +79,46 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 
 	@Query("SELECT s FROM Student s JOIN s.assignmentResponses ar ON ar.instructorId =:instructorId")
 	List<Student> getAssessmentResponses(Integer instructorId);
-	
+
 	@Query("SELECT s.id FROM Student s WHERE s.email =:username")
 	Integer getIdByUsername(String username);
-	
-	Integer findIdByFirstName(String firstName);
-	
-	@RestResource(path = "status")
-	Page<Student> findByStatus(@Param("status") String status, Pageable pageable);
-	
 
-	
-	
+	Integer findIdByFirstName(String firstName);
+
+	@RestResource(path = "status")
+	Page<Student> findUniqueByStatus(@Param("status") String status, Pageable pageable);
+
+	@RestResource(path = "status/Q")
+	Page<Student> findUniqueByStatusAndInstitutionId(@Param("status") String status, @Param("in") Integer in,
+			Pageable pageable);
+
+	@RestResource(path = "query_status")
+	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE s.status =:status AND"
+			+ " i.id =:instr " + "Order By s.firstName ASC")
+	Page<Student> findInstructorsStudentsByStatus(@Param("status") String status, @Param("instr") Integer instr,
+			Pageable pageable);
+
+	@RestResource(path = "query_status/Q")
+	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE s.status =:status AND"
+			+ " i.id =:instr AND ins.id =:inst " + "Order By s.firstName ASC")
+	Page<Student> findInstructorsStudentsByInstitutionAndStatus(@Param("status") String status,
+			@Param("inst") Integer inst, @Param("instr") Integer instr, Pageable pageable);
+
+	@RestResource(path = "query_in_status")
+	Page<Student> findUniqueByInstitutionIdAndStatus(@Param("in") Integer in, @Param("status") String status,
+			Pageable pageable);
+
+	@RestResource(path = "query")
+	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE i.id =:instr AND ins.id =:inst "
+			+ "Order By s.firstName ASC")
+	Page<Student> findByInstructorAndInstitution(@Param("instr") Integer instr, @Param("inst") Integer inst,
+			Pageable pageable);
+
+//	QUERY ALL STUDENTS IN A PARTICULAR INSTITUTION(Used by institution admin to query all their students)
+	@RestResource(path = "q")
+	Page<Student> findUniqueByInstitutionId(@Param("id") Integer id, Pageable pageable);
+
+	@RestResource(path = "by")
+	Page<Student> findUniqueByInstitutionCreatedBy(@Param("id") Integer id, Pageable pageable);
+
 }

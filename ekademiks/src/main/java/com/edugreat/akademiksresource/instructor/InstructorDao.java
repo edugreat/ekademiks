@@ -11,5 +11,7 @@ public interface InstructorDao extends JpaRepository<Instructor, Integer> {
 	Optional<Instructor> findByEmail(String username);
 	
 	boolean existsByEmail(String email);
+	
+	
 
 }
