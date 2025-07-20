@@ -301,10 +301,10 @@ public class AdminController {
     })
     public ResponseEntity<Object> deleteStudentAccount(
             @Parameter(description = "ID of the student to delete", required = true, example = "123")
-            @RequestParam String studentId) {
+            @RequestParam String studentId, Integer admin ) {
         try {
             Integer id = Integer.parseInt(studentId);
-            service.deleteStudentAccount(id);
+            service.deleteStudentAccount(id, admin);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return new ResponseEntity<Object>("Invalid id", HttpStatus.BAD_REQUEST);
@@ -323,10 +323,10 @@ public class AdminController {
     public ResponseEntity<Object> disableStudentAccount(
             @Parameter(description = "Map containing student ID", required = true,
                       schema = @Schema(example = "{\"studentId\": 123}"))
-            @RequestBody Map<String, Integer> map) {
+            @RequestBody Map<String, Integer> map, Integer admin) {
         try {
             final Integer studentId = map.get("studentId");
-            service.disableStudentAccount(studentId);
+            service.disableStudentAccount(studentId, admin);
             return new ResponseEntity<Object>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<Object>("Invalid id", HttpStatus.NOT_FOUND);
@@ -345,10 +345,10 @@ public class AdminController {
     public ResponseEntity<Object> enableStudentAccount(
             @Parameter(description = "Map containing student ID", required = true,
                       schema = @Schema(example = "{\"studentId\": 123}"))
-            @RequestBody Map<String, Integer> map) {
+            @RequestBody Map<String, Integer> map, Integer admin) {
         try {
             final Integer studentId = map.get("studentId");
-            service.enableStudentAccount(studentId);
+            service.enableStudentAccount(studentId, admin);
             return new ResponseEntity<Object>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<Object>(HttpStatus.NOT_FOUND);
@@ -634,33 +634,33 @@ public class AdminController {
         }
     }
     
-    @GetMapping("/institutions")
-    @Operation(summary = "Get institutions", 
-               description = "Retrieves all registered institutions. Requires ADMIN role.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Institutions retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid admin ID format"),
-        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials")
-    })
-    public ResponseEntity<Object> getInstitutions(
-            @Parameter(description = "ID of the admin making the request", required = true)
-            @RequestHeader String adminId) {
-    	
-    	
-        try {
-            if(adminId != null) {
-            	
-            	
-            	
-                return new ResponseEntity<Object>(service.getInstitutions(Integer.parseInt(adminId)), HttpStatus.OK);
-            }
-        } catch (Exception e) {
-        	 System.out.println(e.getMessage());
-            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
-           
-        }
-        return new ResponseEntity<>(new IllegalArgumentException("Number format error"), HttpStatus.BAD_REQUEST);
-    }
+//    @GetMapping("/institutions")
+//    @Operation(summary = "Get institutions", 
+//               description = "Retrieves all registered institutions. Requires ADMIN role.")
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Institutions retrieved successfully"),
+//        @ApiResponse(responseCode = "400", description = "Invalid admin ID format"),
+//        @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials")
+//    })
+//    public ResponseEntity<Object> getInstitutions(
+//            @Parameter(description = "ID of the admin making the request", required = true)
+//            @RequestHeader String adminId) {
+//    	
+//    	
+//        try {
+//            if(adminId != null) {
+//            	
+//            	
+//            	
+//                return new ResponseEntity<Object>(service.getInstitutions(Integer.parseInt(adminId)), HttpStatus.OK);
+//            }
+//        } catch (Exception e) {
+//        	 System.out.println(e.getMessage());
+//            return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
+//           
+//        }
+//        return new ResponseEntity<>(new IllegalArgumentException("Number format error"), HttpStatus.BAD_REQUEST);
+//    }
     
     @PostMapping("/register_student")
     @Operation(summary = "Register students", 

@@ -16,11 +16,11 @@ import com.edugreat.akademiksresource.model.Institution;
 @Repository
 public interface InstitutionDao extends JpaRepository<Institution, Integer> {
 	
-	@RestResource(exported = false)
+	//@RestResource(exported = false)
 	Optional<Institution> findByNameAndLocalGovt(String name, String localGovt);
 
-	@RestResource(path = "by")
-	List<Institution> findByCreatedByOrderByNameAsc(@Param("id") Integer id);
+	@RestResource(path = "A")
+	List<Institution> findByCreatedByOrderByNameAsc(@Param("by") Integer by, Pageable pageable);
 
 
 	  @RestResource(path = "location")
@@ -30,7 +30,7 @@ public interface InstitutionDao extends JpaRepository<Institution, Integer> {
 	   
 
 	  
-	  @RestResource(path = "query")
-	  @Query("SELECT i FROM Institution i JOIN i.instructors ins WHERE ins.id =:inst ORDER BY i.name ASC")
-	  Page<Institution> findByInstructor(@Param("inst") Integer inst, Pageable pageable);
+	  @RestResource(path = "B")
+	  @Query("SELECT i FROM Institution i JOIN i.instructors instr WHERE instr.id =:instr ORDER BY i.name ASC")
+	  Page<Institution> findByInstructor(@Param("instr") Integer instr,Pageable pageable);
 }

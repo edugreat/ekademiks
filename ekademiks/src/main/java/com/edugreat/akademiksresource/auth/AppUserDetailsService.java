@@ -11,20 +11,23 @@ import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.instructor.InstructorDao;
 import com.edugreat.akademiksresource.model.AppUser;
 
-@Service
+import lombok.NoArgsConstructor;
 
+@Service
+@NoArgsConstructor
 public class AppUserDetailsService implements UserDetailsService {
 
 	@Autowired
-	private AdminsDao adminsDao;
-
+	private  AdminsDao adminsDao;
 	@Autowired
-	private StudentDao studentDao;
-	
+	private  StudentDao studentDao;
 	@Autowired
-	private JwtUtil jwtUtil;
+	private  JwtUtil jwtUtil;
+	@Autowired
+	private InstructorDao instructorDao;
 	
 
 	@Override
@@ -40,8 +43,11 @@ public class AppUserDetailsService implements UserDetailsService {
 			return studentDao.findByEmail(username).orElseThrow(
 					() -> new AcademicException("Error authenticating user", Exceptions.STUDENT_NOT_FOUND.name()));
 
-		return adminsDao.findByEmail(username)
-				.orElseThrow(() -> new AcademicException("Error authenticating admin", Exceptions.BAD_REQUEST.name()));
+		else if(adminsDao.existsByEmail(username))
+			return adminsDao.findByEmail(username)
+					.orElseThrow(() -> new AcademicException("Error authenticating admin", Exceptions.BAD_REQUEST.name()));
+		
+		return instructorDao.findByEmail(username).orElseThrow(() ->  new AcademicException("Error authenticating instructor", Exceptions.BAD_REQUEST.name()));
 
 	}
 

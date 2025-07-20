@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
@@ -18,7 +19,8 @@ import com.edugreat.akademiksresource.model.MiscellaneousNotifications;
 import com.edugreat.akademiksresource.model.Student;
 
 @Repository
-//@RepositoryRestResource(exported = false)
+
+@RepositoryRestResource(path = "students")
 public interface StudentDao extends JpaRepository<Student, Integer> {
 
 	// checks the the existence of a student by their email
@@ -85,40 +87,60 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 
 	Integer findIdByFirstName(String firstName);
 
-	@RestResource(path = "status")
-	Page<Student> findUniqueByStatus(@Param("status") String status, Pageable pageable);
+	@RestResource(path = "A")
+	Page<Student> findDistinctByStatus(@Param("status") String status, Pageable pageable);
 
-	@RestResource(path = "status/Q")
-	Page<Student> findUniqueByStatusAndInstitutionId(@Param("status") String status, @Param("in") Integer in,
+	@RestResource(path = "B")
+   // @Query("SELECT DISTINCT s FROM Student s JOIN s.institution i WHERE s.status LIKE CONCAT('%', :status, '%') AND i.id =:in")
+	Page<Student> findDistinctByStatusAndInstitutionId(@Param("s") String s, @Param("in") Integer in,
 			Pageable pageable);
 
-	@RestResource(path = "query_status")
-	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE s.status =:status AND"
-			+ " i.id =:instr " + "Order By s.firstName ASC")
-	Page<Student> findInstructorsStudentsByStatus(@Param("status") String status, @Param("instr") Integer instr,
-			Pageable pageable);
+//	QUERY ALL STUDENTS IN A PARTICULAR INSTITUTION(Used by institution admin and super admins to query all their students)
+	@RestResource(path = "C")
+	@Query("SELECT DISTINCT s FROM Student s JOIN s.institution i WHERE i.id =:id")
+	Page<Student> findDistinctByInstitutionId(@Param("id") Integer id, Pageable pageable);
 
-	@RestResource(path = "query_status/Q")
-	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE s.status =:status AND"
-			+ " i.id =:instr AND ins.id =:inst " + "Order By s.firstName ASC")
-	Page<Student> findInstructorsStudentsByInstitutionAndStatus(@Param("status") String status,
-			@Param("inst") Integer inst, @Param("instr") Integer instr, Pageable pageable);
-
-	@RestResource(path = "query_in_status")
-	Page<Student> findUniqueByInstitutionIdAndStatus(@Param("in") Integer in, @Param("status") String status,
-			Pageable pageable);
-
-	@RestResource(path = "query")
+	
+	@RestResource(path = "D")
 	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE i.id =:instr AND ins.id =:inst "
 			+ "Order By s.firstName ASC")
 	Page<Student> findByInstructorAndInstitution(@Param("instr") Integer instr, @Param("inst") Integer inst,
 			Pageable pageable);
 
-//	QUERY ALL STUDENTS IN A PARTICULAR INSTITUTION(Used by institution admin to query all their students)
-	@RestResource(path = "q")
-	Page<Student> findUniqueByInstitutionId(@Param("id") Integer id, Pageable pageable);
+	
+	@RestResource(path = "E")
+	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE s.status =:status AND"
+			+ " i.id =:instr " + "Order By s.firstName ASC")
+	Page<Student> findInstructorsStudentsByStatus(@Param("status") String status, @Param("instr") Integer instr,
+			Pageable pageable);
 
-	@RestResource(path = "by")
-	Page<Student> findUniqueByInstitutionCreatedBy(@Param("id") Integer id, Pageable pageable);
+	@RestResource(path = "F")
+	@Query("SELECT s FROM Student s JOIN s.instructors i JOIN s.institution ins WHERE s.status =:status AND"
+			+ " i.id =:instr AND ins.id =:inst " + "Order By s.firstName ASC")
+	Page<Student> findInstructorsStudentsByInstitutionAndStatus(@Param("status") String status,
+			@Param("inst") Integer inst, @Param("instr") Integer instr, Pageable pageable);
+
+
+	@RestResource(path = "G")
+	Page<Student> findDistinctByInstitutionCreatedBy(@Param("id") Integer id, Pageable pageable);
+
+	
+	@RestResource(path = "H")
+	@Query("SELECT DISTINCT s FROM Student s JOIN s.institution inst WHERE s.status =:status AND "
+			+ "inst.createdBy =:by AND inst.id =:in")
+	Page<Student> findDistinctByInstitutionIdAndStatus(@Param("in") Integer in, 
+			                                           @Param("status") String status,
+			                                           @Param("by") Integer by,
+			                                           Pageable pageable);
+
+	@RestResource(path = "I")
+	@Query("SELECT s FROM Student s JOIN s.institution inst WHERE s.status =:status AND inst.createdBy =:by")
+	Page<Student> findByStatusAndCreatedBy(@Param("status")String status, 
+			                             @Param("by")String by,
+			                             Pageable pageable);
+	@RestResource(path = "J")
+	@Query("SELECT s FROM Student s JOIN s.instructors i WHERE i.id =:instr")
+	Page<Student> findDistinctByInstructorsId(@Param("instr")Integer instr, Pageable pageable);
+	
 
 }

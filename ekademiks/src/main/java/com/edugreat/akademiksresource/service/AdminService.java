@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -51,6 +50,8 @@ import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.instructor.Instructor;
+import com.edugreat.akademiksresource.instructor.InstructorDao;
 import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
@@ -61,6 +62,7 @@ import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.model.WelcomeMessage;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 import com.edugreat.akademiksresource.util.OptionUtil;
+import com.edugreat.akademiksresource.util.ValidatorService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -90,6 +92,9 @@ public class AdminService implements AdminInterface {
 
 	private final InstitutionDao institutionDao;
 	private final StudentTestDao studentTestDao;
+	private final ValidatorService validatorService;
+	private final InstructorDao instructorDao;
+	
 
 	@Autowired
 	private CacheManager cacheManager;
@@ -213,14 +218,36 @@ public class AdminService implements AdminInterface {
 
 	@Transactional
 	@Override
-	public void deleteStudentAccount(Integer studentId) {
+	public void deleteStudentAccount(Integer studentId, Integer adminId) {
+		
+		
 
 		final Optional<Student> optional = studentDao.findById(studentId);
 		if (!optional.isEmpty()) {
 
 			Student student = optional.get();
+			
+			Institution institution = student.getInstitution();
+			
+			if(institution != null && institution.getCreatedBy() != adminId) throw new IllegalArgumentException("You are not authorized to delete this account");
+				
+				
+			Set<Instructor> instructors = student.getInstructors();
+			
+			instructors.forEach(instructor -> {
+				
+				instructor.getStudents().remove(student);		
+				});
+			
+			
+			institution.getStudents().remove(student);
+			
+			
+			instructorDao.saveAll(instructors);
+			
+			institutionDao.save(institution);
 			studentDao.delete(student);
-		}
+		}else throw new IllegalArgumentException("Student not found with id");
 
 	}
 
@@ -343,35 +370,40 @@ public class AdminService implements AdminInterface {
 
 	@Override
 	@Transactional
-	public void disableStudentAccount(Integer studentId) {
+	public void disableStudentAccount(Integer studentId, Integer adminId) {
 
 		// Disables a student's account
 
 		Optional<Student> optional = studentDao.findById(studentId);
 		if (optional.isPresent()) {
+			
+			
 
 			Student student = optional.get();
+			if(student.getInstitution().getCreatedBy() != adminId) throw new IllegalArgumentException("You are not authorized to disable this account");
 
 			student.setAccountEnabled(false);
 			studentDao.save(student);
 
-		}
+		}else throw new IllegalArgumentException("Student not found with id");
 	}
 
 	@Override
 	@Transactional
-	public void enableStudentAccount(Integer studentId) {
+	public void enableStudentAccount(Integer studentId, Integer adminId) {
 
 		Optional<Student> optional = studentDao.findById(studentId);
 
 		if (optional.isPresent()) {
 
 			Student student = optional.get();
+			if(student.getInstitution().getCreatedBy() != adminId) throw new IllegalArgumentException("You are not authorized to disable this account");
 
 			student.setAccountEnabled(true);
 			studentDao.save(student);
-		}
+		}else throw new IllegalArgumentException("Student not found with id");
 	}
+	
 
 	@Transactional
 	@Override
@@ -830,40 +862,9 @@ public class AdminService implements AdminInterface {
 
 	}
 
-	@Override
-	public List<InstitutionDTO> getInstitutions(Integer adminId) {
-
-		List<Institution> institutions = institutionDao.findByCreatedByOrderByNameAsc(adminId);
 		
+
 	
-		
-		if (!institutions.isEmpty()) {
-			
-			
-			return mapToDTOs(institutions);
-		}
-			
-
-		return Collections.emptyList();
-	}
-
-	private List<InstitutionDTO> mapToDTOs(List<Institution> institutions) {
-		
-		List<InstitutionDTO> dtos = new ArrayList<>();
-		
-		for(Institution institution : institutions) {
-			
-			InstitutionDTO dto = new InstitutionDTO();
-			
-			BeanUtils.copyProperties(institution, dto);
-			dtos.add(dto);
-		}
-		
-		return dtos;
-		
-		
-
-	}
 
 	@Transactional
 	@Override
@@ -876,7 +877,7 @@ public class AdminService implements AdminInterface {
 //		get the students already registered
 		final List<Student> students = institution.getStudents();
 
-		final List<Student> verifiedRecords = verifyStudentRecords(studentRecords);
+		final List<Student> verifiedRecords = validatorService.verifyStudentRecords(studentRecords);
 
 		for (Student s : verifiedRecords) {
 
@@ -897,27 +898,6 @@ public class AdminService implements AdminInterface {
 
 	}
 
-//	processes the given student records against the details in the database. Returns true if successful or false otherwise 
-	private final List<Student> verifyStudentRecords(List<StudentRecord> records) {
-
-		List<Student> students = new ArrayList<>();
-
-//		use each information in the record to fetch the student from the database
-		for (StudentRecord r : records) {
-
-			Optional<Student> op = studentDao.findByEmail(r.email());
-
-			// throws exception if the student does not exist or the supplied password does
-			// not match with the actual password in the database
-			if (op.isEmpty() || !(passwordEncoder.matches(r.password(), op.get().getPassword())))
-				throw new IllegalArgumentException("wrong email and or password");
-
-			students.add(op.get());
-
-		}
-		return students;
-
-	}
 
 	@Override
 	@Transactional

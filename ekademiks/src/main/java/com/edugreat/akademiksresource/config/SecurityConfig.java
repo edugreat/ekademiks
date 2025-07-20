@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -49,7 +47,6 @@ public class SecurityConfig {
 	};
 	private static final String[] STUDENT_URL = {"/chats/**","/assignments/details","/assignments/resource", "/notice/**"}; 
 
-	private final AppUserDetailsService userDetailsService;
 	private final JwtAuthtFilter jwtFilter;
 	private final AccountStatusFilter accountStatusFilter;
 
@@ -81,19 +78,9 @@ public class SecurityConfig {
 		)
 
 				.sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authenticationProvider(authenticationProvider())
+				
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterAfter(accountStatusFilter, JwtAuthtFilter.class).build();
-	}
-
-	@Bean
-	AuthenticationProvider authenticationProvider() {
-
-		DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-		daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-		daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-
-		return daoAuthenticationProvider;
 	}
 
 	@Bean

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.edugreat.akademiksresource.classroom.ClassroomSubject;
 import com.edugreat.akademiksresource.model.AppUser;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Student;
@@ -42,6 +43,10 @@ public class Instructor extends AppUser {
 	    inverseJoinColumns = @JoinColumn(name = "student_id") 
 	)
 	private Set<Student> students = new HashSet<>();
+
+	
+	@OneToMany(mappedBy = "instructor")
+	private Set<ClassroomSubject> classroomSubjects = new HashSet<>();
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "instructor",  cascade = {
 		    CascadeType.PERSIST, 
@@ -137,6 +142,15 @@ public class Instructor extends AppUser {
 	        institution.getInstructors().remove(this);
 	    }
 	}
+
+	public Set<ClassroomSubject> getClassroomSubjects() {
+		return classroomSubjects;
+	}
+
+	public void setClassroomSubjects(Set<ClassroomSubject> classroomSubjects) {
+		this.classroomSubjects = classroomSubjects;
+	}
+
 	
 	
 	

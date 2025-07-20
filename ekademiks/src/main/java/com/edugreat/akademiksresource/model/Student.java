@@ -15,9 +15,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.edugreat.akademiksresource.chat.model.GroupMember;
+import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.instructor.Instructor;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
@@ -54,12 +54,16 @@ public class Student extends AppUser {
 	
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "institution_id", nullable = true)
-	@JsonBackReference
+	//@JsonBackReference
 	private Institution institution;
 	
 	@ManyToMany(mappedBy = "students", fetch = FetchType.LAZY)
-	@JsonIgnore
+	//@JsonIgnore
 	private Set<Instructor> instructors = new HashSet<>();
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "classroom_id", nullable = true)
+	private Classroom classroom;
 	
 //	status depicts student's academic status such as SENIOR or JUNIOR
 	@Column(nullable = false)
@@ -261,11 +265,19 @@ public class Student extends AppUser {
 	}
 
 	public Set<Instructor> getInstructors() {
-		// TODO Auto-generated method stub
+		
 		return instructors;
 	}
 	
+	public void setClassroom(Classroom classroom) {
+		
+		this.classroom = classroom;
+	}
 	
+	public Classroom getClassroom() {
+		
+		return classroom;
+	}
 
 }
 

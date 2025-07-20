@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -56,10 +57,11 @@ public class Institution {
 	private Integer studentPopulation;
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "institution")
-	@JsonManagedReference
+	//@JsonManagedReference
+	@JsonIgnore
 	private List<Student> students = new ArrayList<>();
 	
-	@ManyToMany(mappedBy = "institutions", fetch = FetchType.LAZY)
+	@ManyToMany(mappedBy = "institutions", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JsonIgnore
 	private Set<Instructor> instructors = new HashSet<>();
 	

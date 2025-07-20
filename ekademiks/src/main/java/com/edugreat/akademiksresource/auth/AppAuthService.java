@@ -50,6 +50,7 @@ public class AppAuthService implements AppAuthInterface {
 	private final PasswordEncoder passwordEncoder;
 	private final ModelMapper mapper;
 	private final InstitutionDao institutionDao;
+	
 
 	
 
@@ -126,7 +127,11 @@ public class AppAuthService implements AppAuthInterface {
 			
 			dto.setRefreshToken(refreshToken);
 			
-			dto.setRoles(Set.of(selectedRole));
+			//dto.setRoles(Set.of("SuperAdmin"));
+			dto.setRoles(Set.of(selectedRole));		
+			
+			postLoginCleanup(((Admins)obj).getId());
+			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
 			
 			
@@ -148,6 +153,7 @@ public class AppAuthService implements AppAuthInterface {
 			dto.setStatus(((Student)obj).getStatus());
 			dto.setIsGroupMember(groupMemberDo.isGroupMember(dto.getId()));
 			
+			postLoginCleanup(((Student)obj).getId());
 			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO)dto);
 			
@@ -171,7 +177,12 @@ public class AppAuthService implements AppAuthInterface {
 			dto.setRefreshToken(refreshToken);
 			
 			dto.setRoles(Set.of(selectedRole));
+			
+			postLoginCleanup(((Instructor)obj).getId());
+			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (InstructorDTO)dto);
+			
+			
 			
 			return (T) dto;
 			
@@ -371,6 +382,7 @@ public class AppAuthService implements AppAuthInterface {
 
 
 	@Override
+	@Transactional
 	public void instructorSignup(InstructorRegistrationRequest request) {
 		
 		try {
@@ -385,19 +397,18 @@ public class AppAuthService implements AppAuthInterface {
 			}
 			
 			Institution institution = institutionDao.findById(request.institution() )
-					.orElseThrow(() -> new RuntimeException("Institution(s) not found"));
+					.orElseThrow(() -> new RuntimeException("Institution not found"));
 			
 			Instructor instructor = new Instructor();
-			
-			instructor.getInstitutions().add(institution);
-			
-			
 			
 			BeanUtils.copyProperties(request, instructor);
 			instructor.setPassword(passwordEncoder.encode(instructor.getPassword()));
 			instructor.setRoles(Set.of(new UserRoles(Roles.Instructor)));
 			
-			instructorDao.save(instructor);
+			institution.addInstructor(instructor);	
+			
+			
+			institutionDao.save(institution);
 			
 			
 		} catch (Exception e) {

@@ -1,11 +1,13 @@
 package com.edugreat.akademiksresource.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
+import com.edugreat.akademiksresource.classroom.ClassroomSubject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -37,6 +39,11 @@ public class Subject {
 	@OneToMany(mappedBy = "subject", cascade = CascadeType.ALL)
 	@JsonIgnore
 	private List<Test> tests = new ArrayList<>();
+	
+	@OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
+	private Set<ClassroomSubject> classroomSubjects = new HashSet<>();
+
 
 	public Subject() {
 	}
@@ -89,6 +96,26 @@ public class Subject {
 		}
 
 	}
+
+	
+	
+	public List<Test> getTests() {
+		return tests;
+	}
+
+	public void setTests(List<Test> tests) {
+		this.tests = tests;
+	}
+
+	public Set<ClassroomSubject> getClassroomSubjects() {
+		return classroomSubjects;
+	}
+
+	public void setClassroomSubjects(Set<ClassroomSubject> classroomSubjects) {
+		this.classroomSubjects = classroomSubjects;
+	}
+
+	
 
 	@Override
 	public boolean equals(Object o) {

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -62,6 +63,10 @@ public class Test {
 	@ManyToOne
 	@JoinColumn(name = "subject_id", nullable = false)
 	private Subject subject;
+	
+	@ManyToOne
+	@JoinColumn(name = "classroom_id")
+	private Classroom classroom;
 
 	public Subject getSubject() {
 		return subject;
@@ -200,6 +205,16 @@ public class Test {
 		Test that = (Test) obj;
 
 		return (this.getTestName() == that.getTestName() && this.getSubject() == that.getSubject());
+	}
+
+	public void setClassroom(Classroom classroom) {
+		
+		if (classroom != null) {
+			this.classroom = classroom;
+			classroom.getAssessments().add(this);
+		} else {
+			this.classroom = null;
+		}
 	}
 
 }

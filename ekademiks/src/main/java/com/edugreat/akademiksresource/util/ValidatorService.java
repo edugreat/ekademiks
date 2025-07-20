@@ -2,22 +2,31 @@ package com.edugreat.akademiksresource.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.edugreat.akademiksresource.dao.StudentDao;
+import com.edugreat.akademiksresource.dto.StudentRecord;
+import com.edugreat.akademiksresource.model.Student;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
-//@AllArgsConstructor
-@RequiredArgsConstructor
+
 @Service
+@AllArgsConstructor
 public class ValidatorService {
 	
-	@Autowired
-	 private final Validator validator;
+	
+	
+	private final Validator validator;
+	
+	private final   StudentDao studentDao;
+	private final  PasswordEncoder passwordEncoder;
 	 
 	 
 	
@@ -57,5 +66,28 @@ public class ValidatorService {
 	    	
 	    	
 	    }
+	    
+//		processes the given student records against the details in the database. Returns true if successful or false otherwise 
+		public final List<Student> verifyStudentRecords(List<StudentRecord> records) {
+
+			List<Student> students = new ArrayList<>();
+
+//			use each information in the record to fetch the student from the database
+			for (StudentRecord r : records) {
+
+				Optional<Student> op = studentDao.findByEmail(r.email());
+
+				// throws exception if the student does not exist or the supplied password does
+				// not match with the actual password in the database
+				if (op.isEmpty() || !(passwordEncoder.matches(r.password(), op.get().getPassword())))
+					throw new IllegalArgumentException("wrong email and or password");
+
+				students.add(op.get());
+
+			}
+			return students;
+
+		}
+
 
 }

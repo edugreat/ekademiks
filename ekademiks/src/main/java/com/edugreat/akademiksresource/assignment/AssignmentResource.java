@@ -1,15 +1,22 @@
 package com.edugreat.akademiksresource.assignment;
 
+import com.edugreat.akademiksresource.classroom.Classroom;
+import com.edugreat.akademiksresource.instructor.Instructor;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
+import lombok.ToString;
 
 // Base class of theory, objective and PDF based assignments
 
@@ -17,6 +24,7 @@ import lombok.Data;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type")
 @Data
+@ToString(exclude = {"targetClassroom", "author"})
 public abstract class AssignmentResource {
 
 	@Id
@@ -36,6 +44,15 @@ public abstract class AssignmentResource {
 	private String fileName = "";
 
 	private String fileType = "";
+	
+	 @ManyToOne
+	    @JoinColumn(name = "target_classroom_id", nullable = true)
+	    private Classroom targetClassroom;
+	    
+	    @ManyToOne(fetch = FetchType.LAZY)
+	    @JoinColumn(name = "author_id", nullable = false)
+	    private Instructor author;
+
 
 	@Lob
 	@Column(columnDefinition = "LONGBLOB")
@@ -61,6 +78,8 @@ public abstract class AssignmentResource {
 	}
 
 	public abstract String getType();
+	
+	
 
 	@Override
 	public boolean equals(Object o) {

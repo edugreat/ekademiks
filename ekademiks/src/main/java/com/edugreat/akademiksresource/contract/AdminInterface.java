@@ -47,11 +47,11 @@ public interface AdminInterface {
 
 	 void createWelcomeMessages(Map<String, Collection<String>> msgs);
 
-	 void deleteStudentAccount(Integer studentId);
+	 void deleteStudentAccount(Integer studentId, Integer adminId);
 	
-	 void disableStudentAccount(Integer studentId);
+	 void disableStudentAccount(Integer studentId, Integer adminId);
 	
-	 void enableStudentAccount(Integer studentId);
+	 void enableStudentAccount(Integer studentId, Integer adminId);
 	
 //	Provides capability for modifying questions referenced by the given testId
 	public void modifyQuestion(List<QuestionDTO> questions, Integer testId);
@@ -97,8 +97,7 @@ public interface AdminInterface {
 	
 	void registerInstitution(InstitutionDTO institutionDTO);
 
-//	returns a list of institutions registered by the given admin
-	List<InstitutionDTO> getInstitutions(Integer adminId);
+
 
 //	provides method that adds student's records to registered institution
 	void addStudentRecords(List<StudentRecord> studentRecords, Integer instutionId);
