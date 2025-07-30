@@ -1,9 +1,14 @@
 package com.edugreat.akademiksresource.instructor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.edugreat.akademiksresource.classroom.ClassroomSubject;
 import com.edugreat.akademiksresource.model.AppUser;
@@ -99,14 +104,27 @@ public class Instructor extends AppUser {
 	public void setTests(List<Test> tests) {
 		this.tests = tests;
 	}
-
-	public Set<UserRoles> getRoles() {
-		return roles;
+	public Set<String> getRoles() {
+		return roles.stream().map(role -> role.getRole().toString()).collect(Collectors.toSet());
 	}
 
 	public void setRoles(Set<UserRoles> roles) {
 		this.roles = roles;
 	}
+	
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+
+		Set<GrantedAuthority> authorities = new HashSet<>();
+		for (String role : this.getRoles()) {
+			authorities.add(new SimpleGrantedAuthority(role));
+
+		}
+
+		return authorities;
+	}
+	
+	
 	
 	public void addTest(Test t) {
 		

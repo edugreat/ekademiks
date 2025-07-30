@@ -24,7 +24,7 @@ import jakarta.validation.constraints.Pattern;
 /*
  * A StudentTest entity is an intermediate entity between the Student entity and the Test entity.
  * For every student who has taken one or more tests, their information along with the test taken
- * should persisted in this table. 
+ * should be persisted in this table. 
  * The student_test table can hold a reference to one student and many tests taken taken.
  * It can also hold the reference to a particular test and many students who have taken.
  * Therefore StudentTest should've the Many-To-Many relationships with the respective Student and Test

@@ -16,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.edugreat.akademiksresource.chat.model.GroupMember;
 import com.edugreat.akademiksresource.classroom.Classroom;
+import com.edugreat.akademiksresource.classroom.StudentClassroom;
 import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -65,6 +66,10 @@ public class Student extends AppUser {
 	@JoinColumn(name = "classroom_id", nullable = true)
 	private Classroom classroom;
 	
+	 @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+	    @JsonIgnore
+	    private Set<StudentClassroom> classroomEnrollments = new HashSet<>();
+	
 //	status depicts student's academic status such as SENIOR or JUNIOR
 	@Column(nullable = false)
 	String status;
@@ -100,6 +105,14 @@ public class Student extends AppUser {
 	private Set<MiscellaneousNotifications> miscellaneousNotices = new HashSet<>();
 	
 	
+
+    public Set<StudentClassroom> getClassroomEnrollments() {
+        return classroomEnrollments;
+    }
+
+    public void setClassroomEnrollments(Set<StudentClassroom> classroomEnrollments) {
+        this.classroomEnrollments = classroomEnrollments;
+    }
 	
 	
 	public Set<MiscellaneousNotifications> getMiscellaneousNotices() {
@@ -174,9 +187,15 @@ public class Student extends AppUser {
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 
-		return List.of(new SimpleGrantedAuthority(Roles.Student.name()));
-	}
+		Set<GrantedAuthority> authorities = new HashSet<>();
+		for (String role : this.getRoles()) {
+			authorities.add(new SimpleGrantedAuthority(role));
 
+		}
+
+		return authorities;
+	}
+	
 	public Set<StudentTest> getStudentTests() {
 		return studentTests;
 	}

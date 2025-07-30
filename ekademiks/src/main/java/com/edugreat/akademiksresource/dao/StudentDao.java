@@ -142,5 +142,34 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 	@Query("SELECT s FROM Student s JOIN s.instructors i WHERE i.id =:instr")
 	Page<Student> findDistinctByInstructorsId(@Param("instr")Integer instr, Pageable pageable);
 	
+	@RestResource(exported = false)
+	List<Student> findByClassroomId(Integer classroomId);
+	
+	
+
+	
+
+//	Methods that fetch student for classroom enrollment(for instructors only)
+	@RestResource(path = "all")
+	@Query("SELECT DISTINCT s FROM Student s JOIN s.institution i JOIN i.instructors instr WHERE instr.id =:instr")
+	Page<Student> findAllByInstructorInTheirInstitution(@Param("instr")Integer instr, Pageable pageble);
+	
+	@RestResource(path = "xx")
+	@Query("SELECT s FROM Student s JOIN s.institution i JOIN i.instructors instr WHERE instr.id =:instr AND i.id =:inst")
+	Page<Student> findAllByInstitution(@Param("instr")Integer instr, @Param("inst")Integer inst, Pageable pageable);
+	
+	@RestResource(path ="xy")
+	@Query("SELECT s FROM Student s JOIN s.institution i JOIN i.instructors instr WHERE instr.id =:instr "
+			+ "AND s.status LIKE CONCAT('%',:status,'%')")
+	Page<Student> findAllByStatus(@Param("instr")Integer instr, @Param("status")String status, Pageable pageable);
+	
+	@RestResource(path = "xyz")
+	@Query("SELECT DISTINCT s FROM Student s JOIN s.institution i JOIN i.instructors instr WHERE s.status LIKE CONCAT('%',:status,'%')"
+			+ " AND instr.id =:instr AND i.id =:inst")
+	Page<Student> findAllByInstitutionAndStatus(@Param("instr")Integer instr,@Param("inst")Integer inst, 
+			@Param("status")String status, Pageable pageable);
+	
+	
+	
 
 }

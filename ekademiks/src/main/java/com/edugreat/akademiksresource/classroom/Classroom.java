@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.edugreat.akademiksresource.instructor.Instructor;
+import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
@@ -67,6 +68,9 @@ public class Classroom {
 			)
 	private Set<Student> students = new HashSet<>();
 	
+	 @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
+	    private Set<StudentClassroom> studentEnrollments = new HashSet<>();
+
 	
 	
 	@OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -76,31 +80,53 @@ public class Classroom {
 	
 	@OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Test> assessments = new HashSet<>();
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "institution_id", nullable = false)
+	private Institution institution;
 
 	
 	public Classroom() {
 	
 	}
 	
-	public void addStudent(Student student) {
+	public void addStudent(Student student,String enrolledBy) {
 		if (student != null) {
-			students.add(student);
+			
+//			ensure no duplicate enrollment in the same institution
+			if(isDuplicateEnrollmentAttempt(student)) {
+				
+				throw new IllegalArgumentException("The student has already been enrolled another classroom");
+			}
+			
+			StudentClassroom enrollment = new StudentClassroom(student, this, enrolledBy);
+		
+			studentEnrollments.add(enrollment);
+			
+			this.students.add(student);
 			student.setClassroom(this);
 		}
 	}
 	
 	public void removeStudent(Student student) {
 		if (student != null) {
+			
+			studentEnrollments.removeIf(e -> e.getStudent().equals(student));
 			students.remove(student);
 			student.setClassroom(null);
 		}
 	}
 	
 	
-	public void migrateStudent(Student student, Classroom newClassroom) {
+	public void migrateStudent(Student student, Classroom newClassroom, String enrolledBy) {
 		if (student != null && newClassroom != null) {
+			
+			if(!this.institution.equals(newClassroom.getInstitution())) {
+				throw new IllegalArgumentException("Cannot migrate student between different institution");
+			}
+			
 			removeStudent(student);
-			newClassroom.addStudent(student);
+			newClassroom.addStudent(student, enrolledBy);
 		}
 	}
 	
@@ -137,6 +163,14 @@ public class Classroom {
 		classroomSubjects.add(classroomSubject);
 	}
 	
+	  public Set<StudentClassroom> getStudentEnrollments() {
+	        return studentEnrollments;
+	    }
+
+	    public void setStudentEnrollments(Set<StudentClassroom> studentEnrollments) {
+	        this.studentEnrollments = studentEnrollments;
+	    }
+	
 	 public Instructor getSubjectInstructor(Subject subject) {
 	        return classroomSubjects.stream()
 	            .filter(cs -> cs.getSubject().equals(subject))
@@ -147,7 +181,7 @@ public class Classroom {
 	 
 	 public Set<Instructor> getAllInstructors() {
 		    Set<Instructor> instructors = new HashSet<>();
-		    instructors.add(this.primaryInstructor); // Always include primary
+		    instructors.add(this.primaryInstructor); 
 		    this.classroomSubjects.stream()
 		        .map(ClassroomSubject::getInstructor)
 		        .forEach(instructors::add);
@@ -228,6 +262,20 @@ public class Classroom {
 
 	public Integer getId() {
 		return id;
+	}
+
+	public Institution getInstitution() {
+		return institution;
+	}
+
+	public void setInstitution(Institution institution) {
+		this.institution = institution;
+	}
+	
+	
+	private boolean isDuplicateEnrollmentAttempt(Student student) {
+		
+		return student.getClassroom() != null && student.getClassroom().getInstitution().equals(this.institution);
 	}
 	 
 	 

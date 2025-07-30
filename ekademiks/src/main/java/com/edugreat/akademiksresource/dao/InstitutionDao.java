@@ -33,4 +33,15 @@ public interface InstitutionDao extends JpaRepository<Institution, Integer> {
 	  @RestResource(path = "B")
 	  @Query("SELECT i FROM Institution i JOIN i.instructors instr WHERE instr.id =:instr ORDER BY i.name ASC")
 	  Page<Institution> findByInstructor(@Param("instr") Integer instr,Pageable pageable);
+	  
+	  @RestResource(path = "islegible")
+	  @Query("SELECT CASE WHEN COUNT(i) > 0 THEN true ELSE false END FROM Institution i JOIN i.instructors instr WHERE instr.id =:instr AND i.id =:inst")
+	  boolean isAnInstructorOfInstitution(@Param("instr") Integer instr, @Param("inst") Integer inst);
+	  
+	  @RestResource(path = "isadmin")
+	  @Query("SELECT CASE WHEN COUNT(i) > 0 THEN true ELSE false END FROM Institution  i WHERE i.id =:inst AND i.createdBy =:admin")
+	  boolean isAdminOfInstitution(@Param("inst") Integer inst, @Param("admin") Integer admin);
+	  
+	  
+
 }

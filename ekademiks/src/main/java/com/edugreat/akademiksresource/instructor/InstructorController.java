@@ -45,7 +45,7 @@ public class InstructorController {
 			
 			System.out.println(e);
 			
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
 		}
 		
 		

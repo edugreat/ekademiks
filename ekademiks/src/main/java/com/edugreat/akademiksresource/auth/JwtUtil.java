@@ -35,9 +35,11 @@ public class JwtUtil {
 		
 		List<String> authorities = userDetails.getAuthorities().stream()
 				.map(GrantedAuthority::getAuthority)
+				.map(String::toUpperCase)
 				.toList();
 		
-		if(!authorities.contains(selectedRole)) {
+		
+		if(!authorities.contains(selectedRole.toUpperCase())) {
 			
 			throw new IllegalArgumentException("You cannot login as "+selectedRole);
 		}

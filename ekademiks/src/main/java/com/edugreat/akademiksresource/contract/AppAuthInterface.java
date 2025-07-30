@@ -25,13 +25,15 @@ public interface AppAuthInterface {
 	public<T extends AppUserDTO> T generateNewToken (String refreshToken, HttpServletResponse response) throws IOException;
 
 //	return redis cached logged in user
-	<T extends AppUserDTO> T getCachedUser(String cachingKey);
+	<T extends AppUserDTO> T getCachedUser(String userId);
 	
 //	this method is used to reset the content of the user cache, especially when they've left a group chat.
 //	In this scenario, we check if they still belong to a group, setting appropriate parameters
 	<T extends AppUserDTO> void resetCachedUser(T user, String cachingKey);
 	
 	public void instructorSignup(InstructorRegistrationRequest request);
+	
+	public String extractUserRole(String userId);
 	}
 	
 

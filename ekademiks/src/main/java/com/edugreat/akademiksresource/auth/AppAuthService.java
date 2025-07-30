@@ -198,7 +198,7 @@ public class AppAuthService implements AppAuthInterface {
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String selectedRole) {
 		
 		final String username = request.getEmail();
-		System.out.println(selectedRole);
+		
 		
 	switch (selectedRole.toLowerCase()) {
 	case "admin":
@@ -209,7 +209,8 @@ public class AppAuthService implements AppAuthInterface {
 		if (optionalAdmin.isPresent() && passwordEncoder.matches(request.getPassword(), optionalAdmin.get().getPassword())) {
 
 			Admins admin = optionalAdmin.get();
-		
+			
+			
 			AdminsDTO dto = processBeforLogin(admin, selectedRole);
 
 			return (T) dto;
@@ -240,8 +241,10 @@ public class AppAuthService implements AppAuthInterface {
 		Optional<Instructor> optionalInstructor = instructorDao.findByEmail(username);
 		if(optionalInstructor.isPresent() && passwordEncoder.matches(request.getPassword(), optionalInstructor.get().getPassword() ) ) {
 			
+			
 			InstructorDTO dto = processBeforLogin(optionalInstructor.get(), selectedRole);
 			
+					
 			return (T) dto;
 		}
 		
@@ -335,25 +338,35 @@ public class AppAuthService implements AppAuthInterface {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends AppUserDTO> T getCachedUser(String cachingKey) {
+	public <T extends AppUserDTO> T getCachedUser(String userId) {
 	   
 	
 		try {
 			
-			AppUserDTO user = redisTemplate.opsForValue().get(RedisValues.USER_CACHE+"::"+cachingKey);
+			AppUserDTO user = redisTemplate.opsForValue().get(RedisValues.USER_CACHE+"::"+userId);
 			
-			if(user != null && (user instanceof StudentDTO || user instanceof AdminsDTO)) return (T)user;
+			if(user != null && (user instanceof StudentDTO || user instanceof AdminsDTO || user instanceof InstructorDTO)) return (T)user;
 
 			return null;
 			
 			
 		} catch (Exception e) {
 			
-			System.out.println(e);
+		
 			
 			return null;
 		}
 	
+	}
+	
+	@Override
+	public String extractUserRole(String userId) {
+		
+		final AppUserDTO user = getCachedUser(userId);
+		
+		 return user !=null ? jwtUtil.extractRoles(user.getAccessToken()).get(0) : null;
+		
+		
 	}
 
 	@Override
@@ -388,11 +401,11 @@ public class AppAuthService implements AppAuthInterface {
 		try {
 			
 			
-			if(instructorDao.existsByEmail(request.email())) {
+			if(instructorDao.isDuplicateAccountCreationAttempt(request.email(), request.institution())) {
 				
 				
 				
-				throw new RuntimeException("Account already exists!");
+				throw new IllegalArgumentException("Account already exists!");
 				
 			}
 			

@@ -100,7 +100,13 @@ public class AuthenticateController {
 	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
 			@RequestParam String role) {
 
-		return ResponseEntity.ok(appInterface.signIn(request, role));
+		try {
+			return ResponseEntity.ok(appInterface.signIn(request, role));
+		} catch (Exception e) {
+			System.out.println(e);
+			
+			return new ResponseEntity<AppUserDTO>(HttpStatus.NOT_FOUND);
+		}
 	}
 
 	// Controller endpoint for requesting new access token upon token expiration
