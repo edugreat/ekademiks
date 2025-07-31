@@ -6,8 +6,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.classroom.ClassroomDTO;
 import com.edugreat.akademiksresource.classroom.ClassroomDao;
+import com.edugreat.akademiksresource.classroom.EnrollmentRequest;
+import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
+import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
@@ -25,6 +30,7 @@ import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
+import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Student;
@@ -39,10 +45,14 @@ public class ClassroomService implements ClassroomInterface {
     private final StudentDao studentDao;
 	private final InstructorDao instructorDao;
 	private final LevelDao levelDao;
+	private final AdminsDao adminDao;
 	private final ClassroomDao classroomDao;
 	private final InstitutionDao institutionDao;
 	private final AppAuthInterface authenticationInterface;
 	private final UtilityService utilityService;
+	
+	 @Qualifier(value = "customStringRedisTemplate")
+	private final RedisTemplate<String, String> stringRedisTemplate;
 
    
 	@Override
@@ -384,9 +394,88 @@ public class ClassroomService implements ClassroomInterface {
 	}
 
 	@Override
-	public void enrollStudents(Integer classroommId, Set<Student> students) {
-		// TODO Auto-generated method stub
+	@Transactional
+	public void enrollStudents(EnrollmentRequest enrollmentReq, String role) {
 		
+		System.out.println("selected institution "+enrollmentReq.institutionId());
+		
+		
+
+		try {
+//			ensure really logged in using the role
+			String loggedInRole = stringRedisTemplate.opsForValue().get(RedisValues.CURRENT_ROLE+"::"+enrollmentReq.enrollmentOfficer());
+			
+			if(loggedInRole == null) throw new IllegalArgumentException("Please login to perform this action");
+			
+			
+			
+//			get the classroom the student is being enrolled into
+			Classroom classroom = classroomDao.findById(enrollmentReq.classroomId())
+					               .orElseThrow(() ->  new IllegalArgumentException("No matching records for the given classroom"));
+		
+			System.out.println("classroom details: "+classroom.getName()+" institution "+classroom.getInstitution().getName());
+			
+			if(!classroomDao.isFoundInTheInstitution(classroom.getId(), enrollmentReq.institutionId())){
+				
+				throw new IllegalArgumentException("Please choose a classroom that is part of the institution");
+			}
+			Admins admin = null;
+			
+// Ensure enrollment officer is either classroom primary instructor or ADMIN of the institution
+			Optional<Instructor> optionalInstructor = instructorDao.findById(enrollmentReq.enrollmentOfficer());
+				if(optionalInstructor.isEmpty()) {
+					
+					admin  = adminDao.findById(enrollmentReq.enrollmentOfficer())
+							 .orElseThrow(() -> new IllegalArgumentException("Enrollment officer not found"));
+					
+				}
+				
+							
+				if(admin != null  ) {
+					
+					if(!loggedInRole.equalsIgnoreCase(Roles.Admin.name())) {
+						throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
+					}
+					
+					classroomDao.save(performEnrollment(enrollmentReq, classroom, admin.getEmail()));
+				
+					return;
+				}
+
+				if(!loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
+					throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
+				}
+				
+				classroomDao.save(performEnrollment(enrollmentReq, classroom, optionalInstructor.get().getEmail()));
+			
+			
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getMessage());
+		}
+		
+	}
+	
+	
+	private  Classroom performEnrollment(EnrollmentRequest request, Classroom classroom, String enrollmentOfficerEmail) {
+		
+		for(Integer studentId: request.studentIds()) {
+			
+			if(!studentDao.isRegisteredInTheInstitution(studentId, request.institutionId())) {
+				
+				throw new IllegalArgumentException("Ensure students are part of the institution");
+			}
+			
+			Student student = studentDao.findById(studentId).orElseThrow(() -> new IllegalArgumentException("An enrolling student's record was not found"));
+			
+			classroom.addStudent(student, enrollmentOfficerEmail);
+			
+				
+			
+			
+		}
+		
+		return classroom;
 	}
 	
 

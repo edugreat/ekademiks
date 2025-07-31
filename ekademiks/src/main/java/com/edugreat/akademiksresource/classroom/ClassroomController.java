@@ -3,6 +3,7 @@ package com.edugreat.akademiksresource.classroom;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edugreat.akademiksresource.classroom.service.ClassroomInterface;
 import com.edugreat.akademiksresource.util.ApiResponseObject;
 import com.edugreat.akademiksresource.util.ValidatorService;
-
-import jakarta.validation.Valid;
 
 
 
@@ -58,18 +57,50 @@ public class ClassroomController {
 			
 			return ResponseEntity.ok(response);
 		} catch (Exception e) {
-			System.out.println("catching error");
+		
 			System.out.println(e);
 			
 			ApiResponseObject<ClassroomDTO> response = new ApiResponseObject<>(null, e.getMessage(), false);
 			return ResponseEntity.badRequest().body(response);
 		}
 		
+	}
+	
+	@PostMapping("/enroll")
+	public ResponseEntity<ApiResponseObject<String>> postMethodName
+	(@RequestBody EnrollmentRequest enrollmentReq, @RequestParam String role) {
+		
+		try {
+			
+			List<String> validationErrors = validatorService.validateObject(enrollmentReq);
+			
+			if(!validationErrors.isEmpty()) {
+				
+				String errors = String.join(", ", validationErrors);
+				
+				return ResponseEntity.badRequest()
+						             .body(new ApiResponseObject<>(null, errors, false));
+			}
+			
+			_interface.enrollStudents(enrollmentReq, role);
+			
+			final String successMessage = enrollmentReq.studentIds().size()+" students successfully enrolled";
+			
+			return ResponseEntity.ok(new ApiResponseObject<>(successMessage, null, true));
+			
+		} catch (Exception e) {
+			
+			System.out.println("enrollment error "+e);
+			
+			return ResponseEntity.badRequest()
+					.body(new ApiResponseObject<>(null, e.getMessage(), false));
+		}
 		
 		
 		
 		
 	}
+	
 	
 	@GetMapping
 	public ResponseEntity<ApiResponseObject<Page<ClassroomDTO>>> getManagedClassrooms(@RequestParam Integer userId, 

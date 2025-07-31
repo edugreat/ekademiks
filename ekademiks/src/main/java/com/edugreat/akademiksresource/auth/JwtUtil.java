@@ -22,6 +22,7 @@ import io.jsonwebtoken.security.Keys;
 public class JwtUtil {
 
 	private final long EXPIRATION_TIME = 43200000; // 12 hours converted to milliseconds
+	
 
 	public JwtUtil() {
 

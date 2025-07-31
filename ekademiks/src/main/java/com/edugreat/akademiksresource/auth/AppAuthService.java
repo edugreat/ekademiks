@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
@@ -56,6 +57,9 @@ public class AppAuthService implements AppAuthInterface {
 
 	
 	private final RedisTemplate<String, AppUserDTO> redisTemplate;
+	
+	 @Qualifier(value = "customStringRedisTemplate")
+	private final RedisTemplate<String, String> stringRedisTemplate;
 	
 	
 
@@ -181,7 +185,7 @@ public class AppAuthService implements AppAuthInterface {
 			postLoginCleanup(((Instructor)obj).getId());
 			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (InstructorDTO)dto);
-			
+			stringRedisTemplate.opsForValue().set(RedisValues.CURRENT_ROLE+"::"+dto.getId(), selectedRole);			
 			
 			
 			return (T) dto;

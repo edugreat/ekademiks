@@ -169,7 +169,9 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 	Page<Student> findAllByInstitutionAndStatus(@Param("instr")Integer instr,@Param("inst")Integer inst, 
 			@Param("status")String status, Pageable pageable);
 	
-	
+	@RestResource(exported = false)
+	@Query("SELECT CASE WHEN COUNT(s) > 0 THEN TRUE ELSE FALSE END FROM Student s WHERE s.id =:studentId AND s.institution.id =:institutionId")
+	boolean isRegisteredInTheInstitution(@Param("studentId")Integer studentId, @Param("institutionId")Integer institutionId);
 	
 
 }

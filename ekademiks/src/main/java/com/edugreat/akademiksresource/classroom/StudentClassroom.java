@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 /**
@@ -56,7 +57,7 @@ public class StudentClassroom {
 
     // Constructors, getters, and setters
     public StudentClassroom() {
-        this.enrollmentDate = LocalDateTime.now();
+       
     }
 
     public StudentClassroom(Student student, Classroom classroom, String enrolledBy) {
@@ -109,5 +110,10 @@ public class StudentClassroom {
 
     public void setEnrolledBy(String enrolledBy) {
         this.enrolledBy = enrolledBy;
+    }
+    
+    @PrePersist
+    protected void enrollmentDate() {
+    	 this.enrollmentDate = LocalDateTime.now();
     }
 }

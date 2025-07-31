@@ -114,4 +114,11 @@ public interface ClassroomDao extends JpaRepository<Classroom, Integer> {
             @Param("userId") Integer userId, 
             @Param("institutionId") Integer institutionId, 
             @Param("categoryId") Integer categoryId);
+    
+//    Method that verifies that a particular classroom belongs to the institution referenced by the ID
+    @RestResource(exported= false)
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN TRUE ELSE FALSE END FROM Classroom c WHERE c.id =:classroomId AND"
+    		+ " c.institution.id =:institutionId")
+   boolean isFoundInTheInstitution(@Param("classroomId")Integer classroomId,
+		                           @Param("institutionId")Integer institutionId);
 }

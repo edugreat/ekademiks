@@ -5,6 +5,7 @@ import java.time.Duration;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,6 +45,11 @@ public class RedisConfig {
                                 .serializeValuesWith(valueSerializer)
                                 .entryTtl(Duration.ofMinutes(60)))
                 .withCacheConfiguration(RedisValues.ASSIGNMENT_DETAILS,
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .serializeValuesWith(valueSerializer)
+                                .entryTtl(Duration.ofMinutes(60 * 12)))
+                
+                .withCacheConfiguration(RedisValues.CURRENT_ROLE,
                         RedisCacheConfiguration.defaultCacheConfig()
                                 .serializeValuesWith(valueSerializer)
                                 .entryTtl(Duration.ofMinutes(60 * 24)))
@@ -140,6 +146,16 @@ public class RedisConfig {
 	    
 	    return template;
 	}
+	
+	 @Bean
+	 @Qualifier("customStringRedisTemplate")
+	   RedisTemplate<String, String> stringRedisTemp(RedisConnectionFactory factory) {
+	        RedisTemplate<String, String> template = new RedisTemplate<>();
+	        template.setConnectionFactory(factory);
+	        template.setKeySerializer(new StringRedisSerializer());
+	        template.setValueSerializer(new StringRedisSerializer());
+	        return template;
+	    }
 	
 	
 	@Bean

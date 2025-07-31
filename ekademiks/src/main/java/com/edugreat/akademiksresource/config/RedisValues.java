@@ -5,6 +5,8 @@ public class RedisValues {
 	
 	public static final String USER_CACHE = "USER_CACHE";
 	
+	public static final String CURRENT_ROLE = "CURRENT_ROLE";
+	
 	public static final String SUBJECT_NAMES = "subjectNames";
 	
 	public static final String RECENT_PERFORMANCE = "recent_performance"; 

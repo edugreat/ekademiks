@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.classroom;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -96,7 +97,7 @@ public class Classroom {
 //			ensure no duplicate enrollment in the same institution
 			if(isDuplicateEnrollmentAttempt(student)) {
 				
-				throw new IllegalArgumentException("The student has already been enrolled another classroom");
+				throw new IllegalArgumentException("Some or all the students have already been enrolled in a  classroom");
 			}
 			
 			StudentClassroom enrollment = new StudentClassroom(student, this, enrolledBy);
@@ -105,15 +106,28 @@ public class Classroom {
 			
 			this.students.add(student);
 			student.setClassroom(this);
+			student.getClassroomEnrollments().add(enrollment);
 		}
 	}
 	
 	public void removeStudent(Student student) {
 		if (student != null) {
 			
-			studentEnrollments.removeIf(e -> e.getStudent().equals(student));
 			students.remove(student);
+			studentEnrollments.removeIf(enrollment -> {
+				
+				if(enrollment.getStudent().equals(student)) {
+					
+					student.getClassroomEnrollments().remove(enrollment);
+					
+					return true;
+				}
+				
+				return false;
+			});
+			
 			student.setClassroom(null);
+			
 		}
 	}
 	

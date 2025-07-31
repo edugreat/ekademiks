@@ -1,11 +1,9 @@
 package com.edugreat.akademiksresource.classroom.service;
 
-import java.util.Set;
-
 import org.springframework.data.domain.Page;
 
 import com.edugreat.akademiksresource.classroom.ClassroomDTO;
-import com.edugreat.akademiksresource.model.Student;
+import com.edugreat.akademiksresource.classroom.EnrollmentRequest;
 
 public interface ClassroomInterface {
 	
@@ -19,7 +17,7 @@ public interface ClassroomInterface {
 	
 	Page<ClassroomDTO> getManagedClassroomsByLevelAndInstitution(Integer userId, String userRole, Integer institutionId, Integer categoryId, int page, int pageSize);
 
-	void enrollStudents(Integer classroomId, Set<Student> students);
+	void enrollStudents(EnrollmentRequest enrollmentReq, String role);
 	
 
 	

@@ -30,7 +30,7 @@ public class SecurityConfig {
     };
 
     private static final String[] STUDENT_URL = {"/chats/**", "/assignments/details", "/assignments/resource", "/notice/**"};
-    private static final String[] ADMINS_URL = {"/admins/**", "/assignments/**"};
+    private static final String[] ADMINS_URL = {"/admins/**", "/assignments/**","/classrooms/**"};
     private static final String[] INSTRUCTORS_URL = {"/classrooms/**"};
     private static final String[] ANALYTICS_URL = {"/api/analytics/**"}; 
 
