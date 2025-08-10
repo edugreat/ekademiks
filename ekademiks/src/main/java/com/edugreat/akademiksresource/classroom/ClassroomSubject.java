@@ -1,18 +1,21 @@
 package com.edugreat.akademiksresource.classroom;
 
-import java.io.Serializable;
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.edugreat.akademiksresource.instructor.Instructor;
+import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
 
 @Entity
 @Table(name = "subject_classroom")
@@ -31,11 +34,16 @@ public class ClassroomSubject {
 	@MapsId("subjectId")
 	private Subject subject;
 	
+	@OneToMany(mappedBy = "classroomSubject", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<StudentElectiveEnrollment> electiveEnrollments = new HashSet<>();
+	
 	@ManyToOne
 	private Instructor instructor;
 	
 	@Column(name = "is_primary_instructor", nullable = false)
 	private boolean isPrimaryInstructor = false;
+	
+	
 	
 	public ClassroomSubject() {
 		
@@ -81,6 +89,14 @@ public class ClassroomSubject {
 
 
 
+	public boolean isPrimaryInstructor() {
+		return isPrimaryInstructor;
+	}
+
+
+	
+	
+
 	public void setClassroom(Classroom classroom) {
 		this.classroom = classroom;
 	}
@@ -105,6 +121,16 @@ public class ClassroomSubject {
 
 
 
+	public Set<StudentElectiveEnrollment> getElectiveEnrollments() {
+		return electiveEnrollments;
+	}
+
+
+	public void setElectiveEnrollments(Set<StudentElectiveEnrollment> electiveEnrollments) {
+		this.electiveEnrollments = electiveEnrollments;
+	}
+
+
 	public void setInstructor(Instructor instructor) {
 		this.instructor = instructor;
 	}
@@ -114,38 +140,30 @@ public class ClassroomSubject {
 	public ClassroomSubjectId getId() {
 		return id;
 	}
-
 	
-	
-}
-
-@Data
- class ClassroomSubjectId implements Serializable {
-	
-	private static final long serialVersionUID = 1L;
-	private Integer classroomId;
-	private Integer subjectId;
-
-	public ClassroomSubjectId() {
-	}
-
-	public ClassroomSubjectId(Integer classroomId, Integer subjectId) {
-		this.classroomId = classroomId;
-		this.subjectId = subjectId;
-	}
-
-	 @Override
-	    public boolean equals(Object o) {
-	        if (this == o) return true;
-	        if (!(o instanceof ClassroomSubjectId)) return false;
-	        ClassroomSubjectId that = (ClassroomSubjectId) o;
-	        return Objects.equals(classroomId, that.classroomId) &&
-	               Objects.equals(subjectId, that.subjectId);
+	public void addElectiveStudent(Student student) {
+	    if (student == null || !this.classroom.getStudents().contains(student)) {
+	        throw new IllegalArgumentException("Student not in classroom");
 	    }
+	    StudentElectiveEnrollment enrollment = new StudentElectiveEnrollment(student, this);
+	    electiveEnrollments.add(enrollment);
+	    enrollment.setClassroomSubject(this); 
+	}
+	
+	
+
+	public void removeElectiveStudent(Student student) {
+	    if (student == null) return;
 	    
-	    @Override
-	    public int hashCode() {
-	        return Objects.hash(classroomId, subjectId);
-	    }
+	    electiveEnrollments.removeIf(enrollment -> {
+	        if (enrollment.getStudent().getId().equals(student.getId())) {
+	            enrollment.setClassroomSubject(null);
+	            return true;
+	        }
+	        return false;
+	    });
+	}
 	
 }
+
+

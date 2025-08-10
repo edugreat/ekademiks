@@ -13,7 +13,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.edugreat.akademiksresource.assessment.response.notification.AssessmentResponseBroadcasterService;
 import com.edugreat.akademiksresource.chat.dao.GroupMembersDao;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
@@ -43,6 +43,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AppAuthService implements AppAuthInterface {
 
+  
+
 	private final AdminsDao adminsDao;
 	private final GroupMembersDao groupMemberDo;
 	private final StudentDao studentDao;
@@ -60,8 +62,8 @@ public class AppAuthService implements AppAuthInterface {
 	
 	 @Qualifier(value = "customStringRedisTemplate")
 	private final RedisTemplate<String, String> stringRedisTemplate;
-	
-	
+
+
 
 	@Transactional
 	@Override
@@ -412,6 +414,15 @@ public class AppAuthService implements AppAuthInterface {
 				throw new IllegalArgumentException("Account already exists!");
 				
 			}
+			
+			if(request.mobileNumber() != null && instructorDao.existsByMobileNumber(request.mobileNumber())) {
+				
+				throw new IllegalArgumentException("Mobile number: "+request.mobileNumber()+" is already registered.");
+			}
+				
+				
+				
+			
 			
 			Institution institution = institutionDao.findById(request.institution() )
 					.orElseThrow(() -> new RuntimeException("Institution not found"));

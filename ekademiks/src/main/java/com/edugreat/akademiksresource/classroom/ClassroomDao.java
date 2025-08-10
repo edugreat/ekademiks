@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.classroom;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -121,4 +122,23 @@ public interface ClassroomDao extends JpaRepository<Classroom, Integer> {
     		+ " c.institution.id =:institutionId")
    boolean isFoundInTheInstitution(@Param("classroomId")Integer classroomId,
 		                           @Param("institutionId")Integer institutionId);
+    @RestResource(exported = false)
+    Optional<Classroom> findByIdAndInstitutionId(@Param("classroomId")Integer classroomId, @Param("institutionId")Integer institutionId);
+   
+    
+    @RestResource(exported = false)
+    @Query("SELECT CASE WHEN COUNT(cs) > 0 THEN TRUE ELSE FALSE END FROM Classroom c JOIN c.classroomSubjects cs WHERE c.id =:classroomId AND c.institution.id =:institutionId AND cs.instructor.id =:instructorId")
+    boolean isSubjectInstructor( @Param("instructorId") Integer instructorId, @Param("institutionId") Integer institutionId, @Param("classroomId") Integer classroomId);
+
+    @RestResource(exported = false)
+    Optional<Classroom> findTop1ByInstitutionCreatedByAndInstitutionIdAndNameContaining(@Param("userId") Integer userId, @Param("institutionId")Integer institutionId, @Param("searchQuery")String searchQuery);
+    
+    
+    @RestResource(exported = false)
+    Optional<Classroom> findTop1ByPrimaryInstructorIdAndInstitutionIdAndNameContaining(@Param("userId") Integer userId, @Param("institutionId")Integer institutionId, @Param("searchQuery")String searchQuery);
+    
+
+    @RestResource(exported = false)
+    Optional<Classroom> findTop1ByClassroomSubjectsInstructorIdAndInstitutionIdAndNameContaining(@Param("userId") Integer userId, @Param("institutionId")Integer institutionId, @Param("searchQuery")String searchQuery);
+    
 }

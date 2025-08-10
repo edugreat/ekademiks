@@ -1,9 +1,14 @@
 package com.edugreat.akademiksresource.classroom;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.model.Institution;
@@ -15,6 +20,7 @@ import com.edugreat.akademiksresource.model.Test;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -34,7 +40,7 @@ indexes = {
 	    @Index(columnList = "instructor_id")
 	}
 		)
-
+@EntityListeners(AuditingEntityListener.class)
 public class Classroom {
 	
 	@Id
@@ -53,6 +59,20 @@ public class Classroom {
 	
 	@Column(length = 10)
 	private String section;
+	
+	@Column(updatable = false, nullable = false)
+	@CreatedDate
+	private LocalDateTime creationDate;
+	
+	@Column(nullable = false)
+	@LastModifiedDate
+	private LocalDateTime lastModified;
+	
+	@Column
+	@LastModifiedBy
+	private String lastModifiedBy;
+	
+	
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "instructor_id", nullable = false)
@@ -228,6 +248,20 @@ public class Classroom {
 
 	public String getSection() {
 		return section;
+	}
+	
+	
+
+	public LocalDateTime getCreationDate() {
+		return creationDate;
+	}
+
+	public LocalDateTime getLastModified() {
+		return lastModified;
+	}
+
+	public String getLastModifiedBy() {
+		return lastModifiedBy;
 	}
 
 	public void setSection(String section) {

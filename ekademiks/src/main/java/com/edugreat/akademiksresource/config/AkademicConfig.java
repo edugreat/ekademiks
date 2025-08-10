@@ -4,6 +4,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
 import org.springframework.hateoas.LinkRelation;
@@ -45,14 +46,20 @@ public class AkademicConfig implements RepositoryRestConfigurer {
 
 	}
 
-    @Bean
-    RestTemplate restTemplate() {
-		
-		return new RestTemplate();
-		
+//    @Bean
+//    RestTemplate restTemplate() {
+//		
+//		return new RestTemplate();
+//		
+//		
+//	}
+//	
+
+	@Bean
+ AuditorAware<String> auditorAware(){
+
+		return new AuditorAwareImpl();
 		
 	}
-	
-
 
 }

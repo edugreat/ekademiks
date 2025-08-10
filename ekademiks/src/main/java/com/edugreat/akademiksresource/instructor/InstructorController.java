@@ -26,13 +26,17 @@ public class InstructorController {
 	@PostMapping("/signup")
 	public ResponseEntity<Object> signup (@RequestBody InstructorRegistrationRequest request) {
 		
+		System.out.println("controller called");
+		
 		try {
 			
 			List<String> violations = validatorService.validateObject(request);
 			
 			if(!violations.isEmpty()) {
 				
-				return new ResponseEntity<>(violations, HttpStatus.BAD_REQUEST);
+				
+				
+				return new ResponseEntity<>(String.join(", ", violations), HttpStatus.BAD_REQUEST);
 			}
 			
 			userInterface.instructorSignup(request);

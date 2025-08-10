@@ -2,8 +2,10 @@ package com.edugreat.akademiksresource.classroom.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,12 +21,18 @@ import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.classroom.ClassroomDTO;
 import com.edugreat.akademiksresource.classroom.ClassroomDao;
 import com.edugreat.akademiksresource.classroom.EnrollmentRequest;
+import com.edugreat.akademiksresource.classroom.details.ClassroomFullDetails;
+import com.edugreat.akademiksresource.classroom.details.ClassroomSpecificDetails;
+import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetails;
+import com.edugreat.akademiksresource.classroom.details.InstructorBasicDetails;
+import com.edugreat.akademiksresource.classroom.details.StudentBasicDetails;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.LevelDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
+import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.exception.AcademicException;
@@ -34,8 +42,11 @@ import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Student;
+import com.edugreat.akademiksresource.model.Subject;
+import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
 import com.edugreat.akademiksresource.util.UtilityService;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -50,6 +61,7 @@ public class ClassroomService implements ClassroomInterface {
 	private final InstitutionDao institutionDao;
 	private final AppAuthInterface authenticationInterface;
 	private final UtilityService utilityService;
+	private final SubjectDao subjectDao;
 	
 	 @Qualifier(value = "customStringRedisTemplate")
 	private final RedisTemplate<String, String> stringRedisTemplate;
@@ -139,7 +151,7 @@ public class ClassroomService implements ClassroomInterface {
 			
 		} catch (Exception e) {
 			
-			throw new RuntimeException(e);
+			throw new RuntimeException(e.getLocalizedMessage());
 		}
 	
 		
@@ -451,7 +463,7 @@ public class ClassroomService implements ClassroomInterface {
 			
 		} catch (Exception e) {
 			
-			throw new RuntimeException(e.getMessage());
+			throw new RuntimeException(e.getLocalizedMessage());
 		}
 		
 	}
@@ -477,6 +489,266 @@ public class ClassroomService implements ClassroomInterface {
 		
 		return classroom;
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ClassroomFullDetails adminClassroomDetails(Integer classroomId, Integer userId, Integer institutionId) {
+		
+
+		try {
+//			confirm the user has administrative role in the given class
+			if(!institutionDao.isAdminOfInstitution(institutionId, userId)) {
+				
+				throw new IllegalArgumentException("Sorry, your details are unrelated for this operation");
+			}
+			
+//			confirm the given classroom details exist
+			Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
+					.orElseThrow(() ->  new IllegalArgumentException("Not matching classroom details found"));
+			
+		return new ClassroomFullDetails(classroom);
+		
+		
+		
+		
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+		
+		
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ClassroomSpecificDetails subjectInstructorClassroomDetails(Integer classroomId, Integer userId,
+			Integer institutionId) {
+
+		try {
+			
+//			verify identity
+			if(!classroomDao.isSubjectInstructor(userId, institutionId, classroomId)) {
+				
+				throw new IllegalArgumentException("No matching record found");
+			}
+			
+			Classroom classroom = classroomDao.findById(classroomId).get();
+			
+			return new ClassroomSpecificDetails(classroom, userId);
+			
+			
+			
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ClassroomSummarizedDetails primaryInstructorClassroomDetails(Integer classroomId, Integer userId,
+			Integer institutionId) {
+		
+	try {
+		
+//		verify identity
+		if(!classroomDao.isPrimaryInstructor(userId, institutionId)) {
+			
+			throw new IllegalArgumentException("You lack authorizations for this process");
+		}
+		
+		Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
+				              .orElseThrow(() -> new IllegalArgumentException("No matching classroom details found"));
+		
+		
+		return new ClassroomSummarizedDetails(classroom);
+	} catch (Exception e) {
+	
+		throw new RuntimeException(e.getLocalizedMessage());
+	
+	
+	}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ClassroomFullDetails searchAdminClassroom(Integer userId, Integer institutionId, String searchQuery) {
+		
+		try {
+			Classroom classroom  = classroomDao.findTop1ByInstitutionCreatedByAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
+					               .orElseThrow(() -> new IllegalArgumentException("No matching result found."));
+			
+		
+			return new ClassroomFullDetails(classroom);
+			
+			
+			
+			
+			
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+	
+		
+		
+		
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ClassroomSummarizedDetails searchPrimaryInstructorClassroom(Integer userId, Integer institutionId,
+			String searchQuery) {
+		
+		try {
+			
+			Classroom classroom = classroomDao.findTop1ByPrimaryInstructorIdAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
+					              .orElseThrow(() -> new IllegalArgumentException("No matching result found."));
+			
+			return new ClassroomSummarizedDetails(classroom);
+					
+			
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public ClassroomSpecificDetails searchSubjectInstructorClassroom(Integer userId, Integer institutionId,
+			String searchQuery) {
+		
+		try {
+			
+			Classroom classroom = classroomDao.findTop1ByClassroomSubjectsInstructorIdAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
+					              .orElseThrow(() -> new IllegalArgumentException("No matching result found."));
+			
+			return new ClassroomSpecificDetails(classroom, userId);
+			
+		} catch (Exception e) {
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<StudentBasicDetails> getEnrolledStudents(Integer classroomId, Integer institutionId) {
+		
+		try {
+			Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
+                    .orElseThrow(() -> new IllegalArgumentException("No matching record found"));
+			
+			
+			return classroom.getStudents()
+					.stream()
+					.map(StudentBasicDetails::new)
+					.toList();		
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+			
+		}
+		
+		
+		
+		
+	}
+	
+
+	@Override
+	public List<InstructorBasicDetails> getInstructorsInInstitution(Integer adminId, Integer institutionId) {
+		
+		
+		try {
+			
+			Institution institution = institutionDao.findByIdAndCreatedBy(institutionId, adminId)
+	                  .orElseThrow(() -> new IllegalArgumentException("No record of institution was found"));
+
+			
+			Set<Instructor> instructors = institution.getInstructors();
+			
+			return instructors.stream()
+					.map(InstructorBasicDetails::new)
+					.toList();
+
+
+
+			
+		} catch (Exception e) {
+			
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+	}
+
+	@Override
+	@Transactional
+	public void assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId) {
+		
+		try {
+			
+			Classroom classroom = classroomDao.findById(classroomId)
+					             .orElseThrow(() -> new IllegalArgumentException("Classroom does not exist"));
+			List<Integer> subjectIds = subjectAssignments.stream().map(SubjectAssignmentRequest::subjectId).toList();
+			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::InstructorId).toList();
+			
+			
+			Map<Integer, Subject> subjects = subjectDao.findAllById(instructorIds).stream()
+					                         .collect(Collectors.toMap(Subject::getId, s -> s));
+			Map<Integer, Instructor> instructors = instructorDao.findAllById(instructorIds).stream()
+					                                .collect(Collectors.toMap(Instructor::getId, i -> i));
+			
+			if(subjects.isEmpty() || instructors.isEmpty()) throw new IllegalArgumentException("Failed to locate classrooms and or instructors");
+			
+			for(int i = 0; i < subjectIds.size(); i++) {
+				
+				Subject subject = subjects.get(subjectIds.get(i));
+				Instructor instructor = instructors.get(instructorIds.get(i));
+				classroom.assignSubject(subject, instructor);
+					
+			}
+			
+		} catch (Exception e) {
+			
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+	
+		
+		
+	}
+
+	@Override
+	@Transactional
+	public void updatePrimaryInstructor(Integer instructorId, Integer classroomId) {
+		
+		try {
+			
+			Instructor instructor = instructorDao.findById(instructorId).orElseThrow(() -> new EntityNotFoundException("Instructor noy found"));
+			Classroom classroom = classroomDao.findById(classroomId).orElseThrow(() -> new  EntityNotFoundException("Classroom not found"));
+			
+//			verify instructor is registered under same institution as the classroom
+			Institution institution = classroom.getInstitution();
+			if(!institution.getInstructors().contains(instructor)) {
+				throw new IllegalArgumentException("Instructor not registered under the intended institution");
+			}
+			
+			classroom.setPrimaryInstructor(instructor);
+			classroomDao.save(classroom);
+			
+			
+			
+		} catch (Exception e) {
+			
+
+			throw new RuntimeException(e.getLocalizedMessage());
+		}
+		
+		
+		
+	}
+	
+	
 	
 
 

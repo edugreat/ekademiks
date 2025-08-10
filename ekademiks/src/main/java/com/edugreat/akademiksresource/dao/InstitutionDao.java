@@ -42,6 +42,9 @@ public interface InstitutionDao extends JpaRepository<Institution, Integer> {
 	  @Query("SELECT CASE WHEN COUNT(i) > 0 THEN true ELSE false END FROM Institution  i WHERE i.id =:inst AND i.createdBy =:admin")
 	  boolean isAdminOfInstitution(@Param("inst") Integer inst, @Param("admin") Integer admin);
 	  
+	  @RestResource(exported = false)
+	  Optional<Institution> findByIdAndCreatedBy(@Param("id")Integer id, @Param("createdBy")Integer createdBy);
+	  
 	  
 
 }
