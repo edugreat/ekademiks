@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
+import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
+import com.edugreat.akademiksresource.registrations.StudentRegistrationData;
+import com.edugreat.akademiksresource.util.ApiResponseObject;
+import com.edugreat.akademiksresource.util.ValidatorService;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -43,6 +47,7 @@ public class AuthenticateController {
 	private final AppAuthInterface appInterface;
 	
 	private final Validator validator;
+	private final ValidatorService validatorService;
 
 	@PostMapping("/sign-up")
 	@ResponseStatus(HttpStatus.OK)
@@ -144,5 +149,29 @@ public class AuthenticateController {
 			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 	}
+	
+	@PostMapping("/admins/reg")
+	public ResponseEntity<ApiResponseObject<String>> registerSchoolAdmin(@RequestBody AdminRegistrationRequest request) {
+	
+		try {
+			List<String> violations = validatorService.validateObject(request);
+			if(!violations.isEmpty()) {
+				
+				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, String.join(", ", violations), false));
+			}
+			
+			appInterface.registerSchoolAdmin(request);
+			
+			return ResponseEntity.ok(new ApiResponseObject<>("Congrats, "+request.firstName()+" "+request.lastName(), null, true));
+			
+		} catch (Exception e) {
+			
+			System.out.println(e);
+			return ResponseEntity.badRequest().body(new ApiResponseObject<>(e.getLocalizedMessage(), null, false));
+		}
+		
+		
+	}
+	
 
 }

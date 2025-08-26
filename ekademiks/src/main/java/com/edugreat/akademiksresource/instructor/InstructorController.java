@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
+import com.edugreat.akademiksresource.registrations.InstructorRegistrationRequest;
 import com.edugreat.akademiksresource.util.ValidatorService;
 
 import lombok.RequiredArgsConstructor;

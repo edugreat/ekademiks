@@ -29,10 +29,10 @@ public record ClassroomFullDetails(
 				classroom.getClassroomSubjects()
 				.stream().map(SubjectBasicDetails::new)
 				.collect(Collectors.toSet()), 
-				classroom.getStudents().stream()
+				classroom.getActiveStudents().stream()
 				.map(StudentBasicDetails::new)
 				.collect(Collectors.toSet()), 
-				classroom.getStudents().size(), 
+				classroom.getActiveStudents().size(), 
 				classroom.getLastModified()
 				);
 	}

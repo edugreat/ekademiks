@@ -60,6 +60,7 @@ import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.model.WelcomeMessage;
+import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 import com.edugreat.akademiksresource.util.OptionUtil;
 import com.edugreat.akademiksresource.util.ValidatorService;
@@ -913,5 +914,6 @@ public class AdminService implements AdminInterface {
 		
 		
 	}
-
+	
+	
 }

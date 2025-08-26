@@ -142,7 +142,7 @@ public class ClassroomSubject {
 	}
 	
 	public void addElectiveStudent(Student student) {
-	    if (student == null || !this.classroom.getStudents().contains(student)) {
+	    if (student == null || !this.classroom.getActiveStudents().contains(student)) {
 	        throw new IllegalArgumentException("Student not in classroom");
 	    }
 	    StudentElectiveEnrollment enrollment = new StudentElectiveEnrollment(student, this);

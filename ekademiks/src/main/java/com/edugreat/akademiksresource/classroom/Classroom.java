@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.classroom;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.edugreat.akademiksresource.classroom.StudentClassroom.EnrollmentStatus;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
@@ -36,7 +38,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "classroom",
 indexes = {
-	    @Index(columnList = "level_id, academicYear, section", unique = true),
+	  //  @Index(columnList = "level_id, academicYear, section", unique = true),
 	    @Index(columnList = "instructor_id")
 	}
 		)
@@ -82,12 +84,7 @@ public class Classroom {
 	@JoinColumn(name = "level_id", nullable = false)
 	private Level level;
 	
-	@OneToMany(
-			   mappedBy = "classroom",
-			    cascade = CascadeType.ALL,
-			    orphanRemoval = true
-			)
-	private Set<Student> students = new HashSet<>();
+	
 	
 	 @OneToMany(mappedBy = "classroom", cascade = CascadeType.ALL, orphanRemoval = true)
 	    private Set<StudentClassroom> studentEnrollments = new HashSet<>();
@@ -114,18 +111,12 @@ public class Classroom {
 	public void addStudent(Student student,String enrolledBy) {
 		if (student != null) {
 			
-//			ensure no duplicate enrollment in the same institution
-			if(isDuplicateEnrollmentAttempt(student)) {
-				
-				throw new IllegalArgumentException("Some or all the students have already been enrolled in a  classroom");
-			}
-			
+			System.out.println("about to enroll");			
 			StudentClassroom enrollment = new StudentClassroom(student, this, enrolledBy);
 		
 			studentEnrollments.add(enrollment);
 			
-			this.students.add(student);
-			student.setClassroom(this);
+			
 			student.getClassroomEnrollments().add(enrollment);
 		}
 	}
@@ -133,7 +124,7 @@ public class Classroom {
 	public void removeStudent(Student student) {
 		if (student != null) {
 			
-			students.remove(student);
+			
 			studentEnrollments.removeIf(enrollment -> {
 				
 				if(enrollment.getStudent().equals(student)) {
@@ -146,23 +137,34 @@ public class Classroom {
 				return false;
 			});
 			
-			student.setClassroom(null);
+			
 			
 		}
 	}
 	
 	
-	public void migrateStudent(Student student, Classroom newClassroom, String enrolledBy) {
-		if (student != null && newClassroom != null) {
-			
-			if(!this.institution.equals(newClassroom.getInstitution())) {
-				throw new IllegalArgumentException("Cannot migrate student between different institution");
-			}
-			
-			removeStudent(student);
-			newClassroom.addStudent(student, enrolledBy);
-		}
+	public void promoteStudent(Student student, Classroom targetClassroom, String enrolledBy) {
+		
+		StudentClassroom currentEnrollment = findActiveEnrollment(student)
+				                             .orElseThrow(() -> new IllegalArgumentException("Student not enrolled in this class"));
+	
+	currentEnrollment.setEnrollmentStatus(EnrollmentStatus.PROMOTED);
+	currentEnrollment.setCompletionDate(LocalDateTime.now());
+	
+	currentEnrollment.setCompletedBy(enrolledBy);
+	targetClassroom.addStudent(student, enrolledBy);
+	
 	}
+	
+	  protected Optional<StudentClassroom> findActiveEnrollment(Student student) {
+		  
+		  
+		  
+	        return studentEnrollments.stream()
+	            .filter(e -> e.getStudent().equals(student)) 
+	            .filter(e -> e.getEnrollmentStatus() == EnrollmentStatus.ACTIVE)
+	            .findFirst();
+	    }
 	
 	public void promoteToNextAcademicYear() {
 		this.academicYear++;
@@ -284,13 +286,7 @@ public class Classroom {
 		this.level = level;
 	}
 
-	public Set<Student> getStudents() {
-		return students;
-	}
-
-	public void setStudents(Set<Student> students) {
-		this.students = students;
-	}
+	
 
 	public Set<ClassroomSubject> getClassroomSubjects() {
 		return classroomSubjects;
@@ -320,12 +316,15 @@ public class Classroom {
 		this.institution = institution;
 	}
 	
-	
-	private boolean isDuplicateEnrollmentAttempt(Student student) {
+	public Set<Student> getActiveStudents(){
 		
-		return student.getClassroom() != null && student.getClassroom().getInstitution().equals(this.institution);
+		return this.studentEnrollments.stream()
+				.filter(e -> e.getEnrollmentStatus() == EnrollmentStatus.ACTIVE)
+				.map(StudentClassroom::getStudent)
+				.collect(Collectors.toSet());
 	}
-	 
+	
+	
 	 
 	
 

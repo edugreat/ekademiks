@@ -7,6 +7,8 @@ import com.edugreat.akademiksresource.model.Student;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,8 +30,8 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "student_classroom",
        indexes = {
-           @Index(columnList = "student_id, classroom_id", unique = true),
-           @Index(columnList = "student_id, institution_id", unique = true)
+           @Index(columnList = "student_id, classroom_id, academic_year, enrollment_status", unique = true),
+           @Index(columnList = "student_id, enrollment_status", unique = true)
        })
 public class StudentClassroom {
 
@@ -55,6 +57,19 @@ public class StudentClassroom {
     @Column(nullable = false, length = 100)
     private String enrolledBy; // Stores email of admin/instructor who enrolled the student
 
+    @Column(nullable = false)
+    private Integer academicYear;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private EnrollmentStatus enrollmentStatus = EnrollmentStatus.ACTIVE;
+    
+    @Column
+    private LocalDateTime completionDate;
+    
+    @Column(length = 100)
+    private String completedBy;
+    
     // Constructors, getters, and setters
     public StudentClassroom() {
        
@@ -112,8 +127,50 @@ public class StudentClassroom {
         this.enrolledBy = enrolledBy;
     }
     
-    @PrePersist
-    protected void enrollmentDate() {
-    	 this.enrollmentDate = LocalDateTime.now();
+    
+    
+    public LocalDateTime getCompletionDate() {
+		return completionDate;
+	}
+
+	public void setCompletionDate(LocalDateTime completionDate) {
+		this.completionDate = completionDate;
+	}
+
+	public String getCompletedBy() {
+		return completedBy;
+	}
+
+	public void setCompletedBy(String completedBy) {
+		this.completedBy = completedBy;
+	}
+
+	public Integer getAcademicYear() {
+		return academicYear;
+	}
+
+	public EnrollmentStatus getEnrollmentStatus() {
+		return enrollmentStatus;
+	}
+	
+	
+
+	public void setEnrollmentStatus(EnrollmentStatus enrollmentStatus) {
+		this.enrollmentStatus = enrollmentStatus;
+	}
+
+	@PrePersist
+    protected void enrollmentDefaults() {
+    	if(this.enrollmentDate == null) {
+    		 this.enrollmentDate = LocalDateTime.now();
+    	}
+    	if(this.academicYear == null && this.classroom != null) {
+    		
+    		this.academicYear = this.classroom.getAcademicYear();
+    	}
+    }
+    
+    public enum EnrollmentStatus{
+    	ACTIVE,PROMOTED,REPEATED,TRANSFERRED,WITHDRAWN,GRADUATED
     }
 }

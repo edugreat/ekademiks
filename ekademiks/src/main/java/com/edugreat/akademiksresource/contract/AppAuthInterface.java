@@ -3,10 +3,10 @@ package com.edugreat.akademiksresource.contract;
 import java.io.IOException;
 
 import com.edugreat.akademiksresource.auth.AuthenticationRequest;
-import com.edugreat.akademiksresource.controller.StudentRegistrationData;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
-import com.edugreat.akademiksresource.instructor.InstructorRegistrationRequest;
-import com.edugreat.akademiksresource.model.AppUser;
+import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
+import com.edugreat.akademiksresource.registrations.InstructorRegistrationRequest;
+import com.edugreat.akademiksresource.registrations.StudentRegistrationData;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -34,6 +34,9 @@ public interface AppAuthInterface {
 	public void instructorSignup(InstructorRegistrationRequest request);
 	
 	public String extractUserRole(String userId);
+	
+	
+	void registerSchoolAdmin(AdminRegistrationRequest request);
 	}
 	
 

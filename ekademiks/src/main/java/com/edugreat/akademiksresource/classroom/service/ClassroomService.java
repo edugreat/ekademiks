@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,6 +22,9 @@ import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.classroom.ClassroomDTO;
 import com.edugreat.akademiksresource.classroom.ClassroomDao;
 import com.edugreat.akademiksresource.classroom.EnrollmentRequest;
+import com.edugreat.akademiksresource.classroom.StudentClassroom;
+import com.edugreat.akademiksresource.classroom.StudentClassroom.EnrollmentStatus;
+import com.edugreat.akademiksresource.classroom.StudentClassroomDao;
 import com.edugreat.akademiksresource.classroom.details.ClassroomFullDetails;
 import com.edugreat.akademiksresource.classroom.details.ClassroomSpecificDetails;
 import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetails;
@@ -43,6 +47,7 @@ import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
+//import com.edugreat.akademiksresource.util.ClassroomPrimaryInstructorUpdateDTO;
 import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
 import com.edugreat.akademiksresource.util.UtilityService;
 
@@ -53,7 +58,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ClassroomService implements ClassroomInterface {
 
-    private final StudentDao studentDao;
+	private final StudentDao studentDao;
 	private final InstructorDao instructorDao;
 	private final LevelDao levelDao;
 	private final AdminsDao adminDao;
@@ -62,461 +67,423 @@ public class ClassroomService implements ClassroomInterface {
 	private final AppAuthInterface authenticationInterface;
 	private final UtilityService utilityService;
 	private final SubjectDao subjectDao;
-	
-	 @Qualifier(value = "customStringRedisTemplate")
+	private final StudentClassroomDao studentClassroomDao;
+
+	@Qualifier(value = "customStringRedisTemplate")
 	private final RedisTemplate<String, String> stringRedisTemplate;
 
-   
 	@Override
 	@Transactional
 	public ClassroomDTO createClassroom(ClassroomDTO classroomDTO) {
-		
+
 		try {
-			
-			
+
 			Institution institution = institutionDao.findById(classroomDTO.institutionId())
-					.orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + classroomDTO.institutionId()));
-			
-			final String userRole = authenticationInterface.extractUserRole(classroomDTO.primaryInstructorId().toString());
-			
+					.orElseThrow(() -> new IllegalArgumentException(
+							"Institution not found with id: " + classroomDTO.institutionId()));
+
+			final String userRole = authenticationInterface
+					.extractUserRole(classroomDTO.primaryInstructorId().toString());
+
 			Instructor primaryInstructor = null;
-			if(userRole != null) {
-				
-				if(!userRole.equalsIgnoreCase(Roles.Student.name())) {
-					
-					
+			if (userRole != null) {
+
+				if (!userRole.equalsIgnoreCase(Roles.Student.name())) {
+
 					switch (userRole.toLowerCase()) {
 					case "admin":
 						throw new IllegalArgumentException("Please login as an instructor to create a classroom");
-						
-						
-						case "superadmin":	
-							throw new IllegalArgumentException("Please login as an instructor to create a classroom");
-							
-							
-						
+
+					case "superadmin":
+						throw new IllegalArgumentException("Please login as an instructor to create a classroom");
+
 					case "instructor":
-						
-						Optional<Instructor> instructor = instructorDao.findByInstitutionId(classroomDTO.institutionId(), classroomDTO.primaryInstructorId());
-						if(instructor.isEmpty()) {
+
+						Optional<Instructor> instructor = instructorDao
+								.findByInstitutionId(classroomDTO.institutionId(), classroomDTO.primaryInstructorId());
+						if (instructor.isEmpty()) {
 							throw new IllegalArgumentException("You are not an instructor of this institution");
 						}
-						
+
 						primaryInstructor = instructor.get();
-						
+
 						break;
 
 					default:
-						throw new IllegalArgumentException("You are not qualified to create a classroom for this institution");
-						
+						throw new IllegalArgumentException(
+								"You are not qualified to create a classroom for this institution");
+
 					}
 				}
-				
-				
-				
+
 			}
-			
-			
-			
-			Level level = levelDao.findById(classroomDTO.levelId())
-					.orElseThrow(() -> new IllegalArgumentException("Category not found with id: " + classroomDTO.levelId()));
-			
-		
-		
+
+			Level level = levelDao.findById(classroomDTO.levelId()).orElseThrow(
+					() -> new IllegalArgumentException("Category not found with id: " + classroomDTO.levelId()));
+
 			Classroom classroom = new Classroom();
 			BeanUtils.copyProperties(classroomDTO, classroom);
-			
+
 			classroom.setPrimaryInstructor(primaryInstructor);
 			classroom.setLevel(level);
 			classroom.setInstitution(institution);
-			
-		Classroom newClassroom = 	classroomDao.save(classroom);
-		
-		
-		
-		ClassroomDTO newClassroomDTO = new ClassroomDTO.Builder()
-				.id(newClassroom.getId())
-				.name(newClassroom.getName())
-				.description(newClassroom.getDescription())
-				.academicYear(newClassroom.getAcademicYear())
-				.section(newClassroom.getSection())
-				.primaryInstructorId(newClassroom.getPrimaryInstructor().getId())
-				.primaryInstructorName(newClassroom.getPrimaryInstructor().getFirstName() 
-						+ " " + newClassroom.getPrimaryInstructor().getLastName())
-				.levelId(newClassroom.getLevel().getId())
-				.institutionName(newClassroom.getInstitution().getName())
-				.build();
-		
-		return newClassroomDTO;
-			
+
+			Classroom newClassroom = classroomDao.save(classroom);
+
+			ClassroomDTO newClassroomDTO = new ClassroomDTO.Builder().id(newClassroom.getId())
+					.name(newClassroom.getName()).description(newClassroom.getDescription())
+					.academicYear(newClassroom.getAcademicYear()).section(newClassroom.getSection())
+					.primaryInstructorId(newClassroom.getPrimaryInstructor().getId())
+					.primaryInstructorName(newClassroom.getPrimaryInstructor().getFirstName() + " "
+							+ newClassroom.getPrimaryInstructor().getLastName())
+					.levelId(newClassroom.getLevel().getId()).institutionName(newClassroom.getInstitution().getName())
+					.build();
+
+			return newClassroomDTO;
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
-	
-		
+
 	}
-	
+
 	private void validateUserRole(String userRole) {
-		
-		if(!List.of("admin", "instructor").contains(userRole.toLowerCase())) {
-			
+
+		if (!List.of("admin", "instructor").contains(userRole.toLowerCase())) {
+
 			throw new AcademicException("Login as admin or instructor", HttpStatus.NOT_ACCEPTABLE.name());
 		}
-		
+
 	}
 
 	@Override
-	@Transactional(readOnly=true)
+	@Transactional(readOnly = true)
 	public Page<ClassroomDTO> getManagedClassrooms(Integer userId, String userRole, int page, int pageSize) {
-		
-		
+
 		validateUserRole(userRole);
-		
+
 		final String ADMIN = Roles.Admin.name();
 		final String INSTRUCTOR = Roles.Instructor.name();
-		
+
 		Page<Classroom> classrooms = Page.empty();
 		try {
-		
-			
-			 if(userRole.equalsIgnoreCase(ADMIN)) {
-				 classrooms = classroomDao.getAdminManagedClassrooms(userId, PageRequest.of(page, pageSize));
-				
-	
-				
-			}
-			else if(userRole.equalsIgnoreCase(INSTRUCTOR)) {
-				
-				if(classroomDao.isPrimaryInstructor(userId)) {
-					 classrooms = classroomDao.findByPrimaryInstructorId(userId,  PageRequest.of(page, pageSize));
-					
+
+			if (userRole.equalsIgnoreCase(ADMIN)) {
+				classrooms = classroomDao.getAdminManagedClassrooms(userId, PageRequest.of(page, pageSize));
+
+			} else if (userRole.equalsIgnoreCase(INSTRUCTOR)) {
+
+				if (classroomDao.isPrimaryInstructor(userId)) {
+					classrooms = classroomDao.findByPrimaryInstructorId(userId, PageRequest.of(page, pageSize));
+
 				}
-				
-				else  classrooms = classroomDao.findByInstructorInSubject(userId,  PageRequest.of(page, pageSize));
-				
-									
+
+				else
+					classrooms = classroomDao.findByInstructorInSubject(userId, PageRequest.of(page, pageSize));
+
 			}
-			
-			
+
 		} catch (Exception e) {
-			
+
 			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
-		
-		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize) : classrooms.map(this::buildFullClassroomData);
+
+		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
+				: classrooms.map(this::buildFullClassroomData);
 	}
-	
+
 	private ClassroomDTO buildFullClassroomData(Classroom clzz) {
-		
+
 		final Level l = clzz.getLevel();
 		final Instructor i = clzz.getPrimaryInstructor();
-		
+
 		Set<StudentDTO> studentDTOs = new HashSet<>();
 		List<Student> classroomStudents = getClassroomStudents(clzz.getId());
-		
-		for(Student student : classroomStudents) {
-			
+
+		for (Student student : classroomStudents) {
+
 			studentDTOs.add(toStudentDTO(student));
-			
-			
+
 		}
-		
-		
-		
-		return new ClassroomDTO.Builder()
-				   .id(clzz.getId())
-				   .academicYear(clzz.getAcademicYear())
-				   .description(clzz.getDescription())
-				   .institutionId(clzz.getInstitution().getId())
-				   .institutionName(clzz.getInstitution().getName())
-				   .levelId(l.getId())
-				   .levelName(l.getCategory().name())
-				   .name(clzz.getName())
-				   .primaryInstructorId(i.getId())
-				   .primaryInstructorName(i.getFirstName()+" "+i.getLastName())
-				   .section(clzz.getSection())
-				   .studentCount(classroomStudents.size())
-				   .students(studentDTOs)
-				   .build();
+
+		return new ClassroomDTO.Builder().id(clzz.getId()).academicYear(clzz.getAcademicYear())
+				.description(clzz.getDescription()).institutionId(clzz.getInstitution().getId())
+				.institutionName(clzz.getInstitution().getName()).levelId(l.getId()).levelName(l.getCategory().name())
+				.name(clzz.getName()).primaryInstructorId(i.getId())
+				.primaryInstructorName(i.getFirstName() + " " + i.getLastName()).section(clzz.getSection())
+				.studentCount(classroomStudents.size()).students(studentDTOs).build();
 	}
-	
-	private StudentDTO toStudentDTO(Student student){
-		
+
+	private StudentDTO toStudentDTO(Student student) {
+
 		StudentDTO dto = new StudentDTO();
-		
+
 		BeanUtils.copyProperties(student, dto);
-		
-		
+
 		return dto;
-		
-		
+
 	}
 
 	@Override
-	@Transactional(readOnly=true)
-	public Page<ClassroomDTO> getManagedClassroomsByInstitution(Integer userId, String userRole,
-			Integer institutionId, int page, int pageSize) {
-		
+	@Transactional(readOnly = true)
+	public Page<ClassroomDTO> getManagedClassroomsByInstitution(Integer userId, String userRole, Integer institutionId,
+			int page, int pageSize) {
+
 		if (!institutionDao.existsById(institutionId)) {
-	        throw new ResourceNotFoundException("Institution not found");
-	    }
-		
+			throw new ResourceNotFoundException("Institution not found");
+		}
+
 		validateUserRole(userRole);
-		
+
 		Page<Classroom> classrooms = Page.empty();
 		try {
-			
-			if(userRole.equalsIgnoreCase(Roles.Instructor.name())) {
-				
-				if(classroomDao.isPrimaryInstructor(userId)) {
-					
-					
-					
-					 classrooms = classroomDao.findByPrimaryInstructorIdAndInstitutionId(userId, institutionId, PageRequest.of(page, pageSize));
-			
-				
+
+			if (userRole.equalsIgnoreCase(Roles.Instructor.name())) {
+
+				if (classroomDao.isPrimaryInstructor(userId)) {
+
+					classrooms = classroomDao.findByPrimaryInstructorIdAndInstitutionId(userId, institutionId,
+							PageRequest.of(page, pageSize));
+
 				}
-				
-		
+
 				else {
-					
-					classrooms = classroomDao.findByInstructorInSubjectBy(userId, institutionId, PageRequest.of(page, pageSize));
+
+					classrooms = classroomDao.findByInstructorInSubjectBy(userId, institutionId,
+							PageRequest.of(page, pageSize));
 				}
-				
-			}else if(userRole.equalsIgnoreCase(Roles.Admin.name())) {
-				
-				 classrooms = classroomDao.findByInstitutionCreatedByAndInstitutionId(userId, institutionId, PageRequest.of(page, pageSize));
-				
-				return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize) : classrooms.map(c -> buildFullClassroomData(c));
+
+			} else if (userRole.equalsIgnoreCase(Roles.Admin.name())) {
+
+				classrooms = classroomDao.findByInstitutionCreatedByAndInstitutionId(userId, institutionId,
+						PageRequest.of(page, pageSize));
+
+				return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
+						: classrooms.map(c -> buildFullClassroomData(c));
 			}
-			
-			
+
 		} catch (Exception e) {
-			
 
 			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
-		
-		
-		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize) : classrooms.map(this::buildFullClassroomData);
+
+		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
+				: classrooms.map(this::buildFullClassroomData);
 	}
 
 	@Override
-	@Transactional(readOnly=true)
-	public Page<ClassroomDTO> getManagedClassroomsByLevel(Integer userId, String userRole, Integer categoryId, int page, int pageSize) {
-		
-		
-		
+	@Transactional(readOnly = true)
+	public Page<ClassroomDTO> getManagedClassroomsByLevel(Integer userId, String userRole, Integer categoryId, int page,
+			int pageSize) {
+
 		validateUserRole(userRole);
 		Page<Classroom> classrooms = Page.empty();
-		
+
 		try {
-			if(userRole.equalsIgnoreCase(Roles.Instructor.name())) {
-				
+			if (userRole.equalsIgnoreCase(Roles.Instructor.name())) {
+
 				final boolean isPrimaryInstructor = classroomDao.isPrimaryInstructor(userId);
-				
-				if(!isPrimaryInstructor) {
-					
-					 classrooms = classroomDao.findInstructorInSubjectManagedClassroomsBy(userId, categoryId, PageRequest.of(page, pageSize));
-					                            
-							            
-							
-				
-				}else if(isPrimaryInstructor) {
-					
-					classrooms = classroomDao.findByPrimaryInstructorIdAndLevelId(userId, categoryId,PageRequest.of(page, pageSize));
-					
-					
-					
+
+				if (!isPrimaryInstructor) {
+
+					classrooms = classroomDao.findInstructorInSubjectManagedClassroomsBy(userId, categoryId,
+							PageRequest.of(page, pageSize));
+
+				} else if (isPrimaryInstructor) {
+
+					classrooms = classroomDao.findByPrimaryInstructorIdAndLevelId(userId, categoryId,
+							PageRequest.of(page, pageSize));
+
 				}
-			}else if(userRole.equalsIgnoreCase(Roles.Admin.name())) {
-				
-				classrooms = classroomDao.findByLevelIdAndInstitutionCreatedBy( categoryId,userId, PageRequest.of(page, pageSize));
-				
-				
+			} else if (userRole.equalsIgnoreCase(Roles.Admin.name())) {
+
+				classrooms = classroomDao.findByLevelIdAndInstitutionCreatedBy(categoryId, userId,
+						PageRequest.of(page, pageSize));
+
 			}
 		} catch (Exception e) {
-			
+
 			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
-		
-		
-	
-		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize) : classrooms.map(this::buildFullClassroomData);
+
+		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
+				: classrooms.map(this::buildFullClassroomData);
 	}
 
 	@Override
-	@Transactional(readOnly=true)
-	public Page<ClassroomDTO> getManagedClassroomsByLevelAndInstitution(Integer userId, String userRole, Integer institutionId,
-			Integer categoryId, int page, int pageSize) {
+	@Transactional(readOnly = true)
+	public Page<ClassroomDTO> getManagedClassroomsByLevelAndInstitution(Integer userId, String userRole,
+			Integer institutionId, Integer categoryId, int page, int pageSize) {
 		if (!institutionDao.existsById(institutionId)) {
-	        throw new ResourceNotFoundException("Institution not found");
-	    }
-		
+			throw new ResourceNotFoundException("Institution not found");
+		}
+
 		validateUserRole(userRole);
-		
+
 		Page<Classroom> classrooms = Page.empty();
-		
+
 		try {
-			
-			if(userRole.equalsIgnoreCase(Roles.Instructor.name())) {
-				
+
+			if (userRole.equalsIgnoreCase(Roles.Instructor.name())) {
+
 				final boolean isPrimaryInstructor = classroomDao.isPrimaryInstructor(userId, institutionId);
-				
-				if(!isPrimaryInstructor) {
-					
-					classrooms = classroomDao.findByInstructorInSubjectBy(userId, institutionId, PageRequest.of(page, pageSize));
-					
-					
-							
-					
-					
-				}else if(isPrimaryInstructor) {
+
+				if (!isPrimaryInstructor) {
+
+					classrooms = classroomDao.findByInstructorInSubjectBy(userId, institutionId,
+							PageRequest.of(page, pageSize));
+
+				} else if (isPrimaryInstructor) {
 					System.out.println("fetching by institution and level");
-					
-					classrooms = classroomDao.findByPrimaryInstructorIdAndLevelIdAndInstitutionId(userId, categoryId, institutionId, PageRequest.of(page, pageSize));
-					
-					
-				
+
+					classrooms = classroomDao.findByPrimaryInstructorIdAndLevelIdAndInstitutionId(userId, categoryId,
+							institutionId, PageRequest.of(page, pageSize));
+
 				}
-			}else if(userRole.equalsIgnoreCase(Roles.Admin.name())) {
-				
-				classrooms = classroomDao.findByInstitutionCreatedByAndInstitutionIdAndLevelId(userId, categoryId, institutionId, PageRequest.of(page, pageSize));
-			
-				
-				
-				
+			} else if (userRole.equalsIgnoreCase(Roles.Admin.name())) {
+
+				classrooms = classroomDao.findByInstitutionCreatedByAndInstitutionIdAndLevelId(userId, categoryId,
+						institutionId, PageRequest.of(page, pageSize));
+
 			}
-			
+
 		} catch (Exception e) {
-			
+
 			throw new AcademicException(e.getMessage(), HttpStatus.EXPECTATION_FAILED.name());
 		}
-		
-		
-		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize) : classrooms.map(this::buildFullClassroomData);
+
+		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
+				: classrooms.map(this::buildFullClassroomData);
 	}
-	
-	
+
 	@Transactional(readOnly = true)
-	private List<Student> getClassroomStudents(Integer classroomId){
-		
-		return studentDao.findByClassroomId(classroomId);
+	private List<Student> getClassroomStudents(Integer classroomId) {
+
+		return classroomDao.findById(classroomId).orElseThrow(() -> new EntityNotFoundException("Classroom not found"))
+				.getStudentEnrollments().stream().map(StudentClassroom::getStudent).toList();
+
 	}
 
 	@Override
 	@Transactional
 	public void enrollStudents(EnrollmentRequest enrollmentReq, String role) {
-		
-		System.out.println("selected institution "+enrollmentReq.institutionId());
-		
-		
+
+		System.out.println("selected institution " + enrollmentReq.institutionId());
+
+		System.out.println("enrolling");
+		System.out.println(enrollmentReq.studentIds().toString());
 
 		try {
 //			ensure really logged in using the role
-			String loggedInRole = stringRedisTemplate.opsForValue().get(RedisValues.CURRENT_ROLE+"::"+enrollmentReq.enrollmentOfficer());
-			
-			if(loggedInRole == null) throw new IllegalArgumentException("Please login to perform this action");
-			
-			
-			
+			String loggedInRole = stringRedisTemplate.opsForValue()
+					.get(RedisValues.CURRENT_ROLE + "::" + enrollmentReq.enrollmentOfficer());
+
+			if (loggedInRole == null)
+				throw new IllegalArgumentException("Please login to perform this action");
+
 //			get the classroom the student is being enrolled into
 			Classroom classroom = classroomDao.findById(enrollmentReq.classroomId())
-					               .orElseThrow(() ->  new IllegalArgumentException("No matching records for the given classroom"));
-		
-			System.out.println("classroom details: "+classroom.getName()+" institution "+classroom.getInstitution().getName());
-			
-			if(!classroomDao.isFoundInTheInstitution(classroom.getId(), enrollmentReq.institutionId())){
-				
+					.orElseThrow(() -> new IllegalArgumentException("No matching records for the given classroom"));
+
+			System.out.println("classroom details: " + classroom.getName() + " institution "
+					+ classroom.getInstitution().getName());
+
+			if (!classroomDao.isFoundInTheInstitution(classroom.getId(), enrollmentReq.institutionId())) {
+
 				throw new IllegalArgumentException("Please choose a classroom that is part of the institution");
 			}
 			Admins admin = null;
-			
+
 // Ensure enrollment officer is either classroom primary instructor or ADMIN of the institution
 			Optional<Instructor> optionalInstructor = instructorDao.findById(enrollmentReq.enrollmentOfficer());
-				if(optionalInstructor.isEmpty()) {
-					
-					admin  = adminDao.findById(enrollmentReq.enrollmentOfficer())
-							 .orElseThrow(() -> new IllegalArgumentException("Enrollment officer not found"));
-					
-				}
-				
-							
-				if(admin != null  ) {
-					
-					if(!loggedInRole.equalsIgnoreCase(Roles.Admin.name())) {
-						throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
-					}
-					
-					classroomDao.save(performEnrollment(enrollmentReq, classroom, admin.getEmail()));
-				
-					return;
+			if (optionalInstructor.isEmpty()) {
+
+				admin = adminDao.findById(enrollmentReq.enrollmentOfficer())
+						.orElseThrow(() -> new IllegalArgumentException("Enrollment officer not found"));
+
+			}
+
+			if (admin != null) {
+
+				if (!loggedInRole.equalsIgnoreCase(Roles.Admin.name())) {
+					throw new IllegalArgumentException(
+							"Operation failed! Please login with the appropriate credentials");
 				}
 
-				if(!loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
-					throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
-				}
-				
-				classroomDao.save(performEnrollment(enrollmentReq, classroom, optionalInstructor.get().getEmail()));
-			
-			
+				classroomDao.save(performEnrollment(enrollmentReq, classroom, admin.getEmail()));
+
+				return;
+			}
+
+			if (!loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
+				throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
+			}
+
+			classroomDao.save(performEnrollment(enrollmentReq, classroom, optionalInstructor.get().getEmail()));
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
-		
+
 	}
-	
-	
-	private  Classroom performEnrollment(EnrollmentRequest request, Classroom classroom, String enrollmentOfficerEmail) {
-		
-		for(Integer studentId: request.studentIds()) {
-			
-			if(!studentDao.isRegisteredInTheInstitution(studentId, request.institutionId())) {
-				
-				throw new IllegalArgumentException("Ensure students are part of the institution");
-			}
-			
-			Student student = studentDao.findById(studentId).orElseThrow(() -> new IllegalArgumentException("An enrolling student's record was not found"));
-			
-			classroom.addStudent(student, enrollmentOfficerEmail);
-			
-				
-			
-			
-		}
-		
-		return classroom;
-	}
+private Classroom performEnrollment(EnrollmentRequest request, Classroom classroom, String enrollmentOfficerEmail) {
+    Set<Integer> uniqueStudentIds = new HashSet<>(request.studentIds());
+    
+    for (Integer studentId : uniqueStudentIds) {
+        if (!studentDao.isRegisteredInTheInstitution(studentId, request.institutionId())) {
+            throw new IllegalArgumentException("Ensure students are part of the institution");
+        }
+
+        Student student = studentDao.findById(studentId)
+            .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
+
+        // Check for existing enrollment with locking
+        Optional<StudentClassroom> existingEnrollment = studentClassroomDao
+            .findByStudentAndClassroomAndYearAndStatus(
+                studentId,
+                classroom.getId(),
+                classroom.getAcademicYear(),
+                EnrollmentStatus.ACTIVE
+            );
+
+        if (existingEnrollment.isEmpty()) {
+            try {
+                classroom.addStudent(student, enrollmentOfficerEmail);
+            } catch (DataIntegrityViolationException e) {
+                // Fallback in case of race condition
+                System.out.println("Duplicate enrollment detected for student: " + studentId);
+            }
+        } else {
+            System.out.println("Student " + studentId + " already enrolled in this classroom");
+        }
+    }
+    return classroom;
+}
 
 	@Override
 	@Transactional(readOnly = true)
 	public ClassroomFullDetails adminClassroomDetails(Integer classroomId, Integer userId, Integer institutionId) {
-		
 
 		try {
 //			confirm the user has administrative role in the given class
-			if(!institutionDao.isAdminOfInstitution(institutionId, userId)) {
-				
+			if (!institutionDao.isAdminOfInstitution(institutionId, userId)) {
+
 				throw new IllegalArgumentException("Sorry, your details are unrelated for this operation");
 			}
-			
+
 //			confirm the given classroom details exist
 			Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
-					.orElseThrow(() ->  new IllegalArgumentException("Not matching classroom details found"));
-			
-		return new ClassroomFullDetails(classroom);
-		
-		
-		
-		
+					.orElseThrow(() -> new IllegalArgumentException("Not matching classroom details found"));
+
+			return new ClassroomFullDetails(classroom);
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
-		
-		
+
 	}
 
 	@Override
@@ -525,21 +492,19 @@ public class ClassroomService implements ClassroomInterface {
 			Integer institutionId) {
 
 		try {
-			
+
 //			verify identity
-			if(!classroomDao.isSubjectInstructor(userId, institutionId, classroomId)) {
-				
+			if (!classroomDao.isSubjectInstructor(userId, institutionId, classroomId)) {
+
 				throw new IllegalArgumentException("No matching record found");
 			}
-			
+
 			Classroom classroom = classroomDao.findById(classroomId).get();
-			
+
 			return new ClassroomSpecificDetails(classroom, userId);
-			
-			
-			
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
 	}
@@ -548,68 +513,59 @@ public class ClassroomService implements ClassroomInterface {
 	@Transactional(readOnly = true)
 	public ClassroomSummarizedDetails primaryInstructorClassroomDetails(Integer classroomId, Integer userId,
 			Integer institutionId) {
-		
-	try {
-		
+
+		try {
+
 //		verify identity
-		if(!classroomDao.isPrimaryInstructor(userId, institutionId)) {
-			
-			throw new IllegalArgumentException("You lack authorizations for this process");
+			if (!classroomDao.isPrimaryInstructor(userId, institutionId)) {
+
+				throw new IllegalArgumentException("You lack authorizations for this process");
+			}
+
+			Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
+					.orElseThrow(() -> new IllegalArgumentException("No matching classroom details found"));
+
+			return new ClassroomSummarizedDetails(classroom);
+		} catch (Exception e) {
+
+			throw new RuntimeException(e.getLocalizedMessage());
+
 		}
-		
-		Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
-				              .orElseThrow(() -> new IllegalArgumentException("No matching classroom details found"));
-		
-		
-		return new ClassroomSummarizedDetails(classroom);
-	} catch (Exception e) {
-	
-		throw new RuntimeException(e.getLocalizedMessage());
-	
-	
-	}
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public ClassroomFullDetails searchAdminClassroom(Integer userId, Integer institutionId, String searchQuery) {
-		
+
 		try {
-			Classroom classroom  = classroomDao.findTop1ByInstitutionCreatedByAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
-					               .orElseThrow(() -> new IllegalArgumentException("No matching result found."));
-			
-		
+			Classroom classroom = classroomDao
+					.findTop1ByInstitutionCreatedByAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
+					.orElseThrow(() -> new IllegalArgumentException("No matching result found."));
+
 			return new ClassroomFullDetails(classroom);
-			
-			
-			
-			
-			
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
-	
-		
-		
-		
+
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public ClassroomSummarizedDetails searchPrimaryInstructorClassroom(Integer userId, Integer institutionId,
 			String searchQuery) {
-		
+
 		try {
-			
-			Classroom classroom = classroomDao.findTop1ByPrimaryInstructorIdAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
-					              .orElseThrow(() -> new IllegalArgumentException("No matching result found."));
-			
+
+			Classroom classroom = classroomDao
+					.findTop1ByPrimaryInstructorIdAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
+					.orElseThrow(() -> new IllegalArgumentException("No matching result found."));
+
 			return new ClassroomSummarizedDetails(classroom);
-					
-			
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
 	}
@@ -618,14 +574,16 @@ public class ClassroomService implements ClassroomInterface {
 	@Transactional(readOnly = true)
 	public ClassroomSpecificDetails searchSubjectInstructorClassroom(Integer userId, Integer institutionId,
 			String searchQuery) {
-		
+
 		try {
-			
-			Classroom classroom = classroomDao.findTop1ByClassroomSubjectsInstructorIdAndInstitutionIdAndNameContaining(userId, institutionId, searchQuery)
-					              .orElseThrow(() -> new IllegalArgumentException("No matching result found."));
-			
+
+			Classroom classroom = classroomDao
+					.findTop1ByClassroomSubjectsInstructorIdAndInstitutionIdAndNameContaining(userId, institutionId,
+							searchQuery)
+					.orElseThrow(() -> new IllegalArgumentException("No matching result found."));
+
 			return new ClassroomSpecificDetails(classroom, userId);
-			
+
 		} catch (Exception e) {
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
@@ -634,50 +592,35 @@ public class ClassroomService implements ClassroomInterface {
 	@Override
 	@Transactional(readOnly = true)
 	public List<StudentBasicDetails> getEnrolledStudents(Integer classroomId, Integer institutionId) {
-		
+
 		try {
 			Classroom classroom = classroomDao.findByIdAndInstitutionId(classroomId, institutionId)
-                    .orElseThrow(() -> new IllegalArgumentException("No matching record found"));
-			
-			
-			return classroom.getStudents()
-					.stream()
-					.map(StudentBasicDetails::new)
-					.toList();		
+					.orElseThrow(() -> new IllegalArgumentException("No matching record found"));
+
+			return classroom.getStudentEnrollments().stream().map(StudentClassroom::getStudent)
+					.map(StudentBasicDetails::new).toList();
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
-			
+
 		}
-		
-		
-		
-		
+
 	}
-	
 
 	@Override
 	public List<InstructorBasicDetails> getInstructorsInInstitution(Integer adminId, Integer institutionId) {
-		
-		
+
 		try {
-			
+
 			Institution institution = institutionDao.findByIdAndCreatedBy(institutionId, adminId)
-	                  .orElseThrow(() -> new IllegalArgumentException("No record of institution was found"));
+					.orElseThrow(() -> new IllegalArgumentException("No record of institution was found"));
 
-			
 			Set<Instructor> instructors = institution.getInstructors();
-			
-			return instructors.stream()
-					.map(InstructorBasicDetails::new)
-					.toList();
 
+			return instructors.stream().map(InstructorBasicDetails::new).toList();
 
-
-			
 		} catch (Exception e) {
-			
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
 	}
@@ -685,71 +628,69 @@ public class ClassroomService implements ClassroomInterface {
 	@Override
 	@Transactional
 	public void assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId) {
-		
+
 		try {
-			
+
 			Classroom classroom = classroomDao.findById(classroomId)
-					             .orElseThrow(() -> new IllegalArgumentException("Classroom does not exist"));
+					.orElseThrow(() -> new IllegalArgumentException("Classroom does not exist"));
 			List<Integer> subjectIds = subjectAssignments.stream().map(SubjectAssignmentRequest::subjectId).toList();
-			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::InstructorId).toList();
-			
-			
+			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::InstructorId)
+					.toList();
+
 			Map<Integer, Subject> subjects = subjectDao.findAllById(instructorIds).stream()
-					                         .collect(Collectors.toMap(Subject::getId, s -> s));
+					.collect(Collectors.toMap(Subject::getId, s -> s));
 			Map<Integer, Instructor> instructors = instructorDao.findAllById(instructorIds).stream()
-					                                .collect(Collectors.toMap(Instructor::getId, i -> i));
-			
-			if(subjects.isEmpty() || instructors.isEmpty()) throw new IllegalArgumentException("Failed to locate classrooms and or instructors");
-			
-			for(int i = 0; i < subjectIds.size(); i++) {
-				
+					.collect(Collectors.toMap(Instructor::getId, i -> i));
+
+			if (subjects.isEmpty() || instructors.isEmpty())
+				throw new IllegalArgumentException("Failed to locate classrooms and or instructors");
+
+			for (int i = 0; i < subjectIds.size(); i++) {
+
 				Subject subject = subjects.get(subjectIds.get(i));
 				Instructor instructor = instructors.get(instructorIds.get(i));
 				classroom.assignSubject(subject, instructor);
-					
+
 			}
-			
+
 		} catch (Exception e) {
-			
+
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
-	
-		
-		
+
 	}
 
 	@Override
-	@Transactional
 	public void updatePrimaryInstructor(Integer instructorId, Integer classroomId) {
-		
-		try {
-			
-			Instructor instructor = instructorDao.findById(instructorId).orElseThrow(() -> new EntityNotFoundException("Instructor noy found"));
-			Classroom classroom = classroomDao.findById(classroomId).orElseThrow(() -> new  EntityNotFoundException("Classroom not found"));
-			
-//			verify instructor is registered under same institution as the classroom
-			Institution institution = classroom.getInstitution();
-			if(!institution.getInstructors().contains(instructor)) {
-				throw new IllegalArgumentException("Instructor not registered under the intended institution");
-			}
-			
-			classroom.setPrimaryInstructor(instructor);
-			classroomDao.save(classroom);
-			
-			
-			
-		} catch (Exception e) {
-			
-
-			throw new RuntimeException(e.getLocalizedMessage());
-		}
-		
-		
+		// TODO Auto-generated method stub
 		
 	}
-	
-	
-	
 
+//	@Override
+//	@Transactional
+//	public void updatePrimaryInstructor(ClassroomPrimaryInstructorUpdateDTO dto) {
+//
+//		try {
+//
+//			Instructor instructor = instructorDao.findById(dto.instructorId())
+//					.orElseThrow(() -> new EntityNotFoundException("Instructor noy found"));
+//			Classroom classroom = classroomDao.findById(dto.classroomId())
+//					.orElseThrow(() -> new EntityNotFoundException("Classroom not found"));
+//
+////			verify instructor is registered under same institution as the classroom
+//			Institution institution = classroom.getInstitution();
+//			if (!institution.getInstructors().contains(instructor)) {
+//				throw new IllegalArgumentException("Instructor not registered under the intended institution");
+//			}
+//
+//			classroom.setPrimaryInstructor(instructor);
+//			classroomDao.save(classroom);
+//
+//		} catch (Exception e) {
+//
+//			throw new RuntimeException(e.getLocalizedMessage());
+//		}
+//
+//	}
 
 }

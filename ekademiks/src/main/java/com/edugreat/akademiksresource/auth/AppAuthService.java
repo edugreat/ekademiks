@@ -13,28 +13,28 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.edugreat.akademiksresource.assessment.response.notification.AssessmentResponseBroadcasterService;
+
 import com.edugreat.akademiksresource.chat.dao.GroupMembersDao;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
-import com.edugreat.akademiksresource.controller.StudentRegistrationData;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.InstitutionDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
-import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDTO;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
-import com.edugreat.akademiksresource.instructor.InstructorRegistrationRequest;
 import com.edugreat.akademiksresource.model.Admins;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.UserRoles;
+import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
+import com.edugreat.akademiksresource.registrations.InstructorRegistrationRequest;
+import com.edugreat.akademiksresource.registrations.StudentRegistrationData;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -70,33 +70,7 @@ public class AppAuthService implements AppAuthInterface {
 	public int studentSignup(StudentRegistrationData registrationData) {
 		try {
 			
-			// Check the type of user wanting to sign up.
-			// if the intending user is a student
-
-			// check if the user already exists in the student table
-			final boolean existsAsStudentByEmail = studentDao.existsByEmail((registrationData.email()));
-
-			if (existsAsStudentByEmail) {
-				throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
-			}
-
-			// checks if the user already exists in the admin table
-			final boolean existsAsAdminByEmail = adminsDao.existsByEmail((registrationData.email()));
-			if (existsAsAdminByEmail) {
-				throw new AcademicException("Email already exists", Exceptions.BAD_REQUEST.name());
-			}
-
-			// check if mobile number exists
-			if (registrationData.mobileNumber() != null) {
-
-				final boolean existsAsAdminByMobile = adminsDao.existsByMobile(registrationData.mobileNumber());
-				if (existsAsAdminByMobile == true)
-					throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
-
-				final boolean existsAsStudentByMobile = studentDao.existsByMobile(registrationData.mobileNumber());
-				if (existsAsStudentByMobile == true)
-					throw new AcademicException("Mobile number already exists", Exceptions.BAD_REQUEST.name());
-			}
+		    processAgainstAccountDuplicates(registrationData);
 
 		
 			Student student = new Student();
@@ -406,19 +380,7 @@ public class AppAuthService implements AppAuthInterface {
 		
 		try {
 			
-			
-			if(instructorDao.isDuplicateAccountCreationAttempt(request.email(), request.institution())) {
-				
-				
-				
-				throw new IllegalArgumentException("Account already exists!");
-				
-			}
-			
-			if(request.mobileNumber() != null && instructorDao.existsByMobileNumber(request.mobileNumber())) {
-				
-				throw new IllegalArgumentException("Mobile number: "+request.mobileNumber()+" is already registered.");
-			}
+		processAgainstAccountDuplicates(request);
 				
 				
 				
@@ -448,6 +410,57 @@ public class AppAuthService implements AppAuthInterface {
 		
 		
 		
+		
+	}
+	
+	
+	
+	private  <T extends Object> void processAgainstAccountDuplicates(T registrationObj){
+		
+		if(registrationObj instanceof StudentRegistrationData) {
+			
+			if(studentDao.existsByEmail( ((StudentRegistrationData)registrationObj).email())) throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
+			if(((StudentRegistrationData)registrationObj).mobileNumber() != null && studentDao.existsByMobile(((StudentRegistrationData)registrationObj).mobileNumber())) throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
+	}
+		
+		else if(registrationObj instanceof InstructorRegistrationRequest) {
+			if(instructorDao.existsByEmail( ((InstructorRegistrationRequest)registrationObj).email())) throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
+			if(((InstructorRegistrationRequest)registrationObj).mobileNumber() != null && instructorDao.existsByMobileNumber(((InstructorRegistrationRequest)registrationObj).mobileNumber())) throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
+			
+		}
+		
+		else if(registrationObj instanceof AdminRegistrationRequest) {
+			
+			if(adminsDao.existsByEmail(((AdminRegistrationRequest)registrationObj).email()))throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
+			if( ((AdminRegistrationRequest) registrationObj).mobileNumber() !=null && adminsDao.existsByMobile(((AdminRegistrationRequest)registrationObj).mobileNumber()));
+		}
+	
+	}
+
+
+
+
+	@Override
+	@Transactional
+	public void registerSchoolAdmin(AdminRegistrationRequest request) {
+	
+		try {
+			
+			processAgainstAccountDuplicates(request);
+			
+			Admins admins = new Admins();
+			
+			BeanUtils.copyProperties(request, admins);
+			
+			admins.setPassword(passwordEncoder.encode(admins.getPassword()));
+			
+			admins.setRoles(Set.of(new UserRoles(Roles.Admin)));
+			
+			adminsDao.save(admins);			
+			
+		} catch (Exception e) {
+			
+		}
 		
 	}
 	

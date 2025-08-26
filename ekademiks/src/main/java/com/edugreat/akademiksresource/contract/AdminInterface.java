@@ -13,6 +13,7 @@ import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.dto.StudentRecord;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
+import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 
 /*
@@ -103,6 +104,8 @@ public interface AdminInterface {
 	void addStudentRecords(List<StudentRecord> studentRecords, Integer instutionId);
 	
 	List<String> getAssessmentNamesFor(List<Integer> studentTestIds);
+	
+	
 	
 	
 }

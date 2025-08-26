@@ -28,7 +28,7 @@ public record ClassroomSummarizedDetails(
 			classroom.getLevel().getCategory().name(),
 			classroom.getAcademicYear(),
 			classroom.getCreationDate().toString(),
-			classroom.getStudents().size(),
+			classroom.getActiveStudents().size(),
 			classroom.getPrimaryInstructor() != null ?
 					classroom.getPrimaryInstructor().getFirstName()+" "+classroom.getPrimaryInstructor().getLastName() :"Not Assigned",
 			classroom.getLastModified().toString(),

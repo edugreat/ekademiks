@@ -27,7 +27,7 @@ public record ClassroomBasicDetails(
 			classroom.getCreationDate().toString(),
 			classroom.getLastModified().toString(),
 			classroom.getLastModifiedBy(),
-			classroom.getStudents().size(),
+			classroom.getActiveStudents().size(),
 			classroom.getSection(),
 			new LevelBasicDetails(classroom.getLevel()),
 			new InstitutionBasicDetails(classroom.getInstitution())
