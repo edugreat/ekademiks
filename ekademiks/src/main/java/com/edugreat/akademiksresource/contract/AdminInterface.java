@@ -39,7 +39,7 @@ public interface AdminInterface {
 	// sets new test and return its id
 	 Integer uploadAssessment(TestDTO testDTO);
 
-	 void addLevels(List<LevelDTO> dtos);
+	 List<LevelDTO> addLevels(List<LevelDTO> dtos, Integer userId, String userRole);
 
 	 Iterable<LevelDTO> findAllLevels();
 

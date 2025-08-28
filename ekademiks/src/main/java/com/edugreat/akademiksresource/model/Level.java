@@ -27,9 +27,12 @@ public class Level {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false, unique = true, length = 20)
 	@Enumerated(EnumType.STRING)
 	private Category category;
+	
+	@Column(nullable = false, length = 20)
+	private String categoryLabel;
 
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "level")
 	@JsonIgnore
@@ -65,6 +68,14 @@ public class Level {
 	public void addSubject(Subject subject) {
 
 		this.subjects.add(subject);
+	}
+
+	public String getCategoryLabel() {
+		return categoryLabel;
+	}
+
+	public void setCategoryLabel(String categoryLabel) {
+		this.categoryLabel = categoryLabel;
 	}
 
 	@Override

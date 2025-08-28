@@ -70,7 +70,7 @@ public class AppAuthService implements AppAuthInterface {
 	public int studentSignup(StudentRegistrationData registrationData) {
 		try {
 			
-		    processAgainstAccountDuplicates(registrationData);
+		    processAgainstAccountDuplicates(registrationData.email(), registrationData.mobileNumber());
 
 		
 			Student student = new Student();
@@ -380,7 +380,7 @@ public class AppAuthService implements AppAuthInterface {
 		
 		try {
 			
-		processAgainstAccountDuplicates(request);
+		processAgainstAccountDuplicates(request.email(), request.mobileNumber());
 				
 				
 				
@@ -410,30 +410,21 @@ public class AppAuthService implements AppAuthInterface {
 		
 		
 		
-		
 	}
 	
 	
 	
-	private  <T extends Object> void processAgainstAccountDuplicates(T registrationObj){
+	private  void processAgainstAccountDuplicates(String email, String mobileNumber){
 		
-		if(registrationObj instanceof StudentRegistrationData) {
-			
-			if(studentDao.existsByEmail( ((StudentRegistrationData)registrationObj).email())) throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
-			if(((StudentRegistrationData)registrationObj).mobileNumber() != null && studentDao.existsByMobile(((StudentRegistrationData)registrationObj).mobileNumber())) throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
-	}
-		
-		else if(registrationObj instanceof InstructorRegistrationRequest) {
-			if(instructorDao.existsByEmail( ((InstructorRegistrationRequest)registrationObj).email())) throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
-			if(((InstructorRegistrationRequest)registrationObj).mobileNumber() != null && instructorDao.existsByMobileNumber(((InstructorRegistrationRequest)registrationObj).mobileNumber())) throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
-			
+		if(studentDao.existsByEmail(email) || instructorDao.existsByEmail(email) || adminsDao.existsByEmail(email)) {
+			throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
 		}
 		
-		else if(registrationObj instanceof AdminRegistrationRequest) {
+		if(mobileNumber != null &&  (studentDao.existsByMobile(mobileNumber) || instructorDao.existsByMobileNumber(mobileNumber) || adminsDao.existsByMobile(mobileNumber))) {
 			
-			if(adminsDao.existsByEmail(((AdminRegistrationRequest)registrationObj).email()))throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
-			if( ((AdminRegistrationRequest) registrationObj).mobileNumber() !=null && adminsDao.existsByMobile(((AdminRegistrationRequest)registrationObj).mobileNumber()));
+			throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
 		}
+		
 	
 	}
 
@@ -446,7 +437,7 @@ public class AppAuthService implements AppAuthInterface {
 	
 		try {
 			
-			processAgainstAccountDuplicates(request);
+			processAgainstAccountDuplicates(request.email(), request.mobileNumber());
 			
 			Admins admins = new Admins();
 			

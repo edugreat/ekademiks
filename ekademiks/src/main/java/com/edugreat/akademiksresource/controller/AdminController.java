@@ -221,9 +221,11 @@ public class AdminController {
         @ApiResponse(responseCode = "400", description = "Invalid level data format"),
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials")
     })
-    public ResponseEntity<Object> addLevel(
+    public ResponseEntity<ApiResponseObject<List<LevelDTO>>> addLevel(
             @Parameter(description = "List of level DTOs to create", required = true)
-            @RequestBody List<LevelDTO> dtos) {
+            @RequestBody List<LevelDTO> dtos,
+            @RequestParam Integer userId, 
+            @RequestParam String userRole) {
     	System.out.println("controller");
         try {
         	
@@ -231,17 +233,21 @@ public class AdminController {
         	
            if(!violations.isEmpty()) {
         	   
-        	   return new ResponseEntity<>(violations, HttpStatus.BAD_REQUEST);
+        	   return ResponseEntity.badRequest()
+						.body(new ApiResponseObject<>(null, String.join(",", violations), false));
+	
            }
         	
-            service.addLevels(dtos);
+           List<LevelDTO> _dtos =  service.addLevels(dtos, userId, userRole);
+           
+           return ResponseEntity.ok(new ApiResponseObject<>(_dtos, null, true));
             
             
-            return new ResponseEntity<>(HttpStatus.OK);
+          
         } catch (Exception e) {
         	
         	System.out.println(e);
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getLocalizedMessage(), false));
         }
     }
 

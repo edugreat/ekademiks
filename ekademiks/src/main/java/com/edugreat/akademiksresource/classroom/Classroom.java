@@ -38,7 +38,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "classroom",
 indexes = {
-	  //  @Index(columnList = "level_id, academicYear, section", unique = true),
+	    @Index(columnList = "level_id, academicYear, section", unique = true),
 	    @Index(columnList = "instructor_id")
 	}
 		)

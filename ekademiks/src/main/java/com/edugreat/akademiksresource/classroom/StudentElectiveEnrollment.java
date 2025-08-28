@@ -22,7 +22,7 @@ import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "student_elective_enrollment",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "classroom_subject_id"}))
+       uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "subject_id","subject_id"}))
 @EntityListeners(AuditingEntityListener.class)
 public class StudentElectiveEnrollment {
 

@@ -1,0 +1,55 @@
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: akademiks-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: akademiks-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: akademiks-spring-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - redis
+      - rabbitmq
+    develop:
+      watch:
+        - action: sync
+          path: ./src/main/java
+          target: /app/src/main/java
+        - action: sync
+          path: ./src/main/resources
+          target: /app/src/main/resources
+        - action: rebuild
+          path: ./pom.xml
+        - action: restart
+          path: ./src/main/resources/application-dev.properties
+    volumes:
+      - ./.m2:/root/.m2
+
+volumes:
+  redis_data:
+  rabbitmq_data:

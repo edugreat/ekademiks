@@ -1,6 +1,8 @@
 package com.edugreat.akademiksresource.dto;
 
-import jakarta.validation.constraints.Min;
+
+import org.hibernate.validator.constraints.Length;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -14,11 +16,14 @@ import lombok.Setter;
 @Getter
 public class LevelDTO {
 
-	@Min(value = 0, message = "invalid id")
+	
 	private Integer id;
 
 	@NotNull(message = "category name is required")
 	@NotBlank(message = "invalid category")
+	@Length(max = 20, min = 2, message = "category must between 2 and 20 characters")
 	private String category;
+	
+	private String categoryLabel;
 
 }

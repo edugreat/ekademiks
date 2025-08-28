@@ -22,9 +22,12 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.edugreat.akademiksresource.auth.AppAuthService;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AdminInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
@@ -49,6 +52,7 @@ import com.edugreat.akademiksresource.embeddable.Options;
 import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
+import com.edugreat.akademiksresource.enums.Roles;
 import com.edugreat.akademiksresource.exception.AcademicException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
@@ -60,14 +64,12 @@ import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.model.WelcomeMessage;
-import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
 import com.edugreat.akademiksresource.util.OptionUtil;
 import com.edugreat.akademiksresource.util.ValidatorService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 /*
@@ -95,6 +97,7 @@ public class AdminService implements AdminInterface {
 	private final StudentTestDao studentTestDao;
 	private final ValidatorService validatorService;
 	private final InstructorDao instructorDao;
+	private final AppAuthService appAuthInterface;
 	
 
 	@Autowired
@@ -573,48 +576,84 @@ public class AdminService implements AdminInterface {
 		return mapper.map(admins, AdminsDTO.class);
 	}
 
+@Transactional
+@Override
+@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
+        @CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
+public List<LevelDTO> addLevels(List<LevelDTO> dtos, Integer userId, String userRole) {
+
+    try {
+        
+       	
+//    	authenticate request against the user
+    	final String loggedInUserRole = appAuthInterface.extractUserRole(String.valueOf(userId));
+    	if(!userRole.equals(loggedInUserRole)) {
+    		throw new AcademicException("You are not allowed for this action", HttpStatus.BAD_REQUEST.name());
+    	}
+    	
+    	if(loggedInUserRole.equals(Roles.Admin.name())) {
+    		
+    		if(!adminsDao.existsById(userId)) {
+    			throw new AcademicException("We could not verify your identity", HttpStatus.BAD_REQUEST.name());
+    		}
+    	} 
+    	
+    	if(loggedInUserRole.equals(Roles.Instructor.name())) {
+    		
+    		if(!instructorDao.existsById(userId)) {
+    			throw new AcademicException("We could not verify your identity", HttpStatus.BAD_REQUEST.name());
+    		}
+    	}
+        // Validate that all supplied categories match the backend enum
+        for (LevelDTO dto : dtos) {
+            try {
+                // First try to get the category by label
+                Category category = Category.fromLabel(dto.getCategoryLabel());
+                // If successful, update the category field with the enum name
+                dto.setCategory(category.name());
+            } catch (IllegalArgumentException e1) {
+                try {
+                    // If label lookup fails, try to get by enum name
+                    Category category = Category.valueOf(dto.getCategory());
+                    // Update the categoryLabel with the proper label
+                    dto.setCategoryLabel(category.getLabel());
+                } catch (IllegalArgumentException e2) {
+                    throw new AcademicException("Invalid category: " + dto.getCategory() + " or label: " + dto.getCategoryLabel(), 
+                            Exceptions.BAD_REQUEST.name());
+                }
+            }
+        }
+
+        // Check if Level object for that category already exists
+        dtos.forEach(dto -> {
+            Category category = Category.valueOf(dto.getCategory());
+            if (levelDao.existsByCategory(category)) {
+                throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
+                        Exceptions.BAD_REQUEST.name());
+            }
+        });
+
+        List<Level> levels = new ArrayList<>();
+        dtos.forEach(dto -> {
+            Category category = Category.valueOf(dto.getCategory());
+            Level level = new Level(category);
+            level.setCategoryLabel(dto.getCategoryLabel());
+            levels.add(level);
+        });
+
+        if (levels.size() > 0) {
+            levelDao.saveAll(levels);
+        }
+
+    } catch (IllegalArgumentException e) {
+        throw new AcademicException(e.getMessage(), Exceptions.BAD_REQUEST.name());
+    }
+    
+    return levelDao.findAll().stream().map(this::convertToDTO).toList();
+}
+
 	@Override
-	@Transactional
-	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
-			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
-	public void addLevels(List<LevelDTO> dtos) {
-
-		try {
-
-			// verifies that the parameter is a valid allowable category. Can throw
-			// exception on attempt to provide invalid enum type
-			dtos.forEach(dto -> Category.valueOf(dto.getCategory().toUpperCase()));
-
-			// check if Level object for that category already exists in the database
-
-			dtos.forEach(dto -> {
-				if (levelDao.existsByCategory(Category.valueOf(dto.getCategory().toUpperCase()))) {
-					throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
-							Exceptions.BAD_REQUEST.name());
-				}
-			});
-
-			List<Level> levels = new ArrayList<>();
-			dtos.forEach(dto -> {
-
-				Level level = mapper.map(dto, Level.class);
-				levels.add(level);
-
-			});
-
-			// batch persist the levels to the database and map the returned
-			// record to the data transfer object
-			if (levels.size() > 0) {
-				levelDao.saveAll(levels);
-			}
-
-		} catch (IllegalArgumentException e) {
-			throw new AcademicException(e.getMessage(), Exceptions.BAD_REQUEST.name());
-		}
-
-	}
-
-	@Override
+	@Transactional(readOnly = true)
 	public Iterable<LevelDTO> findAllLevels() {
 
 		return levelDao.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
@@ -622,7 +661,12 @@ public class AdminService implements AdminInterface {
 
 	private LevelDTO convertToDTO(Level level) {
 
-		return mapper.map(level, LevelDTO.class);
+		LevelDTO dto = new LevelDTO();
+		dto.setCategory(level.getCategory().name());
+		dto.setCategoryLabel(level.getCategoryLabel());
+		dto.setId(level.getId());
+		
+		return dto;
 	}
 
 	@Transactional
