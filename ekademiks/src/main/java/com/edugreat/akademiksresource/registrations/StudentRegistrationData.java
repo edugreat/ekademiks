@@ -35,7 +35,7 @@ public record StudentRegistrationData(
    
     @NotNull(message  = "academic level not found")
     @NotBlank(message = "academic level missing")
-    String status
+    Integer status
     
 		) {
 }

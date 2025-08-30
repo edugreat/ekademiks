@@ -1,5 +1,27 @@
-
 services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: akademiks-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=e_database
+      - MYSQL_USER=dbuser
+      - MYSQL_PASSWORD=dbpassword
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # Redis (unchanged)
   redis:
     image: redis:7-alpine
     container_name: akademiks-redis
@@ -9,7 +31,13 @@ services:
       - redis_data:/data
     restart: unless-stopped
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # RabbitMQ (unchanged)
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: akademiks-rabbitmq
@@ -22,7 +50,13 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
+  # Spring Boot Application
   app:
     build: .
     container_name: akademiks-spring-app
@@ -31,10 +65,16 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
       - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
-      - redis
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     develop:
       watch:
         - action: sync
@@ -49,7 +89,9 @@ services:
           path: ./src/main/resources/application-dev.properties
     volumes:
       - ./.m2:/root/.m2
+    restart: on-failure
 
 volumes:
+  mysql_data:
   redis_data:
   rabbitmq_data:

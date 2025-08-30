@@ -32,7 +32,7 @@ public record AdminRegistrationRequest(
 		    	    regexp = "^(\\+234|0)[7-9][0-1]\\d{8}$",
 		    	    message = "Phone number format is invalid"
 		    	)
-		    @NotNull(message = "Phone number is missing")
+		   // @NotNull(message = "Phone number is missing") an optional field
 		    	String mobileNumber
 		 
 		) {

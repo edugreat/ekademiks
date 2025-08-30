@@ -609,7 +609,7 @@ public class AdminController {
         }
     }
     
-    @PostMapping("/register")
+    @PostMapping("/register/institution")
     @Operation(summary = "Register institution", 
                description = "Creates a new institution account. Requires ADMIN role.")
     @ApiResponses(value = {
@@ -621,6 +621,8 @@ public class AdminController {
     public ResponseEntity<Object> registerInstitution(
             @Parameter(description = "Institution DTO containing registration details", required = true)
             @RequestBody @Valid InstitutionDTO institutionDTO) {
+    	System.out.println("controller called");
+    	
     	
     
     	try {
@@ -636,6 +638,7 @@ public class AdminController {
             return new ResponseEntity<>(HttpStatus.OK);
           
         } catch (Exception e) {
+        	System.out.println(e);
             return new ResponseEntity<Object>(e.getLocalizedMessage(), HttpStatus.BAD_REQUEST);
         }
     }

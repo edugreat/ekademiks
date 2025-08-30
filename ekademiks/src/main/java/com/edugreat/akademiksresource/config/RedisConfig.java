@@ -6,6 +6,7 @@ import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -182,19 +183,18 @@ public class RedisConfig {
 
         return template;
     }
-	
 	@Bean(destroyMethod = "shutdown")
-	RedissonClient redissonClient() {
-		
-		Config config = new Config();
-		config.useSingleServer()
-		      .setAddress("redis://localhost:6379")
-		      .setConnectionPoolSize(5)
-		      .setConnectionMinimumIdleSize(5);
-		
-		return Redisson.create(config);
-		
-		
+	RedissonClient redissonClient(
+	        @Value("${spring.redis.host}") String redisHost,
+	        @Value("${spring.redis.port:6379}") int redisPort) {
+	    
+	    Config config = new Config();
+	    config.useSingleServer()
+	          .setAddress(String.format("redis://%s:%d", redisHost, redisPort))
+	          .setConnectionPoolSize(5)
+	          .setConnectionMinimumIdleSize(5);
+	    
+	    return Redisson.create(config);
 	}
 	
 	@Bean

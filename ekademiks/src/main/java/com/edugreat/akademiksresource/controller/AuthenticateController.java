@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +20,9 @@ import com.edugreat.akademiksresource.auth.AuthenticationRequest;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
+import com.edugreat.akademiksresource.registrations.InstructorRegistrationRequest;
 import com.edugreat.akademiksresource.registrations.StudentRegistrationData;
 import com.edugreat.akademiksresource.util.ApiResponseObject;
-import com.edugreat.akademiksresource.util.ValidatorService;
 import com.edugreat.akademiksresource.views.UserView;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -47,8 +48,6 @@ public class AuthenticateController {
 	private final AppAuthInterface appInterface;
 	
 	private final Validator validator;
-	private final ValidatorService validatorService;
-
 	@PostMapping("/sign-up")
 	@ResponseStatus(HttpStatus.OK)
 	@JsonView(UserView.class)
@@ -58,40 +57,59 @@ public class AuthenticateController {
 			@ApiResponse(responseCode = "400", description = "Duplicate account attempt")
 	})
 	@SecurityRequirements()
-	public ResponseEntity<Object> signUp(@RequestBody  StudentRegistrationData registrationData) {
+	public ResponseEntity<ApiResponseObject<String>> signUp(@RequestBody  StudentRegistrationData registrationData) {
 
 		try {
 			
 			Set<ConstraintViolation<StudentRegistrationData>> violations = validator.validate(registrationData);
-			
-			if(!violations.isEmpty() ) {
+			if(!violations.isEmpty()) {
 				
-				List<String> errors = violations.stream().map(v -> v.getMessage()).toList();
-				
-				List<String> phoneNumberUnrelatedErrors = errors.stream().filter(e -> !e.contains("Phone number")).toList();
-				
-				if(!phoneNumberUnrelatedErrors.isEmpty()) {
-					return new ResponseEntity<Object>(phoneNumberUnrelatedErrors, HttpStatus.BAD_REQUEST);
-				}
-				
-				if(errors.size() > 1) {
-					return new ResponseEntity<Object>("Please check your provided mobile number", HttpStatus.BAD_REQUEST);
-				}
-				
-				if(errors.size() == 1 && !(errors.get(0).equals("Phone number is missing"))) {
-					return new ResponseEntity<Object>(errors.get(0), HttpStatus.BAD_REQUEST);
+				List<String> errors = violations.stream().map(v -> v.getMessage()).collect(Collectors.toList());
+				var errorReport =	processViolations(errors);
+				if(errorReport != null) {
+					
+					return errorReport;
 				}
 			}
-			
+				
 
-			
-			return ResponseEntity.ok(appInterface.studentSignup(registrationData));
+			var created = appInterface.studentSignup(registrationData);
+			return ResponseEntity.ok(new ApiResponseObject<>(String.valueOf(created), null, true));
 		} catch (Exception e) {
 		
 			
-			return new ResponseEntity<Object>(e.getMessage(), HttpStatus.BAD_REQUEST);
-		}
+			return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getLocalizedMessage(), false));
 
+		}
+	}
+
+	private ResponseEntity<ApiResponseObject<String>> processViolations(List<String> violations) {
+		if(!violations.isEmpty() ) {
+			
+			
+			
+			List<String> phoneNumberUnrelatedErrors = violations.stream().filter(e -> !e.contains("Phone number")).toList();
+			
+			if(!phoneNumberUnrelatedErrors.isEmpty()) {
+				
+				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, String.join(", ", phoneNumberUnrelatedErrors), false));
+			
+				
+			}
+			
+			if(violations.size() > 1) {
+				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, "Please check your provided mobile number", false));
+				
+			}
+			
+			if(violations.size() == 1 && !(violations.get(0).equals("Phone number is missing"))) {
+				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, "Phone number is missing", false));
+				
+			}
+		}
+		
+		
+		return null;
 	}
 
 	@PostMapping("/sign-in")
@@ -102,15 +120,20 @@ public class AuthenticateController {
 			@ApiResponse(responseCode = "404", description = "User not found")
 	})
 	@SecurityRequirements()
-	public ResponseEntity<AppUserDTO> signIn(@RequestBody @Valid AuthenticationRequest request,
+	public ResponseEntity<ApiResponseObject<AppUserDTO>> signIn(@RequestBody @Valid AuthenticationRequest request,
 			@RequestParam String role) {
+		
+		System.out.println("controller");
 
 		try {
-			return ResponseEntity.ok(appInterface.signIn(request, role));
-		} catch (Exception e) {
-			System.out.println(e);
+			final  AppUserDTO user = appInterface.signIn(request, role);
 			
-			return new ResponseEntity<AppUserDTO>(HttpStatus.NOT_FOUND);
+			return ResponseEntity.ok().body(new ApiResponseObject<>(user, null, true));
+			
+		} catch (Exception e) {
+			System.out.println(e.getLocalizedMessage());
+			
+			return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getLocalizedMessage(), false));
 		}
 	}
 
@@ -152,13 +175,20 @@ public class AuthenticateController {
 	
 	@PostMapping("/admins/reg")
 	public ResponseEntity<ApiResponseObject<String>> registerSchoolAdmin(@RequestBody AdminRegistrationRequest request) {
+		System.out.println("controller");
 	
 		try {
-			List<String> violations = validatorService.validateObject(request);
-			if(!violations.isEmpty()) {
-				
-				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, String.join(", ", violations), false));
+			Set<ConstraintViolation<AdminRegistrationRequest>> violations = validator.validate(request);
+			List<String> errors = violations.stream().map(v -> v.getMessage()).collect(Collectors.toList());
+			if(!errors.isEmpty()) {
+				var errorReport = processViolations(errors);
+				if(errorReport != null) {
+					
+					return errorReport;
+				}
 			}
+			
+			
 			
 			appInterface.registerSchoolAdmin(request);
 			
@@ -172,6 +202,32 @@ public class AuthenticateController {
 		
 		
 	}
+	
+	@PostMapping("/instructors/signup")
+	public ResponseEntity<ApiResponseObject<String>> registerAsInstructor(@RequestBody InstructorRegistrationRequest request) {
+		
+		try {
+			Set<ConstraintViolation<InstructorRegistrationRequest>> violations  = validator.validate(request);
+			List<String> errors = violations.stream().map(v -> v.getMessage()).collect(Collectors.toList());
+			if(!errors.isEmpty()) {
+				var errorReport = processViolations(errors);
+				if(errorReport != null) {
+					
+					return errorReport;
+				}
+			}
+			
+			appInterface.instructorSignup(request);
+			
+			return ResponseEntity.ok().body(new ApiResponseObject<>("Congrats "+request.firstName()+" "+request.lastName(), null, true));
+		} catch (Exception e) {
+			System.out.println(e);
+			return ResponseEntity.badRequest().body(new ApiResponseObject<>(e.getLocalizedMessage(), null, false));
+		}
+		
+		
+	}
+	
 	
 
 }

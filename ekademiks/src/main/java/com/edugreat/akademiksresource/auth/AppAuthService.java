@@ -36,6 +36,7 @@ import com.edugreat.akademiksresource.registrations.AdminRegistrationRequest;
 import com.edugreat.akademiksresource.registrations.InstructorRegistrationRequest;
 import com.edugreat.akademiksresource.registrations.StudentRegistrationData;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -183,6 +184,8 @@ public class AppAuthService implements AppAuthInterface {
 	switch (selectedRole.toLowerCase()) {
 	case "admin":
 		
+	
+		
 	case "superadmin":
 		Optional<Admins> optionalAdmin = adminsDao.findByEmail(username);
 		
@@ -231,7 +234,8 @@ public class AppAuthService implements AppAuthInterface {
 		
 	}
 	
-	throw new AcademicException(loginErrorMessage(selectedRole.toLowerCase()), HttpStatus.BAD_REQUEST.name());
+	throw new EntityNotFoundException(loginErrorMessage(selectedRole.toLowerCase()));
+	
 	}
 	
 	
@@ -319,6 +323,8 @@ public class AppAuthService implements AppAuthInterface {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends AppUserDTO> T getCachedUser(String userId) {
+		
+		System.out.println("calling cache");
 	   
 	
 		try {
@@ -415,7 +421,7 @@ public class AppAuthService implements AppAuthInterface {
 	
 	
 	private  void processAgainstAccountDuplicates(String email, String mobileNumber){
-		
+		System.out.println("processing");		
 		if(studentDao.existsByEmail(email) || instructorDao.existsByEmail(email) || adminsDao.existsByEmail(email)) {
 			throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
 		}

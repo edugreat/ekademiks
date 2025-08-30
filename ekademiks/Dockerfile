@@ -7,9 +7,17 @@ WORKDIR /app
 COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
+
+# Make mvnw executable
+RUN chmod +x mvnw
+
+# Download dependencies first (this helps with caching)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
 COPY src ./src
 
-# Build the application
+# Build the application WITHOUT offline flag
 RUN ./mvnw clean package -DskipTests
 
 # Runtime stage
