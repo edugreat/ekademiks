@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.auth;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import jakarta.validation.constraints.Pattern;
@@ -13,7 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthenticationRequest implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Unsupported email address format")
 	private String email;

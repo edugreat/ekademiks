@@ -1,13 +1,16 @@
 
 package com.edugreat.akademiksresource.classroom;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.Data;
 
 @Data
 public class ClassroomSubjectId implements Serializable {
-	
-	private static final long serialVersionUID = 1L;
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 	private Integer classroomId;
 	private Integer subjectId;
 

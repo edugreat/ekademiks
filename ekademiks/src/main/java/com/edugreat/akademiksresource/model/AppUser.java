@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.model;
 
+import java.io.Serial;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,10 +28,11 @@ import lombok.Setter;
 @Data
 public class AppUser implements UserDetails {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     * 
+     */
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -122,6 +124,9 @@ public class AppUser implements UserDetails {
 	protected void setAccountCreationDate() {
 		
 		accountCreationDate = LocalDateTime.now().toString();
+		
+//		prevents persisting empty String to the database.
+		this.mobileNumber = (this.mobileNumber == null || this.mobileNumber.trim().isEmpty()) ? null : this.mobileNumber;
 		
 	}
 	

@@ -24,6 +24,11 @@ public record StudentRegistrationData(
     @NotBlank(message = "Password required")
     @NotNull(message = "Password is missing")
     String password,
+    
+    @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$")
+    @NotBlank(message = "Password required")
+    @NotNull(message = "Password is missing")
+    String repeatPassword,
 
     @Pattern(
     	    regexp = "^(\\+234|0)[7-9][0-1]\\d{8}$",
@@ -31,11 +36,13 @@ public record StudentRegistrationData(
     	)
     @NotNull(message = "Phone number is missing")
     	String mobileNumber,
+    	
+    	
 
    
     @NotNull(message  = "academic level not found")
     @NotBlank(message = "academic level missing")
-    Integer status
+    String status
     
 		) {
 }

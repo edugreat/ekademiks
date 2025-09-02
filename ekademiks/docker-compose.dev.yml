@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: akademiks-spring-dev
+    ports:
+      - "8080:8080"
+      - "8000:8000"  # For debugger
+    volumes:
+      - ./src:/app/src              # live source code
+      - ~/.m2:/root/.m2             # cache Maven repo (better to use home directory) docker-compose.dev
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_DEVTOOLS_RESTART_POLL_INTERVAL: 2000  # Poll every 2s
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+	  
+	  
+	  

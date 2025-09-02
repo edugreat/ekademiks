@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.instructor;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,8 +31,9 @@ import jakarta.persistence.Table;
 @Entity
 @Table
 public class Instructor extends AppUser {
-	
-	private static final long serialVersionUID = 1L;
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(

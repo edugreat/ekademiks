@@ -68,10 +68,16 @@ public class AppAuthService implements AppAuthInterface {
 
 	@Transactional
 	@Override
-	public int studentSignup(StudentRegistrationData registrationData) {
+	public String studentSignup(StudentRegistrationData registrationData) {
 		try {
 			
+			System.out.println("getting tough");
+			
 		    processAgainstAccountDuplicates(registrationData.email(), registrationData.mobileNumber());
+		    
+		    if(!registrationData.password().equals(registrationData.repeatPassword())) {
+		    	throw new IllegalArgumentException("Passwords mismatch");
+		    }
 
 		
 			Student student = new Student();
@@ -88,7 +94,7 @@ public class AppAuthService implements AppAuthInterface {
 			 throw e;
 		}
 
-		return HttpStatus.CREATED.value();
+		return "Congrats,"+registrationData.firstName()+" "+registrationData.lastName();
 	}
 	
 	
@@ -97,13 +103,13 @@ public class AppAuthService implements AppAuthInterface {
 	@SuppressWarnings("unchecked")
 	private <T extends AppUserDTO> T processBeforLogin(Object obj, String selectedRole){
 		
-		if(obj instanceof Admins) {
+		if(obj instanceof Admins admins) {
 			
-			String accessToken  = jwtUtil.generateToken((Admins)obj, selectedRole);
-			String refreshToken = jwtUtil.createRefreshToken((Admins)obj, selectedRole);
+			String accessToken  = jwtUtil.generateToken(admins, selectedRole);
+			String refreshToken = jwtUtil.createRefreshToken(admins, selectedRole);
 			
 			AdminsDTO dto = new AdminsDTO();
-			BeanUtils.copyProperties((Admins)obj, dto);
+			BeanUtils.copyProperties(admins, dto);
 			dto.setAccessToken(accessToken);
 			
 			dto.setRefreshToken(refreshToken);
@@ -111,7 +117,7 @@ public class AppAuthService implements AppAuthInterface {
 			//dto.setRoles(Set.of("SuperAdmin"));
 			dto.setRoles(Set.of(selectedRole));		
 			
-			postLoginCleanup(((Admins)obj).getId());
+			postLoginCleanup(admins.getId());
 			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (AdminsDTO)dto);
 			
@@ -120,21 +126,21 @@ public class AppAuthService implements AppAuthInterface {
 		}
 		
 		
-		if(obj instanceof Student) {
+		if(obj instanceof Student student) {
 			
 
-			String accessToken  = jwtUtil.generateToken((Student)obj, selectedRole);
-			String refreshToken = jwtUtil.createRefreshToken((Student)obj, selectedRole);
+			String accessToken  = jwtUtil.generateToken(student, selectedRole);
+			String refreshToken = jwtUtil.createRefreshToken(student, selectedRole);
 			
 			StudentDTO dto = new StudentDTO();
-			BeanUtils.copyProperties((Student)obj, dto);
+			BeanUtils.copyProperties(student, dto);
 			dto.setAccessToken(accessToken);
 			
 			dto.setRefreshToken(refreshToken);
-			dto.setStatus(((Student)obj).getStatus());
+			dto.setStatus(student.getStatus());
 			dto.setIsGroupMember(groupMemberDo.isGroupMember(dto.getId()));
 			
-			postLoginCleanup(((Student)obj).getId());
+			postLoginCleanup(student.getId());
 			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (StudentDTO)dto);
 			
@@ -144,22 +150,22 @@ public class AppAuthService implements AppAuthInterface {
 			
 		}
 		
-		if(obj instanceof Instructor) {
+		if(obj instanceof Instructor instructor) {
 			
 
 			
-			String accessToken  = jwtUtil.generateToken((Instructor)obj, selectedRole);
-			String refreshToken = jwtUtil.createRefreshToken((Instructor)obj, selectedRole);
+			String accessToken  = jwtUtil.generateToken(instructor, selectedRole);
+			String refreshToken = jwtUtil.createRefreshToken(instructor, selectedRole);
 			
 			InstructorDTO dto = new InstructorDTO();
-			BeanUtils.copyProperties((Instructor)obj, dto);
+			BeanUtils.copyProperties(instructor, dto);
 			dto.setAccessToken(accessToken);
 			
 			dto.setRefreshToken(refreshToken);
 			
 			dto.setRoles(Set.of(selectedRole));
 			
-			postLoginCleanup(((Instructor)obj).getId());
+			postLoginCleanup(instructor.getId());
 			
 			redisTemplate.opsForValue().set(RedisValues.USER_CACHE+"::"+dto.getId(), (InstructorDTO)dto);
 			stringRedisTemplate.opsForValue().set(RedisValues.CURRENT_ROLE+"::"+dto.getId(), selectedRole);			
@@ -387,6 +393,8 @@ public class AppAuthService implements AppAuthInterface {
 		try {
 			
 		processAgainstAccountDuplicates(request.email(), request.mobileNumber());
+		
+	
 				
 				
 				
@@ -426,7 +434,7 @@ public class AppAuthService implements AppAuthInterface {
 			throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
 		}
 		
-		if(mobileNumber != null &&  (studentDao.existsByMobile(mobileNumber) || instructorDao.existsByMobileNumber(mobileNumber) || adminsDao.existsByMobile(mobileNumber))) {
+		if((mobileNumber != null && !mobileNumber.trim().isEmpty()) &&  (studentDao.existsByMobile(mobileNumber) || instructorDao.existsByMobileNumber(mobileNumber) || adminsDao.existsByMobile(mobileNumber))) {
 			
 			throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
 		}

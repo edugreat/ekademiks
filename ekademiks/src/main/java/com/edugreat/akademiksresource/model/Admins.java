@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.model;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,10 +20,11 @@ import com.edugreat.akademiksresource.enums.Roles;
 @Table
 public class Admins extends AppUser {
 
-	/*
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    /*
+     * 
+     */
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	@ElementCollection(fetch = FetchType.EAGER)
 	private Set<UserRoles> roles = new HashSet<>();

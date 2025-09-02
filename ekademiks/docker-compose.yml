@@ -21,7 +21,7 @@ services:
       retries: 20
       start_period: 30s
 
-  # Redis (unchanged)
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: akademiks-redis
@@ -37,7 +37,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # RabbitMQ (unchanged)
+  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: akademiks-rabbitmq
@@ -56,7 +56,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Spring Boot Application
+  # Spring Boot Application (DEV MODE with hot reload)
   app:
     build: .
     container_name: akademiks-spring-app
@@ -67,7 +67,6 @@ services:
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
       - SPRING_RABBITMQ_HOST=rabbitmq
-      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
       mysql:
         condition: service_healthy
@@ -75,19 +74,12 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    develop:
-      watch:
-        - action: sync
-          path: ./src/main/java
-          target: /app/src/main/java
-        - action: sync
-          path: ./src/main/resources
-          target: /app/src/main/resources
-        - action: rebuild
-          path: ./pom.xml
-        - action: restart
-          path: ./src/main/resources/application-dev.properties
     volumes:
+      # Mount source code
+      - ./src:/app/src
+      # Mount compiled classes
+      - ./target:/app/target
+      # Cache Maven dependencies
       - ./.m2:/root/.m2
     restart: on-failure
 

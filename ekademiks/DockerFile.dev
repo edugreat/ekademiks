@@ -1,0 +1,27 @@
+
+# Dockerfile.dev
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+# Copy Maven wrapper + pom.xml first (for dependency caching)
+COPY pom.xml mvnw ./
+COPY .mvn .mvn
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline -B
+
+# Mount source via volumes in docker-compose, so don’t copy src here
+EXPOSE 8080
+
+# Use this command to keep the container running and allow Maven to use host's source code
+CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000", "-Dspring-boot.run.addResources=true"]
+
+
+
+
+
+
+
+
+
+

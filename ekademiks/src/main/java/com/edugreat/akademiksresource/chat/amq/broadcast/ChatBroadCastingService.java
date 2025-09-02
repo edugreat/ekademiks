@@ -73,7 +73,7 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 	public void sendJoinRequestNotification(MiscellaneousNotifications requestNotification) {
 		
 		if(requestNotification != null) {
-			LOGGER.info(String.format("exchanging request notification -> %s", requestNotification));
+			LOGGER.info("exchanging request notification -> %s".formatted(requestNotification));
 			
 			
 			rabbitTemplate.convertAndSend(exchange, chatNotificationRoutingKey, requestNotification);
@@ -90,7 +90,7 @@ public class ChatBroadCastingService implements ChatBroadcaster {
 	
 		if(newMemberNotification != null) {
 			
-			LOGGER.info(String.format("new member just joined -> %s", newMemberNotification));
+			LOGGER.info("new member just joined -> %s".formatted(newMemberNotification));
 			
 			rabbitTemplate.convertAndSend(exchange, chatNotificationRoutingKey, newMemberNotification);
 			

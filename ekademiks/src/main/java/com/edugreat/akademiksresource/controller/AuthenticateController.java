@@ -59,31 +59,40 @@ public class AuthenticateController {
 	@SecurityRequirements()
 	public ResponseEntity<ApiResponseObject<String>> signUp(@RequestBody  StudentRegistrationData registrationData) {
 
+		System.out.println(".......................................");
+	
+		
 		try {
 			
+			
 			Set<ConstraintViolation<StudentRegistrationData>> violations = validator.validate(registrationData);
+			
 			if(!violations.isEmpty()) {
 				
 				List<String> errors = violations.stream().map(v -> v.getMessage()).collect(Collectors.toList());
-				var errorReport =	processViolations(errors);
+				
+				var errorReport =	processViolations(errors, registrationData.mobileNumber());
+				
 				if(errorReport != null) {
-					
-					return errorReport;
+				
+					throw new IllegalArgumentException(errorReport);
 				}
 			}
 				
 
-			var created = appInterface.studentSignup(registrationData);
-			return ResponseEntity.ok(new ApiResponseObject<>(String.valueOf(created), null, true));
+			String message = appInterface.studentSignup(registrationData);
+			return ResponseEntity.ok(new ApiResponseObject<>(String.valueOf(message), null, true));
 		} catch (Exception e) {
 		
+			System.out.println(e);
 			
-			return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getLocalizedMessage(), false));
+			return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getMessage(), false));
 
 		}
 	}
 
-	private ResponseEntity<ApiResponseObject<String>> processViolations(List<String> violations) {
+	private String processViolations(List<String> violations, String mobileNumber) {
+		System.out.println("Just added something");
 		if(!violations.isEmpty() ) {
 			
 			
@@ -91,21 +100,24 @@ public class AuthenticateController {
 			List<String> phoneNumberUnrelatedErrors = violations.stream().filter(e -> !e.contains("Phone number")).toList();
 			
 			if(!phoneNumberUnrelatedErrors.isEmpty()) {
-				
-				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, String.join(", ", phoneNumberUnrelatedErrors), false));
 			
+				return String.join(", ", phoneNumberUnrelatedErrors);			
 				
 			}
 			
-			if(violations.size() > 1) {
-				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, "Please check your provided mobile number", false));
-				
-			}
+			if(violations.size() != 0 &&  mobileNumber.trim().length() != 0) {
+				System.out.println("provided mobile number "+mobileNumber);
 			
-			if(violations.size() == 1 && !(violations.get(0).equals("Phone number is missing"))) {
-				return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, "Phone number is missing", false));
+				return "Please check your provided mobile number";
 				
 			}
+//			
+//			if(mobileNumber != null  && violations.size() == 1 && !(violations.get(0).equals("Phone number is missing"))) {
+//				System.out.println("mobile number "+mobileNumber);
+//				
+//				return "Phone number is missing";
+//				
+//			}
 		}
 		
 		
@@ -123,7 +135,7 @@ public class AuthenticateController {
 	public ResponseEntity<ApiResponseObject<AppUserDTO>> signIn(@RequestBody @Valid AuthenticationRequest request,
 			@RequestParam String role) {
 		
-		System.out.println("controller");
+	
 
 		try {
 			final  AppUserDTO user = appInterface.signIn(request, role);
@@ -175,16 +187,19 @@ public class AuthenticateController {
 	
 	@PostMapping("/admins/reg")
 	public ResponseEntity<ApiResponseObject<String>> registerSchoolAdmin(@RequestBody AdminRegistrationRequest request) {
-		System.out.println("controller");
+		System.out.println("admin controller");
 	
 		try {
+			
 			Set<ConstraintViolation<AdminRegistrationRequest>> violations = validator.validate(request);
+			
 			List<String> errors = violations.stream().map(v -> v.getMessage()).collect(Collectors.toList());
+		
 			if(!errors.isEmpty()) {
-				var errorReport = processViolations(errors);
+				var errorReport = processViolations(errors, request.mobileNumber());
 				if(errorReport != null) {
 					
-					return errorReport;
+					throw new IllegalArgumentException(errorReport);
 				}
 			}
 			
@@ -210,10 +225,10 @@ public class AuthenticateController {
 			Set<ConstraintViolation<InstructorRegistrationRequest>> violations  = validator.validate(request);
 			List<String> errors = violations.stream().map(v -> v.getMessage()).collect(Collectors.toList());
 			if(!errors.isEmpty()) {
-				var errorReport = processViolations(errors);
+				var errorReport = processViolations(errors, request.mobileNumber());
 				if(errorReport != null) {
 					
-					return errorReport;
+					throw new IllegalArgumentException(errorReport);
 				}
 			}
 			

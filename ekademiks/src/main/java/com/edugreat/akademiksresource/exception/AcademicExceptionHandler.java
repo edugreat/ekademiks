@@ -113,13 +113,13 @@ public class AcademicExceptionHandler {
 	@ExceptionHandler
 	public void asyncRequestException(AsyncRequestTimeoutException e) {
 		
-		LOGGER.info(String.format("async request timeout %s", e.getMessage()));
+		LOGGER.info("async request timeout %s".formatted(e.getMessage()));
 	}
 	
 	@ExceptionHandler
 	public void ioException(java.io.IOException e) {
 		
-		LOGGER.info(String.format("IOEXCEPTION %s", e.getMessage()));
+		LOGGER.info("IOEXCEPTION %s".formatted(e.getMessage()));
 	}
 
 }

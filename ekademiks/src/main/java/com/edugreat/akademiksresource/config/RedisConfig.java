@@ -190,7 +190,7 @@ public class RedisConfig {
 	    
 	    Config config = new Config();
 	    config.useSingleServer()
-	          .setAddress(String.format("redis://%s:%d", redisHost, redisPort))
+	          .setAddress("redis://%s:%d".formatted(redisHost, redisPort))
 	          .setConnectionPoolSize(5)
 	          .setConnectionMinimumIdleSize(5);
 	    

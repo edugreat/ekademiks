@@ -7,7 +7,8 @@ public enum Category {
     SENIOR_PRIMARY("Senior Primary"),
     NURSERY("Nursery"),
     PRE_NURSERY("Pre Nursery"),
-    SENIOR_SECONDARY("Senior Secondary");
+    SENIOR_SECONDARY("Senior Secondary"),
+    JUNIOR_SECONDARY("Junior Secondary");
 
     private final String label;
 

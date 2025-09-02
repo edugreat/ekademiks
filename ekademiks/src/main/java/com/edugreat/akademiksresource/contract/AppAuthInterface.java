@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public interface AppAuthInterface {
 
 	// Contract that registers new user
-	public int studentSignup(StudentRegistrationData registrationData);
+	public String studentSignup(StudentRegistrationData registrationData);
 
 	// Allows users to sign in using different role preferences
 	public <T extends AppUserDTO> T signIn(AuthenticationRequest request, String role);

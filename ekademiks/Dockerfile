@@ -1,9 +1,9 @@
-# Dockerfile
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# Dockerfile (dev mode)
+FROM eclipse-temurin:21-jdk-alpine
 
 WORKDIR /app
 
-# Copy only the files needed for dependency resolution first (for better caching)
+# Copy Maven wrapper and pom.xml first (dependency cache layer)
 COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
@@ -11,27 +11,11 @@ COPY mvnw .
 # Make mvnw executable
 RUN chmod +x mvnw
 
-# Download dependencies first (this helps with caching)
+# Download dependencies (online)
 RUN ./mvnw dependency:go-offline -B
 
-# Copy source code
+# Copy full source code
 COPY src ./src
 
-# Build the application WITHOUT offline flag
-RUN ./mvnw clean package -DskipTests
-
-# Runtime stage
-FROM eclipse-temurin:21-jre-alpine
-
-WORKDIR /app
-
-# Copy the built JAR from the builder stage
-COPY --from=builder /app/target/*.jar app.jar
-
-# Create a non-root user for security
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Start Spring Boot in dev mode (hot reload enabled)
+CMD ["./mvnw", "spring-boot:run"]

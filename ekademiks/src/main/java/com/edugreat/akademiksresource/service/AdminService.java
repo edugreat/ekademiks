@@ -227,7 +227,7 @@ public class AdminService implements AdminInterface {
 		
 
 		final Optional<Student> optional = studentDao.findById(studentId);
-		if (!optional.isEmpty()) {
+		if (optional.isPresent()) {
 
 			Student student = optional.get();
 			

@@ -1,6 +1,7 @@
 
 package com.edugreat.akademiksresource.model;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,10 +41,11 @@ import jakarta.persistence.Table;
 //this is a subclass of the AppUser base class
 public class Student extends AppUser {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     * 
+     */
+    @Serial
+    private static final long serialVersionUID = 1L;
 
 	@ElementCollection(fetch = FetchType.EAGER)
 	private Set<UserRoles> roles = new HashSet<>();
