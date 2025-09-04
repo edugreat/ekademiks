@@ -1,6 +1,8 @@
 package com.edugreat.akademiksresource.classroom.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 
@@ -25,7 +27,8 @@ public interface ClassroomInterface {
 	
 	Page<ClassroomDTO> getManagedClassroomsByLevelAndInstitution(Integer userId, String userRole, Integer institutionId, Integer categoryId, int page, int pageSize);
 
-	void enrollStudents(EnrollmentRequest enrollmentReq, String role);
+//	the returned map indicates success or failure through it key and a set of students whose enrollment succeeded or failed
+	Map<String, Set<String>> enrollStudents(EnrollmentRequest enrollmentReq, String role);
 	
 	ClassroomFullDetails adminClassroomDetails(Integer classroomId, Integer userId, Integer institutionId);
 

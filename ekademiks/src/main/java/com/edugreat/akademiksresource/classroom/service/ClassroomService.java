@@ -1,5 +1,6 @@
 package com.edugreat.akademiksresource.classroom.service;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Level;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.Subject;
+import com.edugreat.akademiksresource.model.UserRoles;
 //import com.edugreat.akademiksresource.util.ClassroomPrimaryInstructorUpdateDTO;
 import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
 import com.edugreat.akademiksresource.util.UtilityService;
@@ -384,9 +386,9 @@ public class ClassroomService implements ClassroomInterface {
 
 	@Override
 	@Transactional
-	public void enrollStudents(EnrollmentRequest enrollmentReq, String role) {
+	public Map<String, Set<String>> enrollStudents(EnrollmentRequest enrollmentReq, String role) {
 
-		
+		Map<String, Set<String>> enrollmentStatusMap = new HashMap<>();
 
 		
 
@@ -396,7 +398,9 @@ public class ClassroomService implements ClassroomInterface {
 					.get(RedisValues.CURRENT_ROLE + "::" + enrollmentReq.enrollmentOfficer());
 
 			if (loggedInRole == null)
-				throw new IllegalArgumentException("Please login to perform this action");
+				throw new AcademicException("Please login to perform this action", HttpStatus.BAD_REQUEST.name());
+			
+			
 
 //			get the classroom the student is being enrolled into
 			Classroom classroom = classroomDao.findById(enrollmentReq.classroomId())
@@ -406,43 +410,39 @@ public class ClassroomService implements ClassroomInterface {
 
 			if (!classroomDao.isFoundInTheInstitution(classroom.getId(), enrollmentReq.institutionId())) {
 
-				throw new IllegalArgumentException("Please choose a classroom that is part of the institution");
+				throw new AcademicException("Please choose a classroom that is part of the institution", HttpStatus.BAD_REQUEST.name());
 			}
-			Admins admin = null;
-
-// Ensure enrollment officer is either classroom primary instructor or ADMIN of the institution
-			Optional<Instructor> optionalInstructor = instructorDao.findById(enrollmentReq.enrollmentOfficer());
-			if (optionalInstructor.isEmpty()) {
-
-				admin = adminDao.findById(enrollmentReq.enrollmentOfficer())
-						.orElseThrow(() -> new IllegalArgumentException("Enrollment officer not found"));
-
-			}
-
-			if (admin != null) {
-
-				if (!loggedInRole.equalsIgnoreCase(Roles.Admin.name())) {
-					throw new IllegalArgumentException(
-							"Operation failed! Please login with the appropriate credentials");
+			
+			
+			if(loggedInRole.equalsIgnoreCase(Roles.Admin.name())) {
+				
+				Admins admin = adminDao.findById(enrollmentReq.enrollmentOfficer()).orElseThrow(() -> new IllegalArgumentException("Enrollment officer not found"));
+				synchronized (this) {
+					enrollmentStatusMap = 	performEnrollment(enrollmentReq, classroom, admin.getEmail());
 				}
-
-				classroomDao.save(performEnrollment(enrollmentReq, classroom, admin.getEmail()));
-
-				return;
+			}else if(loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
+				
+				Instructor instructor = instructorDao.findById(enrollmentReq.enrollmentOfficer())
+						                 .orElseThrow(() -> new AcademicException("Enrollment officer not found", HttpStatus.BAD_REQUEST.name()));
+				
+				if(!classroom.getPrimaryInstructor().getId().equals(instructor.getId())) {
+					throw new AcademicException("Only primary instructor can enroll students", HttpStatus.BAD_REQUEST.name());
+				}
+				
+				synchronized (this) {
+					enrollmentStatusMap = 	performEnrollment(enrollmentReq, classroom, instructor.getEmail());
+				}
+				
+				
 			}
-
-			if (!loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
-				throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
-			}
-
-			synchronized (this) {
-				classroomDao.save(performEnrollment(enrollmentReq, classroom, optionalInstructor.get().getEmail()));
-			}
-
+			
+			
 		} catch (Exception e) {
 
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
+		
+		return enrollmentStatusMap;
 
 	}
 	
@@ -454,8 +454,12 @@ public class ClassroomService implements ClassroomInterface {
 		
 		
 	}
-private Classroom performEnrollment(EnrollmentRequest request, Classroom classroom, String enrollmentOfficerEmail) {
+private Map<String, Set<String>> performEnrollment(EnrollmentRequest request, Classroom classroom, String enrollmentOfficerEmail) {
     Set<Integer> uniqueStudentIds = new HashSet<>(request.studentIds());
+    Map<String, Set<String>> enrollmentStatusMap = new HashMap<>();
+    
+    String enrollmentStatus = null;
+    String studentFullName = null;
     
     for (Integer studentId : uniqueStudentIds) {
         if (!studentDao.isRegisteredInTheInstitution(studentId, request.institutionId())) {
@@ -471,8 +475,10 @@ private Classroom performEnrollment(EnrollmentRequest request, Classroom classro
 //        	throw new AcademicException("Student "+student.getFirstName()+" "+student.getLastName()+" not eligible to enroll into the selected classroom", HttpStatus.BAD_REQUEST.name());
 //        }
         
+       
+        
         // Check for existing enrollment with locking
-        Optional<StudentClassroom> existingEnrollment = studentClassroomDao
+        Optional<StudentClassroom> existingActiveEnrollment = studentClassroomDao
             .findByStudentAndClassroomAndYearAndStatus(
                 studentId,
                 classroom.getId(),
@@ -480,19 +486,46 @@ private Classroom performEnrollment(EnrollmentRequest request, Classroom classro
                 EnrollmentStatus.ACTIVE
             );
 
-        if (existingEnrollment.isEmpty()) {
+        if (existingActiveEnrollment.isEmpty()) {
             try {
-                classroom.addStudent(student, enrollmentOfficerEmail);
+             StudentClassroom newEnrollment = new StudentClassroom(student, classroom, enrollmentOfficerEmail);
+             studentClassroomDao.save(newEnrollment);
+            
+             enrollmentStatus = "success";
+             studentFullName = student.getFirstName()+" "+student.getLastName();
+             
             } catch (DataIntegrityViolationException e) {
-                // Fallback in case of race condition
+              
+               enrollmentStatus = "failed";
+               studentFullName = student.getFirstName()+" "+student.getLastName();
                 System.out.println("Duplicate enrollment detected for student: " + studentId);
+                
             }
         } else {
-            System.out.println("Student " + studentId + " already enrolled in this classroom");
+            throw new IllegalArgumentException("student "+student.getFirstName()+" "+student.getLastName()+""
+            		+ " has acrtive enrollment. Consider completing previous enrollment first");
         }
+        
+        updateEnrollmentStatus(enrollmentStatus, studentFullName, enrollmentStatusMap);
+        
     }
-    return classroom;
+    return enrollmentStatusMap;
 }
+
+// create or update map of successful or failed enrollment of students. 
+ private void updateEnrollmentStatus(String condition, String studentName, Map<String, Set<String>> enrollmentStatusMap) {
+	 
+	 if(!enrollmentStatusMap.containsKey(condition)) {
+		 Set<String> set = new HashSet<>();
+		 set.add(studentName);
+		 enrollmentStatusMap.put(condition, set);
+	 }else {
+		 
+		 enrollmentStatusMap.get(condition).add(studentName);
+		 
+	 }
+	 
+ }
 
 	@Override
 	@Transactional(readOnly = true)
