@@ -117,6 +117,11 @@ public class ClassroomService implements ClassroomInterface {
 				}
 
 			}
+			
+//			check if classroom already exists 
+			if(classroomDao.existsByInstitutionIdAndAcademicYearAndNameIgnoreCase(classroomDTO.institutionId(), classroomDTO.academicYear(), classroomDTO.name())) {
+				throw new DataIntegrityViolationException("classroom"+ classroomDTO.name()+" already exists");
+			}
 
 			Level level = levelDao.findById(classroomDTO.levelId()).orElseThrow(
 					() -> new IllegalArgumentException("Category not found with id: " + classroomDTO.levelId()));
@@ -149,6 +154,8 @@ public class ClassroomService implements ClassroomInterface {
 	}
 
 	private void validateUserRole(String userRole) {
+		
+	
 
 		if (!List.of("admin", "instructor").contains(userRole.toLowerCase())) {
 
@@ -172,22 +179,31 @@ public class ClassroomService implements ClassroomInterface {
 			if (userRole.equalsIgnoreCase(ADMIN)) {
 				classrooms = classroomDao.getAdminManagedClassrooms(userId, PageRequest.of(page, pageSize));
 
+				
+				
 			} else if (userRole.equalsIgnoreCase(INSTRUCTOR)) {
 
 				if (classroomDao.isPrimaryInstructor(userId)) {
+				
 					classrooms = classroomDao.findByPrimaryInstructorId(userId, PageRequest.of(page, pageSize));
 
 				}
 
-				else
+				else {
+					
 					classrooms = classroomDao.findByInstructorInSubject(userId, PageRequest.of(page, pageSize));
+				}
+					
 
 			}
 
 		} catch (Exception e) {
 
+			
 			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
+		
+		
 
 		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
 				: classrooms.map(this::buildFullClassroomData);
@@ -210,6 +226,7 @@ public class ClassroomService implements ClassroomInterface {
 		return new ClassroomDTO.Builder().id(clzz.getId()).academicYear(clzz.getAcademicYear())
 				.description(clzz.getDescription()).institutionId(clzz.getInstitution().getId())
 				.institutionName(clzz.getInstitution().getName()).levelId(l.getId()).levelName(l.getCategory().name())
+				.categoryLabel(l.getCategoryLabel())
 				.name(clzz.getName()).primaryInstructorId(i.getId())
 				.primaryInstructorName(i.getFirstName() + " " + i.getLastName()).section(clzz.getSection())
 				.studentCount(classroomStudents.size()).students(studentDTOs).build();
@@ -335,7 +352,7 @@ public class ClassroomService implements ClassroomInterface {
 							PageRequest.of(page, pageSize));
 
 				} else if (isPrimaryInstructor) {
-					System.out.println("fetching by institution and level");
+					
 
 					classrooms = classroomDao.findByPrimaryInstructorIdAndLevelIdAndInstitutionId(userId, categoryId,
 							institutionId, PageRequest.of(page, pageSize));
@@ -343,8 +360,8 @@ public class ClassroomService implements ClassroomInterface {
 				}
 			} else if (userRole.equalsIgnoreCase(Roles.Admin.name())) {
 
-				classrooms = classroomDao.findByInstitutionCreatedByAndInstitutionIdAndLevelId(userId, categoryId,
-						institutionId, PageRequest.of(page, pageSize));
+				classrooms = classroomDao.findByInstitutionCreatedByAndInstitutionIdAndLevelId(userId, institutionId,
+						categoryId, PageRequest.of(page, pageSize));
 
 			}
 
@@ -369,10 +386,9 @@ public class ClassroomService implements ClassroomInterface {
 	@Transactional
 	public void enrollStudents(EnrollmentRequest enrollmentReq, String role) {
 
-		System.out.println("selected institution " + enrollmentReq.institutionId());
+		
 
-		System.out.println("enrolling");
-		System.out.println(enrollmentReq.studentIds().toString());
+		
 
 		try {
 //			ensure really logged in using the role
@@ -386,8 +402,7 @@ public class ClassroomService implements ClassroomInterface {
 			Classroom classroom = classroomDao.findById(enrollmentReq.classroomId())
 					.orElseThrow(() -> new IllegalArgumentException("No matching records for the given classroom"));
 
-			System.out.println("classroom details: " + classroom.getName() + " institution "
-					+ classroom.getInstitution().getName());
+			
 
 			if (!classroomDao.isFoundInTheInstitution(classroom.getId(), enrollmentReq.institutionId())) {
 
@@ -420,13 +435,24 @@ public class ClassroomService implements ClassroomInterface {
 				throw new IllegalArgumentException("Operation failed! Please login with the appropriate credentials");
 			}
 
-			classroomDao.save(performEnrollment(enrollmentReq, classroom, optionalInstructor.get().getEmail()));
+			synchronized (this) {
+				classroomDao.save(performEnrollment(enrollmentReq, classroom, optionalInstructor.get().getEmail()));
+			}
 
 		} catch (Exception e) {
 
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
 
+	}
+	
+	private boolean isStudentLegitableToEnrollByStatus(String classroomStatus, String studentStatus) {
+		
+		System.out.println("classroom status "+classroomStatus+" student status "+studentStatus);
+		
+		return classroomStatus.equals(studentStatus);
+		
+		
 	}
 private Classroom performEnrollment(EnrollmentRequest request, Classroom classroom, String enrollmentOfficerEmail) {
     Set<Integer> uniqueStudentIds = new HashSet<>(request.studentIds());
@@ -439,6 +465,12 @@ private Classroom performEnrollment(EnrollmentRequest request, Classroom classro
         Student student = studentDao.findById(studentId)
             .orElseThrow(() -> new IllegalArgumentException("Student record not found"));
 
+//        final boolean eligible = isStudentLegitableToEnrollByStatus(classroom.getLevel().getCategoryLabel(), student.getStatus());
+//        
+//        if(!eligible) {
+//        	throw new AcademicException("Student "+student.getFirstName()+" "+student.getLastName()+" not eligible to enroll into the selected classroom", HttpStatus.BAD_REQUEST.name());
+//        }
+        
         // Check for existing enrollment with locking
         Optional<StudentClassroom> existingEnrollment = studentClassroomDao
             .findByStudentAndClassroomAndYearAndStatus(

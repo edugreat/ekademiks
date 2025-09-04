@@ -60,8 +60,8 @@ public interface ClassroomDao extends JpaRepository<Classroom, Integer> {
     @EntityGraph(attributePaths = {"level", "primaryInstructor"})
     Page<Classroom> findByInstitutionCreatedByAndInstitutionIdAndLevelId(
     		                   @Param("adminId")Integer adminId,
-    		                   @Param("categoryId")Integer categoryId,
     		                   @Param("institutionId")Integer institutionId,
+    		                   @Param("categoryId")Integer categoryId,
     		                   Pageable pageable);
     
     
@@ -140,5 +140,11 @@ public interface ClassroomDao extends JpaRepository<Classroom, Integer> {
 
     @RestResource(exported = false)
     Optional<Classroom> findTop1ByClassroomSubjectsInstructorIdAndInstitutionIdAndNameContaining(@Param("userId") Integer userId, @Param("institutionId")Integer institutionId, @Param("searchQuery")String searchQuery);
-    
+  
+    @RestResource(exported = false)
+    @Query("SELECT COUNT(c) > 0 FROM Classroom c WHERE c.institution.id = :institutionId AND c.academicYear =:academicYear AND LOWER(c.name) = LOWER(:name)")
+    boolean existsByInstitutionIdAndAcademicYearAndNameIgnoreCase(
+        @Param("institutionId") Integer institutionId, 
+        @Param("academicYear") Integer academicYear,
+        @Param("name") String name);
 }

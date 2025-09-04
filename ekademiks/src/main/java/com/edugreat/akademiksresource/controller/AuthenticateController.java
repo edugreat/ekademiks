@@ -59,7 +59,7 @@ public class AuthenticateController {
 	@SecurityRequirements()
 	public ResponseEntity<ApiResponseObject<String>> signUp(@RequestBody  StudentRegistrationData registrationData) {
 
-		System.out.println(".......................................");
+		
 	
 		
 		try {
@@ -92,7 +92,7 @@ public class AuthenticateController {
 	}
 
 	private String processViolations(List<String> violations, String mobileNumber) {
-		System.out.println("Just added something");
+		
 		if(!violations.isEmpty() ) {
 			
 			
@@ -106,7 +106,7 @@ public class AuthenticateController {
 			}
 			
 			if(violations.size() != 0 &&  mobileNumber.trim().length() != 0) {
-				System.out.println("provided mobile number "+mobileNumber);
+				
 			
 				return "Please check your provided mobile number";
 				
@@ -187,7 +187,7 @@ public class AuthenticateController {
 	
 	@PostMapping("/admins/reg")
 	public ResponseEntity<ApiResponseObject<String>> registerSchoolAdmin(@RequestBody AdminRegistrationRequest request) {
-		System.out.println("admin controller");
+	
 	
 		try {
 			
@@ -237,7 +237,7 @@ public class AuthenticateController {
 			return ResponseEntity.ok().body(new ApiResponseObject<>("Congrats "+request.firstName()+" "+request.lastName(), null, true));
 		} catch (Exception e) {
 			System.out.println(e);
-			return ResponseEntity.badRequest().body(new ApiResponseObject<>(e.getLocalizedMessage(), null, false));
+			return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getLocalizedMessage(), false));
 		}
 		
 		

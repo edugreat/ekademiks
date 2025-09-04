@@ -71,7 +71,7 @@ public class AppAuthService implements AppAuthInterface {
 	public String studentSignup(StudentRegistrationData registrationData) {
 		try {
 			
-			System.out.println("getting tough");
+			
 			
 		    processAgainstAccountDuplicates(registrationData.email(), registrationData.mobileNumber());
 		    
@@ -330,7 +330,7 @@ public class AppAuthService implements AppAuthInterface {
 	@Override
 	public <T extends AppUserDTO> T getCachedUser(String userId) {
 		
-		System.out.println("calling cache");
+		
 	   
 	
 		try {
@@ -393,6 +393,9 @@ public class AppAuthService implements AppAuthInterface {
 		try {
 			
 		processAgainstAccountDuplicates(request.email(), request.mobileNumber());
+		if(!request.password().equals(request.passwordRepeat())) {
+			throw new IllegalArgumentException("Password Mismatch");
+		}
 		
 	
 				
@@ -429,7 +432,7 @@ public class AppAuthService implements AppAuthInterface {
 	
 	
 	private  void processAgainstAccountDuplicates(String email, String mobileNumber){
-		System.out.println("processing");		
+				
 		if(studentDao.existsByEmail(email) || instructorDao.existsByEmail(email) || adminsDao.existsByEmail(email)) {
 			throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
 		}

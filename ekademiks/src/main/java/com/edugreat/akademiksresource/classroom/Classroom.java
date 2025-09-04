@@ -38,8 +38,9 @@ import lombok.Setter;
 @Entity
 @Table(name = "classroom",
 indexes = {
-	    @Index(columnList = "level_id, academicYear, section", unique = true),
-	    @Index(columnList = "instructor_id")
+	    @Index(columnList = "level_id, institution_id, academicYear, name"),
+	    @Index(columnList = "instructor_id"),
+	    @Index(columnList="institution_id, name, academicYear", unique = true)
 	}
 		)
 @EntityListeners(AuditingEntityListener.class)
@@ -50,7 +51,7 @@ public class Classroom {
 	@Setter(AccessLevel.NONE)
 	private Integer id;
 	
-	@Column(nullable = false, length = 100, unique = true)
+	@Column(nullable = false, length = 100)
 	private String name;
 	
 	@Column( length = 500)

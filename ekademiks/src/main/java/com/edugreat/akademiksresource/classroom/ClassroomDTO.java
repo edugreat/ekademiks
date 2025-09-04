@@ -45,6 +45,8 @@ public record ClassroomDTO(
     @NotNull(message = "level name is required")
     String levelName,
     
+    String categoryLabel,
+    
     @NotNull(message = "Primary instructor ID is required")
     Integer primaryInstructorId,
     
@@ -83,6 +85,7 @@ public record ClassroomDTO(
         private String section;
         private Integer levelId;
         private String levelName;
+        private String levelLabel;
         private Integer primaryInstructorId;
         private String primaryInstructorName;
         private Integer studentCount;
@@ -137,6 +140,13 @@ public record ClassroomDTO(
         	
         	return this;
         }
+        
+        public Builder categoryLabel(String label) {
+        	this.levelLabel = label;
+        	
+        	return this;
+        	
+        }
 
         public Builder primaryInstructorId(Integer primaryInstructorId) {
             this.primaryInstructorId = primaryInstructorId;
@@ -180,6 +190,7 @@ public record ClassroomDTO(
 				section,
 				levelId,
 				levelName,
+				levelLabel,
 				primaryInstructorId,
 				primaryInstructorName,
 				studentCount,

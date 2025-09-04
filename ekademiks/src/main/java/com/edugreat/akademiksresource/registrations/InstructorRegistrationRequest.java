@@ -25,6 +25,11 @@ public record InstructorRegistrationRequest(
 		    @NotBlank(message = "Password required")
 		    @NotNull(message = "Password is missing")
 		    String password,
+		    
+		    @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$")
+		    @NotBlank(message = "Password required")
+		    @NotNull(message = "Password is missing")
+		    String passwordRepeat,
 
 		    @Pattern(
 		    	    regexp = "^(\\+234|0)[7-9][0-1]\\d{8}$",
