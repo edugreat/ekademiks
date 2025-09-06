@@ -142,8 +142,8 @@ public interface StudentDao extends JpaRepository<Student, Integer> {
 	@Query("SELECT s FROM Student s JOIN s.instructors i WHERE i.id =:instr")
 	Page<Student> findDistinctByInstructorsId(@Param("instr")Integer instr, Pageable pageable);
 	
-	@RestResource(exported = false)
-	List<Student> findByClassroomId(Integer classroomId);
+//	@RestResource(exported = false)
+//	List<Student> findByClassroomId(Integer classroomId);
 	
 	
 

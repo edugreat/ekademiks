@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.edugreat.akademiksresource.model.Institution;
 import com.edugreat.akademiksresource.model.Student;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -80,6 +81,7 @@ public class StudentClassroom {
         this.classroom = classroom;
         this.institution = classroom.getInstitution();
         this.enrolledBy = enrolledBy;
+        classroom.getStudentEnrollments().add(this);
     }
 
    

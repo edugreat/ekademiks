@@ -64,9 +64,7 @@ public class Student extends AppUser {
 	//@JsonIgnore
 	private Set<Instructor> instructors = new HashSet<>();
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "classroom_id", nullable = true)
-	private Classroom classroom;
+	
 	
 	 @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
 	    @JsonIgnore
@@ -290,15 +288,7 @@ public class Student extends AppUser {
 		return instructors;
 	}
 	
-	public void setClassroom(Classroom classroom) {
-		
-		this.classroom = classroom;
-	}
-	
-	public Classroom getClassroom() {
-		
-		return classroom;
-	}
+
 
 }
 

@@ -19,7 +19,9 @@ import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetai
 import com.edugreat.akademiksresource.classroom.details.InstructorBasicDetails;
 import com.edugreat.akademiksresource.classroom.details.StudentBasicDetails;
 import com.edugreat.akademiksresource.classroom.service.ClassroomInterface;
+import com.edugreat.akademiksresource.dto.ClassroomPrimaryInstructorUpdateDTO;
 import com.edugreat.akademiksresource.util.ApiResponseObject;
+import com.edugreat.akademiksresource.util.EnrollmentResponse;
 import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
 import com.edugreat.akademiksresource.util.ValidatorService;
 
@@ -74,7 +76,7 @@ public class ClassroomController {
 	}
 	
 	@PostMapping("/enroll")
-	public ResponseEntity<ApiResponseObject<String>> postMethodName
+	public ResponseEntity<ApiResponseObject<EnrollmentResponse>> enrollStudents
 	(@RequestBody EnrollmentRequest enrollmentReq, @RequestParam String role) {
 		
 		try {
@@ -89,15 +91,16 @@ public class ClassroomController {
 						             .body(new ApiResponseObject<>(null, errors, false));
 			}
 			
-			_interface.enrollStudents(enrollmentReq, role);
 			
-			final String successMessage = enrollmentReq.studentIds().size()+" students successfully enrolled";
+			final EnrollmentResponse enrollmentResponse = _interface.enrollStudents(enrollmentReq, role);
 			
-			return ResponseEntity.ok(new ApiResponseObject<>(successMessage, null, true));
+			
+			
+			return ResponseEntity.ok(new ApiResponseObject<>(enrollmentResponse, null, true));
 			
 		} catch (Exception e) {
 			
-			System.out.println("enrollment error "+e);
+			System.out.println(e);
 			
 			return ResponseEntity.badRequest()
 					.body(new ApiResponseObject<>(null, e.getMessage(), false));
@@ -411,14 +414,16 @@ public class ClassroomController {
 		
 	}
 	
-	@PutMapping("/{classroomId}/{instructorId}")
-	public ResponseEntity<ApiResponseObject<String>> updatePrimaryInstructor(@PathVariable Integer classroomId, @PathVariable Integer instructorId) {
+	@PutMapping("/instructor")
+	public ResponseEntity<ApiResponseObject<Integer>> updatePrimaryInstructor(@RequestBody ClassroomPrimaryInstructorUpdateDTO dto,
+			@RequestParam Integer adminId) {
+		
 		
 		try {
 			
-			_interface.updatePrimaryInstructor(instructorId, classroomId);
+			_interface.updatePrimaryInstructor(dto, adminId);
 			
-			return ResponseEntity.ok(new ApiResponseObject<>("Successful!", null, true));
+			return ResponseEntity.ok(new ApiResponseObject<>(dto.instructorId(), null, true));
 		} catch (Exception e) {
 			
 			System.out.println(e);

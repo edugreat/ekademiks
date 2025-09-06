@@ -109,18 +109,23 @@ public class Classroom {
 	
 	}
 	
-//	public void addStudent(Student student,String enrolledBy) {
-//		if (student != null) {
-//			
-//			System.out.println("about to enroll");			
-//			StudentClassroom enrollment = new StudentClassroom(student, this, enrolledBy);
-//		
-//			studentEnrollments.add(enrollment);
-//			
-//			
-//			student.getClassroomEnrollments().add(enrollment);
-//		}
-//	}
+	public StudentClassroom addStudent(Student student,String enrolledBy) {
+		if (student != null) {
+			
+			System.out.println("about to enroll");
+			
+			StudentClassroom enrollment = new StudentClassroom(student, this, enrolledBy);
+		
+			studentEnrollments.add(enrollment);
+			
+			
+			student.getClassroomEnrollments().add(enrollment);
+			
+			return enrollment;
+		}
+		
+		return null;
+	}
 	
 	public void removeStudent(Student student) {
 		if (student != null) {
@@ -153,7 +158,7 @@ public class Classroom {
 	currentEnrollment.setCompletionDate(LocalDateTime.now());
 	
 	currentEnrollment.setCompletedBy(enrolledBy);
-	//targetClassroom.addStudent(student, enrolledBy);
+	targetClassroom.addStudent(student, enrolledBy);
 	
 	}
 	

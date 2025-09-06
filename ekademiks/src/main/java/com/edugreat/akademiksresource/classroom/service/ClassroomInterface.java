@@ -1,8 +1,6 @@
 package com.edugreat.akademiksresource.classroom.service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.springframework.data.domain.Page;
 
@@ -13,6 +11,8 @@ import com.edugreat.akademiksresource.classroom.details.ClassroomSpecificDetails
 import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetails;
 import com.edugreat.akademiksresource.classroom.details.InstructorBasicDetails;
 import com.edugreat.akademiksresource.classroom.details.StudentBasicDetails;
+import com.edugreat.akademiksresource.dto.ClassroomPrimaryInstructorUpdateDTO;
+import com.edugreat.akademiksresource.util.EnrollmentResponse;
 import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
 
 public interface ClassroomInterface {
@@ -27,8 +27,7 @@ public interface ClassroomInterface {
 	
 	Page<ClassroomDTO> getManagedClassroomsByLevelAndInstitution(Integer userId, String userRole, Integer institutionId, Integer categoryId, int page, int pageSize);
 
-//	the returned map indicates success or failure through it key and a set of students whose enrollment succeeded or failed
-	Map<String, Set<String>> enrollStudents(EnrollmentRequest enrollmentReq, String role);
+	EnrollmentResponse enrollStudents(EnrollmentRequest enrollmentReq, String role);
 	
 	ClassroomFullDetails adminClassroomDetails(Integer classroomId, Integer userId, Integer institutionId);
 
@@ -45,5 +44,7 @@ public interface ClassroomInterface {
 	List<StudentBasicDetails> getEnrolledStudents(Integer classroomId, Integer institutionId);
 	List<InstructorBasicDetails> getInstructorsInInstitution(Integer adminId, Integer institutionId);
 	void assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId);
-	void updatePrimaryInstructor(Integer instructorId, Integer classroomId);
+	public void updatePrimaryInstructor(ClassroomPrimaryInstructorUpdateDTO dto, Integer adminId);
+	
+	
 }
