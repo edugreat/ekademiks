@@ -15,13 +15,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table
+@Table(name = "subject",
+
+ indexes = {
+		@Index(columnList = "subjectName, level_id, institutionId", unique = true)
+ }
+		)
 public class Subject {
 
 	@Id
@@ -35,6 +41,9 @@ public class Subject {
 	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "level_id", nullable = false)
 	private Level level;
+	
+	@Column(nullable = false)
+	private Integer institutionId;
 
 	@OneToMany(mappedBy = "subject", cascade = CascadeType.ALL)
 	@JsonIgnore
@@ -52,6 +61,15 @@ public class Subject {
 		this.subjectName = subjectName;
 		this.level = level;
 	}
+	
+	
+
+	public Subject(String subjectName, Level level, Integer institutionId) {
+		super();
+		this.subjectName = subjectName;
+		this.level = level;
+		this.institutionId = institutionId;
+	}
 
 	public Integer getId() {
 		return id;
@@ -63,6 +81,16 @@ public class Subject {
 
 	public String getSubjectName() {
 		return subjectName;
+	}
+	
+	
+
+	public Integer getInstitutionId() {
+		return institutionId;
+	}
+
+	public void setInstitutionId(Integer institutionId) {
+		this.institutionId = institutionId;
 	}
 
 	public void setSubjectName(String subjectName) {

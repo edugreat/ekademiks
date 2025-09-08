@@ -34,7 +34,7 @@ public interface AdminInterface {
 
 	public void deleteUser(String email);
 
-	 void setSubjects(List<SubjectDTO> dtos);
+	 void setSubjects(List<SubjectDTO> dtos, Integer institutionId);
 
 	// sets new test and return its id
 	 Integer uploadAssessment(TestDTO testDTO);

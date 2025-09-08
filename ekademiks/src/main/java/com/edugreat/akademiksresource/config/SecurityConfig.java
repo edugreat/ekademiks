@@ -23,7 +23,7 @@ import com.edugreat.akademiksresource.filter.JwtAuthtFilter;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_API = { 
-        "/auth/**", "/students/**", "/tests/**", "/public/**",
+        "/auth/**", "/students/**", "/tests/**", "/public/**","/subjects/by/**",
         "/instructors/signup/**", "/learning/**", "/allow/**",
         "/swagger-ui/**", "/documentation.html", "/v3/api-docs/**",
         "/api-docs/**", "/webjars/**", "/swagger-resources/**" 

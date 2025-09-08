@@ -4,12 +4,13 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.model.Subject;
+
+import io.lettuce.core.dynamic.annotation.Param;
 
 @Repository
 //@RepositoryRestResource(exported = false)
@@ -32,6 +33,9 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 
 	@Query("SELECT s.subjectName FROM Subject s join s.level l ON l.category =:category")
 	public List<String> findSubjectNamesByCategory(Category category);
+	
+	@RestResource(exported = false)
+	public List<Subject> findByLevelIdAndInstitutionId(@Param("levelId") Integer levelId, @Param("inst") Integer inst);
 
 
 

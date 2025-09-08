@@ -177,7 +177,7 @@ public class AdminService implements AdminInterface {
 	@Transactional
 	@Caching(evict = { @CacheEvict(value = RedisValues.SUBJECT_NAMES, allEntries = true),
 			@CacheEvict(value = RedisValues.TOPICS_AND_DURATIONS, allEntries = true) })
-	public void setSubjects(List<SubjectDTO> subjectDTOs) {
+	public void setSubjects(List<SubjectDTO> subjectDTOs, Integer institutionid) {
 
 		List<Subject> subjects = new ArrayList<>();
 		// get the academic level for the subject, check if any of the subjects already
@@ -209,7 +209,7 @@ public class AdminService implements AdminInterface {
 
 			final Level level = levelDao.findByCategory(category);
 
-			Subject subject = new Subject(dto.getSubjectName(), level);
+			Subject subject = new Subject(dto.getSubjectName(), level, institutionid);
 
 			level.addSubject(subject);
 			subjects.add(subject);
