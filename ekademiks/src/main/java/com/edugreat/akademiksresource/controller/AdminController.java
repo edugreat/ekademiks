@@ -146,7 +146,7 @@ public class AdminController {
             @Parameter(description = "List of subject DTOs to create", required = true)
             @RequestBody List<SubjectDTO> dtos, @RequestParam("institution")Integer institutionId) {
     	
-    
+    	System.out.println("Admin controller");    
        
     	List<String> violations = validatorService.validateObjectList(dtos);
     	
@@ -160,6 +160,7 @@ public class AdminController {
         	 return new ResponseEntity<>(HttpStatus.OK);
 		} catch (Exception e) {
 			
+			System.out.println(e);			
 			return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, e.getMessage(), false));
 		}
     }
