@@ -40,7 +40,7 @@ public class SubjectController {
 	private SubjectDTO mapToSubjectDTO(Subject subject){
 		
 		
-		return new SubjectDTO(subject.getId(), subject.getSubjectName(), subject.getLevel().getCategoryLabel());
+		return new SubjectDTO(subject.getId(), subject.getSubjectName(), subject.getLevel().getCategoryLabel(), subject.getInstitutionId());
 	}
 	
 

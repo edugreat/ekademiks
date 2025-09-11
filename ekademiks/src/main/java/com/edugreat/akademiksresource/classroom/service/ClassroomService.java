@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.classroom.ClassroomDTO;
 import com.edugreat.akademiksresource.classroom.ClassroomDao;
+import com.edugreat.akademiksresource.classroom.ClassroomSubject;
 import com.edugreat.akademiksresource.classroom.EnrollmentRequest;
 import com.edugreat.akademiksresource.classroom.StudentClassroom;
 import com.edugreat.akademiksresource.classroom.StudentClassroom.EnrollmentStatus;
@@ -30,6 +31,7 @@ import com.edugreat.akademiksresource.classroom.details.ClassroomSpecificDetails
 import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetails;
 import com.edugreat.akademiksresource.classroom.details.InstructorBasicDetails;
 import com.edugreat.akademiksresource.classroom.details.StudentBasicDetails;
+import com.edugreat.akademiksresource.classroom.details.SubjectBasicDetails;
 import com.edugreat.akademiksresource.config.RedisValues;
 import com.edugreat.akademiksresource.contract.AppAuthInterface;
 import com.edugreat.akademiksresource.dao.AdminsDao;
@@ -711,7 +713,7 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 		try {
 
 			Institution institution = institutionDao.findByIdAndCreatedBy(institutionId, adminId)
-					.orElseThrow(() -> new IllegalArgumentException("No record of institution was found"));
+					.orElseThrow(() -> new EntityNotFoundException("No record of institution was found"));
 
 			Set<Instructor> instructors = institution.getInstructors();
 
@@ -725,23 +727,30 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 
 	@Override
 	@Transactional
-	public void assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId) {
+	public List<SubjectBasicDetails> assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId,
+			Integer adminId, Integer institutionId) {
+		
+		
 
 		try {
+			
+			if(institutionDao.findByIdAndCreatedBy(institutionId, adminId).isEmpty()) {
+				throw new EntityNotFoundException("You are not allowed to modify the classroom");
+			}
 
 			Classroom classroom = classroomDao.findById(classroomId)
-					.orElseThrow(() -> new IllegalArgumentException("Classroom does not exist"));
+					.orElseThrow(() -> new EntityNotFoundException("Classroom does not exist"));
 			List<Integer> subjectIds = subjectAssignments.stream().map(SubjectAssignmentRequest::subjectId).toList();
-			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::InstructorId)
-					.toList();
+			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::InstructorId).toList();
 
-			Map<Integer, Subject> subjects = subjectDao.findAllById(instructorIds).stream()
+			Map<Integer, Subject> subjects = subjectDao.findAllById(subjectIds).stream()
 					.collect(Collectors.toMap(Subject::getId, s -> s));
+			
 			Map<Integer, Instructor> instructors = instructorDao.findAllById(instructorIds).stream()
 					.collect(Collectors.toMap(Instructor::getId, i -> i));
 
 			if (subjects.isEmpty() || instructors.isEmpty())
-				throw new IllegalArgumentException("Failed to locate classrooms and or instructors");
+				throw new EntityNotFoundException("Failed to locate classrooms and or instructors");
 
 			for (int i = 0; i < subjectIds.size(); i++) {
 
@@ -750,12 +759,29 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 				classroom.assignSubject(subject, instructor);
 
 			}
+			
+			classroomDao.flush();
+			
+			
+			
 
 		} catch (Exception e) {
 
 			throw new RuntimeException(e.getLocalizedMessage());
 		}
+		
 
+		return classroomDao.findById(classroomId)
+				.orElseThrow(() -> new EntityNotFoundException("Error fetching updated classroom"))
+				.getClassroomSubjects()
+				.stream()
+				.map(this::mapToSubjectBasicDetails)
+				.collect(Collectors.toList());
+	}
+	
+	private SubjectBasicDetails mapToSubjectBasicDetails(ClassroomSubject clzz) {
+		
+		return new SubjectBasicDetails(clzz);
 	}
 	
 
@@ -855,5 +881,10 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 		}
 
 	}
+
+
+	
+	
+	
 
 }

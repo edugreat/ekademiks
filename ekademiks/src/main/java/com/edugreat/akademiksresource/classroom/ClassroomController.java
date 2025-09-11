@@ -17,8 +17,10 @@ import com.edugreat.akademiksresource.classroom.details.ClassroomSpecificDetails
 import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetails;
 import com.edugreat.akademiksresource.classroom.details.InstructorBasicDetails;
 import com.edugreat.akademiksresource.classroom.details.StudentBasicDetails;
+import com.edugreat.akademiksresource.classroom.details.SubjectBasicDetails;
 import com.edugreat.akademiksresource.classroom.service.ClassroomInterface;
 import com.edugreat.akademiksresource.dto.ClassroomPrimaryInstructorUpdateDTO;
+
 import com.edugreat.akademiksresource.util.ApiResponseObject;
 import com.edugreat.akademiksresource.util.EnrollmentResponse;
 import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
@@ -385,8 +387,9 @@ public class ClassroomController {
 		}
 	}
 	
-	@PostMapping("/assign")
-	public ResponseEntity<ApiResponseObject<String>> assignSubjects(@RequestBody List<SubjectAssignmentRequest> requests ,@RequestParam Integer classroom) {
+	@PostMapping("/assign/subjects")
+	public ResponseEntity<ApiResponseObject<List<SubjectBasicDetails>>> assignSubjects(@RequestBody List<SubjectAssignmentRequest> requests , 
+			@RequestParam Integer adminId, @RequestParam Integer classroomId, @RequestParam Integer institutionId) {
 		try {
 
 			List<String> violations = validatorService.validateObjectList(requests);
@@ -397,10 +400,10 @@ public class ClassroomController {
 						.body(new ApiResponseObject<>(null, String.join(",", violations), false));
 			}
 			
-			_interface.assignSubjectInstructor(requests, classroom);
+		final List<SubjectBasicDetails> dtos = 	_interface.assignSubjectInstructor(requests, adminId, classroomId, institutionId);
 			
 			
-			return ResponseEntity.ok(new ApiResponseObject<>("Sucessful", null, true));
+			return ResponseEntity.ok(new ApiResponseObject<>(dtos, null, true));
 		} catch (Exception e) {
 			
 			System.out.println(e);
@@ -433,6 +436,9 @@ public class ClassroomController {
 		
 		
 	}
+	
+
+	
 	
 	
 	

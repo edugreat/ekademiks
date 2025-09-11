@@ -45,6 +45,9 @@ public interface InstitutionDao extends JpaRepository<Institution, Integer> {
 	  @RestResource(exported = false)
 	  Optional<Institution> findByIdAndCreatedBy(@Param("id")Integer id, @Param("createdBy")Integer createdBy);
 	  
+	  @RestResource(exported = false)
+	  List<Institution> findByCreatedBy(Integer adminId);
+	  
 	  
 
 }

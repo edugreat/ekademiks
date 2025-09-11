@@ -11,7 +11,9 @@ import com.edugreat.akademiksresource.classroom.details.ClassroomSpecificDetails
 import com.edugreat.akademiksresource.classroom.details.ClassroomSummarizedDetails;
 import com.edugreat.akademiksresource.classroom.details.InstructorBasicDetails;
 import com.edugreat.akademiksresource.classroom.details.StudentBasicDetails;
+import com.edugreat.akademiksresource.classroom.details.SubjectBasicDetails;
 import com.edugreat.akademiksresource.dto.ClassroomPrimaryInstructorUpdateDTO;
+
 import com.edugreat.akademiksresource.util.EnrollmentResponse;
 import com.edugreat.akademiksresource.util.SubjectAssignmentRequest;
 
@@ -43,7 +45,8 @@ public interface ClassroomInterface {
 	ClassroomSpecificDetails searchSubjectInstructorClassroom(Integer userId, Integer institutionId, String searchQuery);
 	List<StudentBasicDetails> getEnrolledStudents(Integer classroomId, Integer institutionId);
 	List<InstructorBasicDetails> getInstructorsInInstitution(Integer adminId, Integer institutionId);
-	void assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId);
+	List<SubjectBasicDetails> assignSubjectInstructor(List<SubjectAssignmentRequest> subjectAssignments, Integer classroomId, 
+			Integer adminId, Integer institutionId);
 	public void updatePrimaryInstructor(ClassroomPrimaryInstructorUpdateDTO dto, Integer adminId);
 	
 	

@@ -1,6 +1,7 @@
 package com.edugreat.akademiksresource.dao;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -36,6 +37,10 @@ public interface SubjectDao extends JpaRepository<Subject, Integer> {
 	
 	@RestResource(exported = false)
 	public List<Subject> findByLevelIdAndInstitutionId(@Param("levelId") Integer levelId, @Param("inst") Integer inst);
+
+	@RestResource(exported = false)
+	@Query("SELECT s FROM Subject s WHERE s.institutionId IN :institutionIds AND s.level.id =:categoryId")
+	public List<Subject> findByInstitutionIds(Set<Integer> institutionIds, Integer categoryId);
 
 
 

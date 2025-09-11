@@ -22,5 +22,9 @@ public class SubjectDTO {
 	@NotEmpty(message = "field level must be provided")
 	@NotNull(message = "provide category/level for the subject")
 	private String category;
+	
+	
+//	default value of zero
+	private Integer institutionId = 0;
 
 }

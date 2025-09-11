@@ -142,7 +142,7 @@ public class AdminController {
         @ApiResponse(responseCode = "400", description = "Invalid subject data format"),
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid credentials")
     })
-    public ResponseEntity<ApiResponseObject<String>> setSubject(
+    public ResponseEntity<ApiResponseObject<Integer>> setSubject(
             @Parameter(description = "List of subject DTOs to create", required = true)
             @RequestBody List<SubjectDTO> dtos, @RequestParam("institution")Integer institutionId) {
     	
@@ -152,12 +152,13 @@ public class AdminController {
     	
     	if(!violations.isEmpty()) {
     		
-    		return ResponseEntity.ok(new ApiResponseObject<>("Success", null, false));
+    		
+    		return ResponseEntity.badRequest().body(new ApiResponseObject<>(null, String.join(",", violations), false)) ;  		
     	}
        
         try {
         	 service.setSubjects(dtos, institutionId);
-        	 return new ResponseEntity<>(HttpStatus.OK);
+        	 return ResponseEntity.ok().body(new ApiResponseObject<>(dtos.size(), null, true));
 		} catch (Exception e) {
 			
 			System.out.println(e);			

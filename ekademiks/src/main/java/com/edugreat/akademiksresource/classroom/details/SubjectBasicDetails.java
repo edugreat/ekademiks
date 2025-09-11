@@ -10,7 +10,7 @@ public record SubjectBasicDetails(
 		
 		) {
 
-	SubjectBasicDetails(ClassroomSubject cs){
+	public SubjectBasicDetails(ClassroomSubject cs){
 		
 		this(cs.getId().getSubjectId(), cs.getSubject().getSubjectName(), cs.getInstructor() !=null ? new InstructorBasicDetails(cs.getInstructor()) : null);
 	}
