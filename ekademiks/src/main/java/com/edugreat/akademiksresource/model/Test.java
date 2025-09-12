@@ -1,11 +1,16 @@
 package com.edugreat.akademiksresource.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.instructor.Instructor;
@@ -16,6 +21,7 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,6 +33,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "test")
+@EntityListeners(AuditingEntityListener.class)
 public class Test {
 
 	@Id
@@ -67,6 +74,17 @@ public class Test {
 	@ManyToOne
 	@JoinColumn(name = "classroom_id")
 	private Classroom classroom;
+	
+	@Column(nullable = false, updatable = false)
+	private LocalDateTime creationDate = LocalDateTime.now();
+	
+	@LastModifiedDate
+	@Column
+	private LocalDateTime updatedOn;
+	
+	@LastModifiedBy
+	@Column
+	private String modifiedBy;
 
 	public Subject getSubject() {
 		return subject;
@@ -74,6 +92,20 @@ public class Test {
 
 	public void setSubject(Subject subject) {
 		this.subject = subject;
+	}
+	
+	
+
+	public Classroom getClassroom() {
+		return classroom;
+	}
+
+	public LocalDateTime getUpdatedOn() {
+		return updatedOn;
+	}
+
+	public String getModifiedBy() {
+		return modifiedBy;
 	}
 
 	public Test() {
@@ -90,6 +122,12 @@ public class Test {
 		this.duration = duration;
 		this.instructions = instructions;
 
+	}
+	
+	
+
+	public LocalDateTime getCreationDate() {
+		return creationDate;
 	}
 
 	public String getTestName() {
@@ -187,27 +225,8 @@ public class Test {
 			this.studentTests.add(studentTest);
 		}
 	}
-
-	@Override
-	public int hashCode() {
-
-		return Objects.hash(testName, subject.getSubjectName());
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-
-		if (obj == null || getClass() != obj.getClass())
-			return false;
-
-		Test that = (Test) obj;
-
-		return (this.getTestName() == that.getTestName() && this.getSubject() == that.getSubject());
-	}
-
-	public void setClassroom(Classroom classroom) {
+	
+        public void setClassroom(Classroom classroom) {
 		
 		if (classroom != null) {
 			this.classroom = classroom;
@@ -216,5 +235,29 @@ public class Test {
 			this.classroom = null;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+
+		return Objects.hash(testName.toLowerCase(), creationDate, 
+				classroom.getId(), modifiedBy);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+
+		Test that = (Test) obj;
+
+
+		
+		return Objects.equals(testName.toLowerCase(), that.testName.toLowerCase())
+				&& Objects.equals(creationDate, that.creationDate)
+				&& Objects.equals(modifiedBy, that.modifiedBy)
+				&& Objects.equals(classroom.getId(), that.getClassroom().getId());
+	}
+
+	
 
 }

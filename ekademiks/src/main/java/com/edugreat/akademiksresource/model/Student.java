@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -287,8 +288,25 @@ public class Student extends AppUser {
 		
 		return instructors;
 	}
-	
 
+	@Override
+	public boolean equals(Object o) {
+		
+		if(this == o)return true;
+		if(!(o instanceof Student)) return false;
+		Student that = (Student)o;
+		
+		return Objects.equals(this.getEmail().toLowerCase(), that.getEmail().toLowerCase());
+				
+	}
+
+	@Override
+	public int hashCode() {
+		
+		return Objects.hash(this.getEmail().toLowerCase());
+	}
+	
+    
 
 }
 

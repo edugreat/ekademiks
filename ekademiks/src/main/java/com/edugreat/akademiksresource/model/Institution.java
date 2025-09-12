@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,6 +113,26 @@ public Institution(String name, String state, String localGovt, Integer createdB
 	        this.instructors.remove(instructor);
 	        instructor.getInstitutions().remove(this);
 	    }
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		
+		Institution other = (Institution) obj;
+		return Objects.equals(localGovt.toLowerCase(), other.localGovt.toLowerCase()) 
+				&& Objects.equals(name.toLowerCase(), other.name.toLowerCase())
+				&& Objects.equals(state.toLowerCase(), other.state.toLowerCase());
+	}
+
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(localGovt, name.toLowerCase(), state.toLowerCase());
 	}
 
 

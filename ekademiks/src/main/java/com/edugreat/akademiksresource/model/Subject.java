@@ -150,12 +150,13 @@ public class Subject {
 	    if (this == o) return true;
 	    if (!(o instanceof Subject)) return false;
 	    Subject that = (Subject) o;
-	    return id != null && id.equals(that.getId());
+	    return Objects.equals(subjectName, that.getSubjectName())
+	    		&& Objects.equals(level, that.getLevel());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		return Objects.hash(subjectName, level);
 	}
 
 }

@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.classroom;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -193,9 +194,7 @@ public class Classroom {
 	}
 	
 	public void assignSubject(Subject subject, Instructor instructor) {
-		System.out.println("subject ID "+subject.getId()+" level "+subject.getLevel().getId());
-		System.out.println("current level "+this.level.getId());
-		System.out.println("--------------------------------");
+		
 		
 	 if(!subject.getLevel().equals(this.level)) {
 			throw new IllegalArgumentException("Subject level does not match classroom level");
@@ -331,6 +330,23 @@ public class Classroom {
 				.filter(e -> e.getEnrollmentStatus() == EnrollmentStatus.ACTIVE)
 				.map(StudentClassroom::getStudent)
 				.collect(Collectors.toSet());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(academicYear, institution, name.toLowerCase());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		
+		Classroom other = (Classroom) obj;
+		return Objects.equals(academicYear, other.academicYear) && Objects.equals(institution, other.institution)
+				&& Objects.equals(name.toLowerCase(), other.name.toLowerCase());
 	}
 	
 	

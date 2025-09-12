@@ -82,7 +82,7 @@ public class Level {
 	@Override
 	public int hashCode() {
 		
-		return Objects.hash(id);
+		return Objects.hash(category.name().toLowerCase(), categoryLabel.toLowerCase());
 	}
 
 	@Override
@@ -90,7 +90,8 @@ public class Level {
 	    if (this == o) return true;
 	    if (!(o instanceof Level)) return false;
 	    Level that = (Level) o;
-	    return id != null && id.equals(that.getId());
+	    return Objects.equals(this.category.name().toLowerCase(), that.getCategory().name().toLowerCase())
+	    		&& Objects.equals(this.getCategoryLabel().toLowerCase(), that.getCategoryLabel().toLowerCase());
 	}
 
 	
