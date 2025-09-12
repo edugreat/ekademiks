@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.model;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -80,25 +81,17 @@ public class Level {
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		return super.hashCode();
+		
+		return Objects.hash(id);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Level that = (Level) obj;
-
-		return sameCategory(getCategory(), that.getCategory());
+	public boolean equals(Object o) {
+	    if (this == o) return true;
+	    if (!(o instanceof Level)) return false;
+	    Level that = (Level) o;
+	    return id != null && id.equals(that.getId());
 	}
 
-	private boolean sameCategory(Category cate1, Category cate2) {
-
-		return cate1.name().equals(cate2.name());
-	}
-
+	
 }

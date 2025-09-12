@@ -193,6 +193,9 @@ public class Classroom {
 	}
 	
 	public void assignSubject(Subject subject, Instructor instructor) {
+		System.out.println("subject ID "+subject.getId()+" level "+subject.getLevel().getId());
+		System.out.println("current level "+this.level.getId());
+		System.out.println("--------------------------------");
 		
 	 if(!subject.getLevel().equals(this.level)) {
 			throw new IllegalArgumentException("Subject level does not match classroom level");

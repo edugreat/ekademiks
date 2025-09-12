@@ -147,22 +147,15 @@ public class Subject {
 
 	@Override
 	public boolean equals(Object o) {
-
-		if (this == o)
-			return true;
-
-		if (this == null || getClass() != o.getClass())
-			return false;
-
-		Subject that = (Subject) o;
-
-		return subjectName.equals(that.getSubjectName()) && level.getCategory() == that.getLevel().getCategory();
-
+	    if (this == o) return true;
+	    if (!(o instanceof Subject)) return false;
+	    Subject that = (Subject) o;
+	    return id != null && id.equals(that.getId());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(subjectName.concat(level.getCategory().toString()));
+		return Objects.hash(id);
 	}
 
 }

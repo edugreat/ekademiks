@@ -7,7 +7,7 @@ public record SubjectAssignmentRequest(
 		@Positive(message = "Invalid subject identifier")
 		Integer subjectId,
 		@Positive(message = "Invalid instructor identifier")
-		Integer InstructorId
+		Integer instructorId
 		
 		) {
 

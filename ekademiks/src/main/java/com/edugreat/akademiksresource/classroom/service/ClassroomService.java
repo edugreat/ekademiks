@@ -735,13 +735,17 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 		try {
 			
 			if(institutionDao.findByIdAndCreatedBy(institutionId, adminId).isEmpty()) {
+				System.out.println("institution: "+institutionId+" admin "+adminId);
 				throw new EntityNotFoundException("You are not allowed to modify the classroom");
 			}
 
+		
 			Classroom classroom = classroomDao.findById(classroomId)
 					.orElseThrow(() -> new EntityNotFoundException("Classroom does not exist"));
 			List<Integer> subjectIds = subjectAssignments.stream().map(SubjectAssignmentRequest::subjectId).toList();
-			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::InstructorId).toList();
+			List<Integer> instructorIds = subjectAssignments.stream().map(SubjectAssignmentRequest::instructorId).toList();
+			System.out.println("subject IDs: "+subjectIds.toString());
+			System.out.println("instructor IDs: "+instructorIds.toString());
 
 			Map<Integer, Subject> subjects = subjectDao.findAllById(subjectIds).stream()
 					.collect(Collectors.toMap(Subject::getId, s -> s));
@@ -749,8 +753,10 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 			Map<Integer, Instructor> instructors = instructorDao.findAllById(instructorIds).stream()
 					.collect(Collectors.toMap(Instructor::getId, i -> i));
 
-			if (subjects.isEmpty() || instructors.isEmpty())
+			if (subjects.isEmpty() || instructors.isEmpty()) {
 				throw new EntityNotFoundException("Failed to locate classrooms and or instructors");
+			}
+				
 
 			for (int i = 0; i < subjectIds.size(); i++) {
 
