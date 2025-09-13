@@ -26,8 +26,8 @@ public class AcademicExceptionHandler {
 	
 	private final Logger LOGGER = LoggerFactory.getLogger(AcademicExceptionHandler.class);
 
-	@ExceptionHandler(AcademicException.class)
-	private ResponseEntity<String> handleAcademicException(AcademicException ex) {
+	@ExceptionHandler(AppCustomException.class)
+	private ResponseEntity<String> handleAcademicException(AppCustomException ex) {
 
 		String errorCode = ex.getErrorCode();
 		if (errorCode.equals(Exceptions.BLANK.name())) {

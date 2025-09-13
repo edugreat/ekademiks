@@ -147,4 +147,17 @@ public interface ClassroomDao extends JpaRepository<Classroom, Integer> {
         @Param("institutionId") Integer institutionId, 
         @Param("academicYear") Integer academicYear,
         @Param("name") String name);
+    
+    @RestResource(exported = false)
+    @Query("SELECT c FROM Classroom c JOIN c.institution i WHERE i.id =:institutionId "
+    		+ "And c.academicYear > :academicYear")
+    List<Classroom> getPromotionalClassrooms(Integer academicYear, Integer institutionId);
+    
+    @RestResource(exported = false)
+    List<Classroom> findByInstitutionCreatedByAndIdIn( @Param("createdBy")Integer createdBy, @Param("classroomIds")List<Integer> classroomIds);
+    
+    @RestResource(exported = false)
+    @Query("SELECT COUNT(c) > 0 FROM Classroom c JOIN c.primaryInstructor p ON c.id IN :classroomIds AND p.id =:instructorId")
+    boolean isPrimaryInstructor(@Param("classroomIds")List<Integer> classroomIds, @Param("instructorId") Integer instructorId);
+   
 }

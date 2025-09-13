@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.contract.TestInterface;
 import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.projection.TestWrapper;
 import com.edugreat.akademiksresource.util.AttemptUtil;
 import com.edugreat.akademiksresource.util.PerformanceObj;
@@ -61,7 +61,7 @@ public class TestController {
 
 		} catch (ConstraintViolationException e) {
 
-			throw new AcademicException("Invalid input detected", Exceptions.ILLEGAL_DATA_FIELD.name());
+			throw new AppCustomException("Invalid input detected", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
 	}
@@ -91,7 +91,7 @@ public class TestController {
 
 		final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
 		if (!(Pattern.matches(regex, category) && Pattern.matches(regex, category)))
-			throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
+			throw new AppCustomException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
 
 		
 		return ResponseEntity.ok(service.testTopicsAndDurations(subject, category, _studentId));
@@ -111,7 +111,7 @@ public class TestController {
 		
 		final String regex = "^[a-zA-Z]+(?: [a-zA-Z]+)*$";
 		if (!(Pattern.matches(regex, category) && Pattern.matches(regex, category)))
-			throw new AcademicException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
+			throw new AppCustomException("Illegal inputs", Exceptions.BAD_REQUEST.toString());
 
 		return ResponseEntity.ok(service.takeTest(topic, category));
 

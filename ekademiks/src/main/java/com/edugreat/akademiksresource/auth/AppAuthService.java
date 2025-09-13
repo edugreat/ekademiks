@@ -24,7 +24,7 @@ import com.edugreat.akademiksresource.dto.AdminsDTO;
 import com.edugreat.akademiksresource.dto.AppUserDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Roles;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDTO;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
@@ -434,12 +434,12 @@ public class AppAuthService implements AppAuthInterface {
 	private  void processAgainstAccountDuplicates(String email, String mobileNumber){
 				
 		if(studentDao.existsByEmail(email) || instructorDao.existsByEmail(email) || adminsDao.existsByEmail(email)) {
-			throw new AcademicException("Email already in use", HttpStatus.BAD_REQUEST.name());
+			throw new AppCustomException("Email already in use", HttpStatus.BAD_REQUEST.name());
 		}
 		
 		if((mobileNumber != null && !mobileNumber.trim().isEmpty()) &&  (studentDao.existsByMobile(mobileNumber) || instructorDao.existsByMobileNumber(mobileNumber) || adminsDao.existsByMobile(mobileNumber))) {
 			
-			throw new AcademicException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
+			throw new AppCustomException("Mobile number already in use", HttpStatus.BAD_REQUEST.name());
 		}
 		
 	

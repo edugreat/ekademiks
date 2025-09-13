@@ -1,11 +1,17 @@
 package com.edugreat.akademiksresource.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.edugreat.akademiksresource.classroom.Classroom;
 import com.edugreat.akademiksresource.instructor.Instructor;
@@ -16,6 +22,7 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,6 +34,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "test")
+@EntityListeners(AuditingEntityListener.class)
 public class Test {
 
 	@Id
@@ -49,6 +57,22 @@ public class Test {
 	
 	@Column
 	private long duration;
+	
+	@Column(nullable = true)
+	private LocalDateTime createdOn = LocalDateTime.now();
+	
+	@LastModifiedBy
+	@Column(nullable  = false)
+	private String modifiedBy;
+	
+	@Column
+	@LastModifiedDate
+	private LocalDateTime lastModified;
+	
+	@CreatedBy
+	@Column(nullable = false)
+	private String createdBy;
+	
 	
 //	institution that owns the Test assessment. By default, the value null showing it belongs to all institutions
 	@Column
@@ -141,6 +165,10 @@ public class Test {
 	
 	
 
+	public LocalDateTime getLastModified() {
+		return lastModified;
+	}
+
 	public Integer getOwningInstitution() {
 		return owningInstitution;
 	}
@@ -187,11 +215,25 @@ public class Test {
 			this.studentTests.add(studentTest);
 		}
 	}
+	
+	
+
+	public LocalDateTime getCreatedOn() {
+		return createdOn;
+	}
+
+	public String getModifiedBy() {
+		return modifiedBy;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
 
 	@Override
 	public int hashCode() {
 
-		return Objects.hash(testName, subject.getSubjectName());
+		return Objects.hash(testName, subject.getSubjectName(), createdOn, createdBy);
 	}
 
 	@Override
@@ -199,12 +241,13 @@ public class Test {
 		if (this == obj)
 			return true;
 
-		if (obj == null || getClass() != obj.getClass())
-			return false;
-
+		
 		Test that = (Test) obj;
-
-		return (this.getTestName() == that.getTestName() && this.getSubject() == that.getSubject());
+		
+		return Objects.equals(this.getTestName().toLowerCase(), getTestName().toLowerCase())
+				&& Objects.equals(createdOn, that.createdOn)
+				&& Objects.equals(createdBy, that.createdBy);
+				
 	}
 
 	public void setClassroom(Classroom classroom) {

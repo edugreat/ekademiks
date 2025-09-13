@@ -29,7 +29,7 @@ import com.edugreat.akademiksresource.dto.StudentRecord;
 import com.edugreat.akademiksresource.dto.SubjectDTO;
 import com.edugreat.akademiksresource.dto.TestDTO;
 import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.util.ApiResponseObject;
 import com.edugreat.akademiksresource.util.AssessmentTopic;
 import com.edugreat.akademiksresource.util.AssessmentTopicRequest;
@@ -78,7 +78,7 @@ public class AdminController {
         if (Pattern.matches(emailRegex, email))
             return ResponseEntity.ok(service.searchByEmail(email));
 
-        throw new AcademicException("Invalid email format", Exceptions.BAD_REQUEST.name());
+        throw new AppCustomException("Invalid email format", Exceptions.BAD_REQUEST.name());
     }
 
     @GetMapping("/students")
@@ -131,7 +131,7 @@ public class AdminController {
             service.deleteUser(email);
             return ResponseEntity.ok("Deleted");
         }
-        throw new AcademicException("Invalid email format", Exceptions.BAD_REQUEST.name());
+        throw new AppCustomException("Invalid email format", Exceptions.BAD_REQUEST.name());
     }
 
     @PostMapping("/subjects")

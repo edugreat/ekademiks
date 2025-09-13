@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.edugreat.akademiksresource.dao.AdminsDao;
 import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
 import com.edugreat.akademiksresource.model.AppUser;
 
@@ -41,13 +41,13 @@ public class AppUserDetailsService implements UserDetailsService {
 		final boolean isStudent = studentDao.existsByEmail(username);
 		if (isStudent)
 			return studentDao.findByEmail(username).orElseThrow(
-					() -> new AcademicException("Error authenticating user", Exceptions.STUDENT_NOT_FOUND.name()));
+					() -> new AppCustomException("Error authenticating user", Exceptions.STUDENT_NOT_FOUND.name()));
 
 		else if(adminsDao.existsByEmail(username))
 			return adminsDao.findByEmail(username)
-					.orElseThrow(() -> new AcademicException("Error authenticating admin", Exceptions.BAD_REQUEST.name()));
+					.orElseThrow(() -> new AppCustomException("Error authenticating admin", Exceptions.BAD_REQUEST.name()));
 		
-		return instructorDao.findByEmail(username).orElseThrow(() ->  new AcademicException("Error authenticating instructor", Exceptions.BAD_REQUEST.name()));
+		return instructorDao.findByEmail(username).orElseThrow(() ->  new AppCustomException("Error authenticating instructor", Exceptions.BAD_REQUEST.name()));
 
 	}
 

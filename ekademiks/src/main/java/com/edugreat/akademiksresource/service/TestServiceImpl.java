@@ -30,7 +30,7 @@ import com.edugreat.akademiksresource.dto.QuestionDTO;
 import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Student;
 import com.edugreat.akademiksresource.model.StudentTest;
@@ -76,7 +76,7 @@ public class TestServiceImpl implements TestInterface {
 
 		if (optional.isEmpty()) {
 
-			throw new AcademicException("Record not found for test id: " + id, Exceptions.RECORD_NOT_FOUND.name());
+			throw new AppCustomException("Record not found for test id: " + id, Exceptions.RECORD_NOT_FOUND.name());
 
 		}
 
@@ -203,7 +203,7 @@ public class TestServiceImpl implements TestInterface {
 		// TODO: Modify this declaration in the future to allow for non-registered
 		// students
 		else
-			throw new AcademicException("student and or test information not found",
+			throw new AppCustomException("student and or test information not found",
 					Exceptions.RECORD_NOT_FOUND.name());
 
 	}
@@ -354,7 +354,7 @@ public class TestServiceImpl implements TestInterface {
 			}
 
 		} catch (IllegalArgumentException e) {
-			throw new AcademicException("illegal options '" + res + "'", Exceptions.ILLEGAL_DATA_FIELD.name());
+			throw new AppCustomException("illegal options '" + res + "'", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
 	}

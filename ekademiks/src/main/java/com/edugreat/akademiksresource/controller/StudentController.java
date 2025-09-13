@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
 import com.edugreat.akademiksresource.service.StudentService;
@@ -37,7 +37,7 @@ public class StudentController {
 		Matcher m2 = pattern.matcher(tId);
 		if (!(m1.matches() && m2.matches())) {
 
-			throw new AcademicException("Invalid input '" + stId + "' or '" + tId + "'",
+			throw new AppCustomException("Invalid input '" + stId + "' or '" + tId + "'",
 					Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
@@ -56,7 +56,7 @@ public class StudentController {
 		// CHECK TO CONFIRM THE ARGUMENT IS A VALID INTEGER
 		Pattern p = Pattern.compile("^\\d+$");
 		if (!p.matcher(tId).matches()) {
-			throw new AcademicException("Invalid input " + tId, Exceptions.ILLEGAL_DATA_FIELD.name());
+			throw new AppCustomException("Invalid input " + tId, Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
 		Integer testId = Integer.parseInt(tId);

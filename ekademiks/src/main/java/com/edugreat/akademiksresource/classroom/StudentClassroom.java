@@ -68,6 +68,7 @@ public class StudentClassroom {
     @Column
     private LocalDateTime completionDate;
     
+//    email of the admin/instructor who carried out the operation
     @Column(length = 100)
     private String completedBy;
     

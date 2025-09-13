@@ -42,7 +42,7 @@ import com.edugreat.akademiksresource.dao.SubjectDao;
 import com.edugreat.akademiksresource.dto.ClassroomPrimaryInstructorUpdateDTO;
 import com.edugreat.akademiksresource.dto.StudentDTO;
 import com.edugreat.akademiksresource.enums.Roles;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
 import com.edugreat.akademiksresource.model.Admins;
@@ -163,7 +163,7 @@ public class ClassroomService implements ClassroomInterface {
 
 		if (!List.of("admin", "instructor").contains(userRole.toLowerCase())) {
 
-			throw new AcademicException("Login as admin or instructor", HttpStatus.NOT_ACCEPTABLE.name());
+			throw new AppCustomException("Login as admin or instructor", HttpStatus.NOT_ACCEPTABLE.name());
 		}
 
 	}
@@ -204,7 +204,7 @@ public class ClassroomService implements ClassroomInterface {
 		} catch (Exception e) {
 
 			
-			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
+			throw new AppCustomException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
 		
 		
@@ -286,7 +286,7 @@ public class ClassroomService implements ClassroomInterface {
 
 		} catch (Exception e) {
 
-			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
+			throw new AppCustomException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
 
 		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
@@ -325,7 +325,7 @@ public class ClassroomService implements ClassroomInterface {
 			}
 		} catch (Exception e) {
 
-			throw new AcademicException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
+			throw new AppCustomException("Error fetching data", HttpStatus.EXPECTATION_FAILED.name());
 		}
 
 		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
@@ -371,7 +371,7 @@ public class ClassroomService implements ClassroomInterface {
 
 		} catch (Exception e) {
 
-			throw new AcademicException(e.getMessage(), HttpStatus.EXPECTATION_FAILED.name());
+			throw new AppCustomException(e.getMessage(), HttpStatus.EXPECTATION_FAILED.name());
 		}
 
 		return classrooms.isEmpty() ? utilityService.emptyPage(page, pageSize)
@@ -398,7 +398,7 @@ public class ClassroomService implements ClassroomInterface {
 					.get(RedisValues.CURRENT_ROLE + "::" + enrollmentReq.enrollmentOfficer());
 
 			if (loggedInRole == null)
-				throw new AcademicException("Please login to perform this action", HttpStatus.BAD_REQUEST.name());
+				throw new AppCustomException("Please login to perform this action", HttpStatus.BAD_REQUEST.name());
 			
 			
 
@@ -410,7 +410,7 @@ public class ClassroomService implements ClassroomInterface {
 
 			if (!classroomDao.isFoundInTheInstitution(classroom.getId(), enrollmentReq.institutionId())) {
 
-				throw new AcademicException("Please choose a classroom that is part of the institution", HttpStatus.BAD_REQUEST.name());
+				throw new AppCustomException("Please choose a classroom that is part of the institution", HttpStatus.BAD_REQUEST.name());
 			}
 			
 			
@@ -429,10 +429,10 @@ public class ClassroomService implements ClassroomInterface {
 			}else if(loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
 				
 				Instructor instructor = instructorDao.findById(enrollmentReq.enrollmentOfficer())
-						                 .orElseThrow(() -> new AcademicException("Enrollment officer not found", HttpStatus.BAD_REQUEST.name()));
+						                 .orElseThrow(() -> new AppCustomException("Enrollment officer not found", HttpStatus.BAD_REQUEST.name()));
 				
 				if(!classroom.getPrimaryInstructor().getId().equals(instructor.getId())) {
-					throw new AcademicException("Only primary instructor can enroll students", HttpStatus.BAD_REQUEST.name());
+					throw new AppCustomException("Only primary instructor can enroll students", HttpStatus.BAD_REQUEST.name());
 				}
 				
 				synchronized (this) {
@@ -454,7 +454,7 @@ public class ClassroomService implements ClassroomInterface {
 		}
 		
 		
-		throw new AcademicException("Unknown error occured while enrolling students", HttpStatus.BAD_REQUEST.name());
+		throw new AppCustomException("Unknown error occured while enrolling students", HttpStatus.BAD_REQUEST.name());
 		
 
 	}
@@ -484,7 +484,7 @@ private void performEnrollment(EnrollmentRequest request,
         final boolean eligible = isStudentLegitableToEnrollByStatus(classroom.getLevel().getCategoryLabel(), student.getStatus());
         
         if(!eligible) {
-        	throw new AcademicException("Student "+student.getFirstName()+" "+student.getLastName()+" not eligible to enroll into the selected classroom", HttpStatus.BAD_REQUEST.name());
+        	throw new AppCustomException("Student "+student.getFirstName()+" "+student.getLastName()+" not eligible to enroll into the selected classroom", HttpStatus.BAD_REQUEST.name());
         }
         
        
@@ -554,7 +554,7 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 		break;
 
 	default:
-		throw new AcademicException("System detected critical error while enrolling students", HttpStatus.BAD_REQUEST.name());
+		throw new AppCustomException("System detected critical error while enrolling students", HttpStatus.BAD_REQUEST.name());
 	}
 	
 	
@@ -806,7 +806,7 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 		} catch (Exception e) {
 			
 			System.out.println(e);
-			throw new AcademicException("Unknow error processing your request", HttpStatus.BAD_REQUEST.name());
+			throw new AppCustomException("Unknow error processing your request", HttpStatus.BAD_REQUEST.name());
 		}
 		
 		
@@ -824,21 +824,21 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 				.get(RedisValues.CURRENT_ROLE + "::" + userId);
 
 		if (loggedInRole == null)
-			throw new AcademicException("Please login to perform this action", HttpStatus.BAD_REQUEST.name());
+			throw new AppCustomException("Please login to perform this action", HttpStatus.BAD_REQUEST.name());
 		
 		if(loggedInRole.equalsIgnoreCase(Roles.Admin.name())) {
 			
 			if(!institutionDao.isAdminOfInstitution(institutionId, userId))
-				throw new AcademicException("Request is not allowed", HttpStatus.BAD_REQUEST.name());
+				throw new AppCustomException("Request is not allowed", HttpStatus.BAD_REQUEST.name());
 			
 			
 		}else if(loggedInRole.equalsIgnoreCase(Roles.Instructor.name())) {
 			
 			if(!classroomDao.isPrimaryInstructor(userId)) {
-				throw new AcademicException("Request is not allowed", HttpStatus.BAD_REQUEST.name());
+				throw new AppCustomException("Request is not allowed", HttpStatus.BAD_REQUEST.name());
 				
 			}else if(!classroomDao.isSubjectInstructor(userId, institutionId, classroomId))
-				throw new AcademicException("Request is not allowed", HttpStatus.BAD_REQUEST.name());
+				throw new AppCustomException("Request is not allowed", HttpStatus.BAD_REQUEST.name());
 		}
 		
 		
@@ -850,7 +850,7 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 
 		if (!classroomDao.isFoundInTheInstitution(classroom.getId(), institutionId)) {
 
-			throw new AcademicException("Please choose a classroom that is part of the institution", HttpStatus.BAD_REQUEST.name());
+			throw new AppCustomException("Please choose a classroom that is part of the institution", HttpStatus.BAD_REQUEST.name());
 		}
 		
 		
@@ -865,7 +865,7 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 
 		try {
 			
-			if(! institutionDao.isAdminOfInstitution(dto.institutionId(), adminId)) throw new AcademicException("Please login as admin", HttpStatus.BAD_REQUEST.name());
+			if(! institutionDao.isAdminOfInstitution(dto.institutionId(), adminId)) throw new AppCustomException("Please login as admin", HttpStatus.BAD_REQUEST.name());
 
 			Instructor instructor = instructorDao.findById(dto.instructorId())
 					.orElseThrow(() -> new EntityNotFoundException("Instructor not found"));
@@ -875,7 +875,7 @@ private void updateEnrollmentResponse(EnrollmentResponse response, String status
 //			verify instructor is registered under same institution as the classroom
 			Institution institution = classroom.getInstitution();
 			if (!institution.getInstructors().contains(instructor)) {
-				throw new AcademicException("Instructor not registered under the intended institution", HttpStatus.BAD_REQUEST.name());
+				throw new AppCustomException("Instructor not registered under the intended institution", HttpStatus.BAD_REQUEST.name());
 			}
 
 			classroom.setPrimaryInstructor(instructor);

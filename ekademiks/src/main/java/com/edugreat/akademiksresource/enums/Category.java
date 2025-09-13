@@ -3,12 +3,13 @@ package com.edugreat.akademiksresource.enums;
 
 public enum Category {
     CRECHE("Creche"),
+    PRE_NURSERY("Pre Nursery"),
+    NURSERY("Nursery"),
     JUNIOR_PRIMARY("Junior Primary"),
     SENIOR_PRIMARY("Senior Primary"),
-    NURSERY("Nursery"),
-    PRE_NURSERY("Pre Nursery"),
-    SENIOR_SECONDARY("Senior Secondary"),
-    JUNIOR_SECONDARY("Junior Secondary");
+    JUNIOR_SECONDARY("Junior Secondary"),
+    SENIOR_SECONDARY("Senior Secondary");
+   
 
     private final String label;
 
@@ -28,5 +29,11 @@ public enum Category {
             }
         }
         throw new IllegalArgumentException("Unknown category label: " + label);
+    }
+    
+    public int getHierarchy() {
+    	
+    	return this.ordinal()+1;
+    	
     }
 }

@@ -53,7 +53,7 @@ import com.edugreat.akademiksresource.enums.Category;
 import com.edugreat.akademiksresource.enums.Exceptions;
 import com.edugreat.akademiksresource.enums.OptionLetter;
 import com.edugreat.akademiksresource.enums.Roles;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.instructor.Instructor;
 import com.edugreat.akademiksresource.instructor.InstructorDao;
 import com.edugreat.akademiksresource.model.Admins;
@@ -128,7 +128,7 @@ public class AdminService implements AdminInterface {
 			}
 		}
 
-		throw new AcademicException("User not found", Exceptions.RECORD_NOT_FOUND.name());
+		throw new AppCustomException("User not found", Exceptions.RECORD_NOT_FOUND.name());
 
 	}
 
@@ -192,12 +192,12 @@ public class AdminService implements AdminInterface {
 
 			if (level == null) {
 
-				throw new AcademicException("category '" + category + "' not found ",
+				throw new AppCustomException("category '" + category + "' not found ",
 						Exceptions.RECORD_NOT_FOUND.name());
 			}
 			// Check if the subject already exists for that particular level
 			if (subjectDao.subjectExists(dto.getSubjectName(), level.getId())) {
-				throw new AcademicException("subject, " + dto.getSubjectName() + ", exists for " + category.name(),
+				throw new AppCustomException("subject, " + dto.getSubjectName() + ", exists for " + category.name(),
 						Exceptions.BAD_REQUEST.name());
 			}
 
@@ -428,7 +428,7 @@ public class AdminService implements AdminInterface {
 			Test t = testDao.findByTestIdAndCategoryId(testDTO.getId(), categoryId);
 			if (t != null) {
 
-				throw new AcademicException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
+				throw new AppCustomException(t.getTestName() + " already exists", Exceptions.TEST_ALREADY_EXISTS.name());
 			}
 
 			// fetches from the database, subject to which the test is associated
@@ -505,7 +505,7 @@ public class AdminService implements AdminInterface {
 		if (subj != null)
 			return subj;
 
-		throw new AcademicException("subject, '" + subjectName + "' not found", Exceptions.RECORD_NOT_FOUND.name());
+		throw new AppCustomException("subject, '" + subjectName + "' not found", Exceptions.RECORD_NOT_FOUND.name());
 	}
 
 	// validates the question dto by validating each of the objections
@@ -547,7 +547,7 @@ public class AdminService implements AdminInterface {
 
 		} catch (IllegalArgumentException e) {
 			validOptions = null;// for garbage collection
-			throw new AcademicException("illegal option", Exceptions.ILLEGAL_DATA_FIELD.name());
+			throw new AppCustomException("illegal option", Exceptions.ILLEGAL_DATA_FIELD.name());
 		}
 
 		return validOptions;
@@ -562,7 +562,7 @@ public class AdminService implements AdminInterface {
 			return this.mapToAdminsDTO(adminsDao.findByEmail(username).get());
 
 		else
-			throw new AcademicException("user not found", Exceptions.RECORD_NOT_FOUND.name());
+			throw new AppCustomException("user not found", Exceptions.RECORD_NOT_FOUND.name());
 	}
 
 	private StudentDTO mapToStudentDTO(Student student) {
@@ -588,20 +588,20 @@ public List<LevelDTO> addLevels(List<LevelDTO> dtos, Integer userId, String user
 //    	authenticate request against the user
     	final String loggedInUserRole = appAuthInterface.extractUserRole(String.valueOf(userId));
     	if(!userRole.equals(loggedInUserRole)) {
-    		throw new AcademicException("You are not allowed for this action", HttpStatus.BAD_REQUEST.name());
+    		throw new AppCustomException("You are not allowed for this action", HttpStatus.BAD_REQUEST.name());
     	}
     	
     	if(loggedInUserRole.equals(Roles.Admin.name())) {
     		
     		if(!adminsDao.existsById(userId)) {
-    			throw new AcademicException("We could not verify your identity", HttpStatus.BAD_REQUEST.name());
+    			throw new AppCustomException("We could not verify your identity", HttpStatus.BAD_REQUEST.name());
     		}
     	} 
     	
     	if(loggedInUserRole.equals(Roles.Instructor.name())) {
     		
     		if(!instructorDao.existsById(userId)) {
-    			throw new AcademicException("We could not verify your identity", HttpStatus.BAD_REQUEST.name());
+    			throw new AppCustomException("We could not verify your identity", HttpStatus.BAD_REQUEST.name());
     		}
     	}
         // Validate that all supplied categories match the backend enum
@@ -618,7 +618,7 @@ public List<LevelDTO> addLevels(List<LevelDTO> dtos, Integer userId, String user
                     // Update the categoryLabel with the proper label
                     dto.setCategoryLabel(category.getLabel());
                 } catch (IllegalArgumentException e2) {
-                    throw new AcademicException("Invalid category: " + dto.getCategory() + " or label: " + dto.getCategoryLabel(), 
+                    throw new AppCustomException("Invalid category: " + dto.getCategory() + " or label: " + dto.getCategoryLabel(), 
                             Exceptions.BAD_REQUEST.name());
                 }
             }
@@ -628,7 +628,7 @@ public List<LevelDTO> addLevels(List<LevelDTO> dtos, Integer userId, String user
         dtos.forEach(dto -> {
             Category category = Category.valueOf(dto.getCategory());
             if (levelDao.existsByCategory(category)) {
-                throw new AcademicException("Record for level '" + dto.getCategory() + "' exists",
+                throw new AppCustomException("Record for level '" + dto.getCategory() + "' exists",
                         Exceptions.BAD_REQUEST.name());
             }
         });
@@ -646,7 +646,7 @@ public List<LevelDTO> addLevels(List<LevelDTO> dtos, Integer userId, String user
         }
 
     } catch (IllegalArgumentException e) {
-        throw new AcademicException(e.getMessage(), Exceptions.BAD_REQUEST.name());
+        throw new AppCustomException(e.getMessage(), Exceptions.BAD_REQUEST.name());
     }
     
     return levelDao.findAll().stream().map(this::convertToDTO).toList();

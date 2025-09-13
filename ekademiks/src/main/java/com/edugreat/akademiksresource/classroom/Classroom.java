@@ -2,6 +2,7 @@ package com.edugreat.akademiksresource.classroom;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -149,16 +150,17 @@ public class Classroom {
 	}
 	
 	
-	public void promoteStudent(Student student, Classroom targetClassroom, String enrolledBy) {
+	public void promoteStudent(Student student, Classroom targetClassroom, String enrollmentOfficerEmail) {
 		
 		StudentClassroom currentEnrollment = findActiveEnrollment(student)
-				                             .orElseThrow(() -> new IllegalArgumentException("Student not enrolled in this class"));
+				                             .orElseThrow(() -> new IllegalArgumentException(student.getFirstName()+" "+student.getLastName()+
+				                            		 "is not enrolled in this class"));
 	
 	currentEnrollment.setEnrollmentStatus(EnrollmentStatus.PROMOTED);
 	currentEnrollment.setCompletionDate(LocalDateTime.now());
 	
-	currentEnrollment.setCompletedBy(enrolledBy);
-	targetClassroom.addStudent(student, enrolledBy);
+	currentEnrollment.setCompletedBy(enrollmentOfficerEmail);
+	targetClassroom.addStudent(student, enrollmentOfficerEmail);
 	
 	}
 	
@@ -331,6 +333,23 @@ public class Classroom {
 				.filter(e -> e.getEnrollmentStatus() == EnrollmentStatus.ACTIVE)
 				.map(StudentClassroom::getStudent)
 				.collect(Collectors.toSet());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(institution.getId(), level.getId(), name.toLowerCase());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		
+		Classroom other = (Classroom) obj;
+		return Objects.equals(institution.getId(), other.institution.getId()) && Objects.equals(level.getId(), other.level.getId())
+				&& Objects.equals(name.toLowerCase(), other.name.toLowerCase());
 	}
 	
 	

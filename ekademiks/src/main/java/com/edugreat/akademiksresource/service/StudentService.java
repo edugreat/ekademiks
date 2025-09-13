@@ -12,7 +12,7 @@ import com.edugreat.akademiksresource.dao.StudentDao;
 import com.edugreat.akademiksresource.dao.StudentTestDao;
 import com.edugreat.akademiksresource.dao.TestDao;
 import com.edugreat.akademiksresource.enums.Exceptions;
-import com.edugreat.akademiksresource.exception.AcademicException;
+import com.edugreat.akademiksresource.exception.AppCustomException;
 import com.edugreat.akademiksresource.model.Question;
 import com.edugreat.akademiksresource.model.Test;
 import com.edugreat.akademiksresource.projection.ScoreAndDate;
@@ -40,7 +40,7 @@ public class StudentService implements StudentInterface {
 		}
 
 		// the test does not exist in the database
-		throw new AcademicException("Test not found", Exceptions.TEST_NOT_FOUND.name());
+		throw new AppCustomException("Test not found", Exceptions.TEST_NOT_FOUND.name());
 	}
 
 	@Override
