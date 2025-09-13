@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -58,22 +57,6 @@ public class Test {
 	@Column
 	private long duration;
 	
-	@Column(nullable = true)
-	private LocalDateTime createdOn = LocalDateTime.now();
-	
-	@LastModifiedBy
-	@Column(nullable  = false)
-	private String modifiedBy;
-	
-	@Column
-	@LastModifiedDate
-	private LocalDateTime lastModified;
-	
-	@CreatedBy
-	@Column(nullable = false)
-	private String createdBy;
-	
-	
 //	institution that owns the Test assessment. By default, the value null showing it belongs to all institutions
 	@Column
 	private Integer owningInstitution;
@@ -91,6 +74,17 @@ public class Test {
 	@ManyToOne
 	@JoinColumn(name = "classroom_id")
 	private Classroom classroom;
+	
+	@Column(nullable = false, updatable = false)
+	private LocalDateTime creationDate = LocalDateTime.now();
+	
+	@LastModifiedDate
+	@Column
+	private LocalDateTime updatedOn;
+	
+	@LastModifiedBy
+	@Column
+	private String modifiedBy;
 
 	public Subject getSubject() {
 		return subject;
@@ -98,6 +92,20 @@ public class Test {
 
 	public void setSubject(Subject subject) {
 		this.subject = subject;
+	}
+	
+	
+
+	public Classroom getClassroom() {
+		return classroom;
+	}
+
+	public LocalDateTime getUpdatedOn() {
+		return updatedOn;
+	}
+
+	public String getModifiedBy() {
+		return modifiedBy;
 	}
 
 	public Test() {
@@ -114,6 +122,12 @@ public class Test {
 		this.duration = duration;
 		this.instructions = instructions;
 
+	}
+	
+	
+
+	public LocalDateTime getCreationDate() {
+		return creationDate;
 	}
 
 	public String getTestName() {
@@ -165,10 +179,6 @@ public class Test {
 	
 	
 
-	public LocalDateTime getLastModified() {
-		return lastModified;
-	}
-
 	public Integer getOwningInstitution() {
 		return owningInstitution;
 	}
@@ -216,41 +226,7 @@ public class Test {
 		}
 	}
 	
-	
-
-	public LocalDateTime getCreatedOn() {
-		return createdOn;
-	}
-
-	public String getModifiedBy() {
-		return modifiedBy;
-	}
-
-	public String getCreatedBy() {
-		return createdBy;
-	}
-
-	@Override
-	public int hashCode() {
-
-		return Objects.hash(testName, subject.getSubjectName(), createdOn, createdBy);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-
-		
-		Test that = (Test) obj;
-		
-		return Objects.equals(this.getTestName().toLowerCase(), getTestName().toLowerCase())
-				&& Objects.equals(createdOn, that.createdOn)
-				&& Objects.equals(createdBy, that.createdBy);
-				
-	}
-
-	public void setClassroom(Classroom classroom) {
+        public void setClassroom(Classroom classroom) {
 		
 		if (classroom != null) {
 			this.classroom = classroom;
@@ -259,5 +235,29 @@ public class Test {
 			this.classroom = null;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+
+		return Objects.hash(testName.toLowerCase(), creationDate, 
+				classroom.getId(), modifiedBy);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+
+		Test that = (Test) obj;
+
+
+		
+		return Objects.equals(testName.toLowerCase(), that.testName.toLowerCase())
+				&& Objects.equals(creationDate, that.creationDate)
+				&& Objects.equals(modifiedBy, that.modifiedBy)
+				&& Objects.equals(classroom.getId(), that.getClassroom().getId());
+	}
+
+	
 
 }

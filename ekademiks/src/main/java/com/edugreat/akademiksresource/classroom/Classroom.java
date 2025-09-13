@@ -150,17 +150,16 @@ public class Classroom {
 	}
 	
 	
-	public void promoteStudent(Student student, Classroom targetClassroom, String enrollmentOfficerEmail) {
+	public void promoteStudent(Student student, Classroom targetClassroom, String enrolledBy) {
 		
 		StudentClassroom currentEnrollment = findActiveEnrollment(student)
-				                             .orElseThrow(() -> new IllegalArgumentException(student.getFirstName()+" "+student.getLastName()+
-				                            		 "is not enrolled in this class"));
+				                             .orElseThrow(() -> new IllegalArgumentException("Student not enrolled in this class"));
 	
 	currentEnrollment.setEnrollmentStatus(EnrollmentStatus.PROMOTED);
 	currentEnrollment.setCompletionDate(LocalDateTime.now());
 	
-	currentEnrollment.setCompletedBy(enrollmentOfficerEmail);
-	targetClassroom.addStudent(student, enrollmentOfficerEmail);
+	currentEnrollment.setCompletedBy(enrolledBy);
+	targetClassroom.addStudent(student, enrolledBy);
 	
 	}
 	
@@ -195,9 +194,7 @@ public class Classroom {
 	}
 	
 	public void assignSubject(Subject subject, Instructor instructor) {
-		System.out.println("subject ID "+subject.getId()+" level "+subject.getLevel().getId());
-		System.out.println("current level "+this.level.getId());
-		System.out.println("--------------------------------");
+		
 		
 	 if(!subject.getLevel().equals(this.level)) {
 			throw new IllegalArgumentException("Subject level does not match classroom level");
@@ -337,7 +334,7 @@ public class Classroom {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(institution.getId(), level.getId(), name.toLowerCase());
+		return Objects.hash(academicYear, institution, name.toLowerCase());
 	}
 
 	@Override
@@ -348,7 +345,7 @@ public class Classroom {
 			return false;
 		
 		Classroom other = (Classroom) obj;
-		return Objects.equals(institution.getId(), other.institution.getId()) && Objects.equals(level.getId(), other.level.getId())
+		return Objects.equals(academicYear, other.academicYear) && Objects.equals(institution, other.institution)
 				&& Objects.equals(name.toLowerCase(), other.name.toLowerCase());
 	}
 	
