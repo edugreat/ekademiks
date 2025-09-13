@@ -80,7 +80,7 @@ public class Test {
 	
 	@LastModifiedDate
 	@Column
-	private LocalDateTime updatedOn;
+	private LocalDateTime modifiedOn;
 	
 	@LastModifiedBy
 	@Column
@@ -101,7 +101,7 @@ public class Test {
 	}
 
 	public LocalDateTime getUpdatedOn() {
-		return updatedOn;
+		return modifiedOn;
 	}
 
 	public String getModifiedBy() {
